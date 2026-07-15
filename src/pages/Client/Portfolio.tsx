@@ -1,0 +1,628 @@
+import { Link, useNavigate } from "react-router-dom";
+
+import { useAuth } from "../../contexts/AuthContext";
+
+function Portfolio() {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = (): void => {
+    logout();
+    navigate("/", { replace: true });
+  };
+
+  return (
+    <div>
+      {/* Scroll to top */}
+      <div className="progress-wrap cursor-pointer">
+        <svg
+          className="progress-circle svg-content"
+          width="100%"
+          height="100%"
+          viewBox="-1 -1 102 102"
+        >
+          <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" />
+        </svg>
+      </div>
+
+      {/* Navbar */}
+      <nav className="navbar navbar-expand-lg">
+        <div className="container">
+          <div className="logo-wrapper">
+            <Link className="logo" to="/">
+              <img
+                src="/img/logo.png"
+                className="logo-img"
+                alt="THADS Barber"
+              />
+            </Link>
+          </div>
+
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbar"
+            aria-controls="navbar"
+            aria-expanded="false"
+            aria-label="Mở menu"
+          >
+            <span className="navbar-toggler-icon">
+              <i className="ti-menu" />
+            </span>
+          </button>
+
+          <div className="collapse navbar-collapse" id="navbar">
+            <ul className="navbar-nav ms-auto">
+              <li className="nav-item">
+                <Link className="nav-link" to="/">
+                  Trang chủ
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/about.html">
+                  Giới thiệu
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/services.html">
+                  Dịch vụ
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/pricing.html">
+                  Bảng giá
+                </Link>
+              </li>
+
+              <li className="nav-item dropdown">
+                <button
+                  className="nav-link active dropdown-toggle navbar-dropdown-button"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  data-bs-auto-close="outside"
+                  aria-expanded="false"
+                >
+                  Khám phá <i className="ti-angle-down" />
+                </button>
+
+                <ul className="dropdown-menu">
+                  <li>
+                    <Link
+                      className="dropdown-item active"
+                      to="/portfolio.html"
+                    >
+                      <span>Thư viện kiểu tóc</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/team.html"
+                    >
+                      <span>Đội ngũ Barber</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/faq.html"
+                    >
+                      <span>Câu hỏi thường gặp</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/services-page.html"
+                    >
+                      <span>Chi tiết dịch vụ</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/team-details.html"
+                    >
+                      <span>Thông tin Barber</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/blog.html"
+                    >
+                      <span>Tin tức và bài viết</span>
+                    </Link>
+                  </li>
+                </ul>
+              </li>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/contact.html">
+                  Liên hệ
+                </Link>
+              </li>
+
+              {isAuthenticated && user ? (
+                <li className="nav-item dropdown">
+                  <button
+                    className="nav-link dropdown-toggle auth-user-button"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside"
+                    aria-expanded="false"
+                  >
+                    <i className="ti-user" />{" "}
+                    {user.fullName}{" "}
+                    <i className="ti-angle-down" />
+                  </button>
+
+                  <ul className="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/profile"
+                      >
+                        <span>Hồ sơ cá nhân</span>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/booking-history"
+                      >
+                        <span>Lịch sử đặt lịch</span>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <button
+                        type="button"
+                        className="dropdown-item logout-menu-button"
+                        onClick={handleLogout}
+                      >
+                        <span>Đăng xuất</span>
+                      </button>
+                    </li>
+                  </ul>
+                </li>
+              ) : (
+                <>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/login">
+                      Đăng nhập
+                    </Link>
+                  </li>
+
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/register">
+                      Đăng ký
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      {/* Header Banner */}
+      <div
+        className="banner-header valign bg-img bg-fixed"
+        data-overlay-dark={6}
+        data-background="img/slider/9.jpg"
+      >
+        <div className="container">
+          <div className="row">
+            <div className="col-md-12 text-center caption mt-60">
+              <h5>Hình ảnh và video</h5>
+              <h1>Thư viện THADS Barber</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Image Gallery */}
+      <section className="section-padding">
+        <div className="container">
+          <div className="row">
+            <div className="col-md-12">
+              <div className="section-head text-center">
+                <div className="section-subtitle">
+                  Khoảnh khắc nổi bật
+                </div>
+
+                <div className="section-title">
+                  Thư viện hình ảnh
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/3.jpg"
+                title="Không gian THADS Barber"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/3.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Không gian THADS Barber"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/4.jpg"
+                title="Dịch vụ chăm sóc râu"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/4.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Dịch vụ chăm sóc râu"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/5.jpg"
+                title="Cắt tóc nam chuyên nghiệp"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/5.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Cắt tóc nam chuyên nghiệp"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-6 gallery-item">
+              <a
+                href="/img/slider/16.jpg"
+                title="Kiểu tóc hiện đại"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/16.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Kiểu tóc hiện đại"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-6 gallery-item">
+              <a
+                href="/img/slider/14.jpg"
+                title="Barber đang tạo kiểu"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/14.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Barber đang tạo kiểu"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/8.jpg"
+                title="Phong cách Fade"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/8.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Phong cách Fade"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/9.jpg"
+                title="Không gian cắt tóc"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/9.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Không gian cắt tóc"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/10.jpg"
+                title="Dịch vụ tạo kiểu tóc"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/10.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Dịch vụ tạo kiểu tóc"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Video Gallery */}
+      <section className="section-padding">
+        <div className="container">
+          <div className="row">
+            <div className="col-md-12">
+              <div className="section-head text-center">
+                <div className="section-subtitle">
+                  Trải nghiệm thực tế
+                </div>
+
+                <div className="section-title">
+                  Thư viện video
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            {[
+              {
+                image: "/img/slider/8.jpg",
+                title: "Quy trình cắt tóc tại THADS Barber",
+              },
+              {
+                image: "/img/slider/9.jpg",
+                title: "Không gian THADS Barber",
+              },
+              {
+                image: "/img/slider/11.jpg",
+                title: "Kỹ thuật Fade chuyên nghiệp",
+              },
+              {
+                image: "/img/slider/13.jpg",
+                title: "Tạo kiểu tóc nam hiện đại",
+              },
+              {
+                image: "/img/slider/16.jpg",
+                title: "Trải nghiệm của khách hàng",
+              },
+            ].map((video, index) => (
+              <div
+                className={index < 2 ? "col-md-6" : "col-md-4"}
+                key={video.image}
+              >
+                <div className="vid-area mb-30">
+                  <div className="vid-icon">
+                    <img
+                      src={video.image}
+                      alt={video.title}
+                    />
+
+                    <a
+                      className="video-gallery-button vid"
+                      href="https://youtu.be/e2x0UXVU2yg"
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={video.title}
+                    >
+                      <span className="video-gallery-polygon">
+                        <i className="ti-control-play" />
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="row">
+            <div className="col-md-12 text-center mt-20">
+              <Link
+                to="/booking"
+                className="button-1"
+              >
+                Đặt lịch trải nghiệm
+                <span />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="footer-top">
+          <div className="container">
+            <div className="row">
+              <div className="col-md-3">
+                <div className="footer-column footer-contact">
+                  <h3 className="footer-title">
+                    Liên hệ
+                  </h3>
+
+                  <p className="footer-contact-text">
+                    THADS Barber
+                    <br />
+                    Hà Nội, Việt Nam
+                  </p>
+
+                  <div className="footer-contact-info">
+                    <p className="footer-contact-phone">
+                      0987 654 321
+                    </p>
+
+                    <p className="footer-contact-mail">
+                      contact@thadsbarber.com
+                    </p>
+                  </div>
+
+                  <div className="footer-about-social-list">
+                    <a href="#instagram">
+                      <i className="ti-instagram" />
+                    </a>
+
+                    <a href="#youtube">
+                      <i className="ti-youtube" />
+                    </a>
+
+                    <a href="#facebook">
+                      <i className="ti-facebook" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-md-3 offset-md-1">
+                <div className="item opening">
+                  <h3 className="footer-title">
+                    Giờ làm việc
+                  </h3>
+
+                  <ul>
+                    <li>
+                      <div className="tit">Thứ Hai</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
+                    </li>
+
+                    <li>
+                      <div className="tit">Thứ Ba</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
+                    </li>
+
+                    <li>
+                      <div className="tit">Thứ Tư</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
+                    </li>
+
+                    <li>
+                      <div className="tit">Thứ Năm</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
+                    </li>
+
+                    <li>
+                      <div className="tit">Thứ Sáu</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
+                    </li>
+
+                    <li>
+                      <div className="tit">Cuối tuần</div>
+                      <div className="dots" />
+                      <span>08:00 - 22:00</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="col-md-4 offset-md-1">
+                <div className="footer-column footer-explore clearfix">
+                  <h3 className="footer-title">
+                    Nhận thông tin ưu đãi
+                  </h3>
+
+                  <div className="row subscribe">
+                    <div className="col-md-12">
+                      <p>
+                        Đăng ký email để nhận thông tin về
+                        kiểu tóc, dịch vụ và chương trình ưu
+                        đãi mới nhất.
+                      </p>
+
+                      <form
+                        onSubmit={(event) =>
+                          event.preventDefault()
+                        }
+                      >
+                        <input
+                          type="email"
+                          name="email"
+                          placeholder="Email của bạn"
+                          required
+                        />
+
+                        <button type="submit">
+                          Đăng ký
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="footer-bottom">
+          <div className="container">
+            <div className="row">
+              <div className="col-md-12">
+                <div className="footer-bottom-inner">
+                  <p className="footer-bottom-copy-right">
+                    © {new Date().getFullYear()} THADS Barber.
+                    Bảo lưu mọi quyền.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export default Portfolio;
