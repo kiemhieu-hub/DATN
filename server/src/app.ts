@@ -10,6 +10,10 @@ import appointmentRoutes from "./routes/appointment.routes";
 import AppError from "./utils/AppError";
 import catalogRoutes from "./routes/catalog.routes";
 import mongoose from "mongoose";
+import barberRoutes from "./routes/barber.routes";
+import barberScheduleRoutes from "./routes/barberSchedule.routes";
+import barberDashboardRoutes from "./routes/barberDashboard.routes";
+import barberProfileRoutes from "./routes/barberProfile.routes";
 
 const app = express();
 
@@ -29,6 +33,10 @@ app.get("/", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/catalog",catalogRoutes);
+app.use("/api/barber", barberRoutes);
+app.use("/api/barber/schedule",barberScheduleRoutes);
+app.use("/api/barber/dashboard",barberDashboardRoutes);
+app.use("/api/barber/profile",barberProfileRoutes);
 
 // Error Handler
 app.use(
