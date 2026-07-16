@@ -15,6 +15,8 @@ import Post from './pages/Client/Post';
 import Blog from './pages/Client/Blog';
 import Blog2 from './pages/Client/Blog2';
 import Blog3 from './pages/Client/Blog3';
+import Booking from "./pages/Client/Booking";
+import BookingHistory from "./pages/Client/BookingHistory";
 
 // Auth
 import Login from './pages/Auth/Login';
@@ -47,6 +49,8 @@ function App() {
         <Route path="/blog.html" element={<Blog />} />
         <Route path="/blog2.html" element={<Blog2 />} />
         <Route path="/blog3.html" element={<Blog3 />} />
+        <Route path="/booking"element={<Booking />}/>
+        <Route path="/booking-history"element={<BookingHistory />}/>
 
         {/* ================= 404 ================= */}
 

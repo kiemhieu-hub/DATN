@@ -6,13 +6,16 @@ import express, {
 } from "express";
 
 import authRoutes from "./routes/auth.routes";
+import appointmentRoutes from "./routes/appointment.routes";
 import AppError from "./utils/AppError";
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// Test API
 app.get("/", (_req, res) => {
   res.json({
     success: true,
@@ -20,8 +23,11 @@ app.get("/", (_req, res) => {
   });
 });
 
+// Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
+// Error Handler
 app.use(
   (
     error: unknown,
@@ -30,16 +36,15 @@ app.use(
     _next: NextFunction
   ) => {
     if (error instanceof AppError) {
-      res.status(error.statusCode).json({
+      return res.status(error.statusCode).json({
         success: false,
         message: error.message,
       });
-      return;
     }
 
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Lỗi máy chủ",
     });
