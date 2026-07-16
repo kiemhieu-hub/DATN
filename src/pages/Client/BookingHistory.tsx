@@ -19,8 +19,8 @@ import {
 
 import type {
   Appointment,
-  AppointmentService,
   AppointmentStatus,
+  PaymentStatus,
 } from "../../types/Appointment";
 
 import "./css/BookingHistory.css";
@@ -29,24 +29,7 @@ interface LocationState {
   message?: string;
 }
 
-
-type LegacyAppointment = Omit<
-  Appointment,
-  | "services"
-  | "totalPrice"
-  | "durationMinutes"
-  | "endTime"
-> & {
-  serviceName?: string;
-  servicePrice?: number;
-
-  services?: AppointmentService[];
-  totalPrice?: number;
-  durationMinutes?: number;
-  endTime?: string;
-};
-
-const statusLabels: Record<
+const appointmentStatusLabels: Record<
   AppointmentStatus,
   string
 > = {
@@ -57,174 +40,95 @@ const statusLabels: Record<
   CANCELLED: "Đã hủy",
 };
 
-const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(price);
+const paymentStatusLabels: Record<
+  PaymentStatus,
+  string
+> = {
+  UNPAID: "Chưa thanh toán",
+  PENDING: "Đang xử lý",
+  PAID: "Đã thanh toán",
+  REFUNDED: "Đã hoàn tiền",
 };
 
-const formatDate = (
-  dateString: string
-): string => {
-  const [year, month, day] =
-    dateString.split("-");
-
-  if (!year || !month || !day) {
-    return dateString;
-  }
-
-  return `${day}/${month}/${year}`;
-};
-
-const formatCreatedAt = (
-  dateString: string
-): string => {
-  const date = new Date(dateString);
-
-  if (Number.isNaN(date.getTime())) {
-    return dateString;
-  }
-
-  return date.toLocaleString("vi-VN");
-};
+const formatPrice = (
+  amount: number
+): string =>
+  new Intl.NumberFormat("vi-VN").format(
+    amount
+  );
 
 const formatDuration = (
-  totalMinutes: number
+  minutes: number
 ): string => {
-  if (
-    typeof totalMinutes !== "number" ||
-    totalMinutes <= 0
-  ) {
-    return "Chưa xác định";
-  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes =
+    minutes % 60;
 
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours > 0 && minutes > 0) {
-    return `${hours} giờ ${minutes} phút`;
+  if (hours > 0 && remainingMinutes > 0) {
+    return `${hours} giờ ${remainingMinutes} phút`;
   }
 
   if (hours > 0) {
     return `${hours} giờ`;
   }
 
-  return `${minutes} phút`;
+  return `${remainingMinutes} phút`;
 };
 
-/*
- * Chuyển dữ liệu cũ:
- * serviceName + servicePrice
- *
- * thành dữ liệu mới:
- * services[]
- */
-const getAppointmentServices = (
-  appointment: LegacyAppointment
-): AppointmentService[] => {
-  if (
-    Array.isArray(appointment.services) &&
-    appointment.services.length > 0
-  ) {
-    return appointment.services;
+const formatDate = (
+  dateValue: string
+): string => {
+  const [year, month, day] =
+    dateValue.split("-");
+
+  if (!year || !month || !day) {
+    return dateValue;
   }
 
-  if (
-    typeof appointment.serviceName === "string" &&
-    appointment.serviceName.trim() &&
-    typeof appointment.servicePrice === "number"
-  ) {
-    return [
-      {
-        name: appointment.serviceName,
-        price: appointment.servicePrice,
-      },
-    ];
-  }
-
-  return [];
+  return `${day}/${month}/${year}`;
 };
 
-const getAppointmentTotalPrice = (
-  appointment: LegacyAppointment
-): number => {
-  if (
-    typeof appointment.totalPrice === "number"
-  ) {
-    return appointment.totalPrice;
+const formatDateTime = (
+  dateValue: string
+): string => {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return dateValue;
   }
 
-  if (
-    typeof appointment.servicePrice === "number"
-  ) {
-    return appointment.servicePrice;
-  }
-
-  return getAppointmentServices(
-    appointment
-  ).reduce(
-    (total, service) =>
-      total + service.price,
-    0
-  );
+  return date.toLocaleString("vi-VN");
 };
 
-const getAppointmentDuration = (
-  appointment: LegacyAppointment
-): number => {
-  if (
-    typeof appointment.durationMinutes ===
-      "number" &&
-    appointment.durationMinutes > 0
-  ) {
-    return appointment.durationMinutes;
-  }
-
-  /*
-   * Dữ liệu lịch cũ chưa có thời lượng.
-   * Tạm hiển thị 60 phút.
-   */
-  return 60;
-};
-
-const getAppointmentEndTime = (
-  appointment: LegacyAppointment
+const getBarberName = (
+  appointment: Appointment
 ): string => {
   if (
-    typeof appointment.endTime === "string" &&
-    appointment.endTime
+    typeof appointment.barber ===
+    "string"
   ) {
-    return appointment.endTime;
+    return "Barber";
   }
 
-  const [hourText, minuteText] =
-    appointment.timeSlot.split(":");
+  return appointment.barber.fullName;
+};
 
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
+const getErrorMessage = (
+  error: unknown,
+  fallback: string
+): string => {
+  if (axios.isAxiosError(error)) {
+    const data =
+      error.response?.data as
+        | {
+            message?: string;
+          }
+        | undefined;
 
-  if (
-    Number.isNaN(hour) ||
-    Number.isNaN(minute)
-  ) {
-    return "Chưa xác định";
+    return data?.message || fallback;
   }
 
-  const totalMinutes =
-    hour * 60 +
-    minute +
-    getAppointmentDuration(appointment);
-
-  const endHour =
-    Math.floor(totalMinutes / 60);
-  const endMinute =
-    totalMinutes % 60;
-
-  return `${String(endHour).padStart(
-    2,
-    "0"
-  )}:${String(endMinute).padStart(2, "0")}`;
+  return fallback;
 };
 
 function BookingHistory() {
@@ -233,14 +137,16 @@ function BookingHistory() {
 
   const {
     isAuthenticated,
-    isLoading,
+    isLoading: authLoading,
   } = useAuth();
 
   const locationState =
     location.state as LocationState | null;
 
-  const [appointments, setAppointments] =
-    useState<LegacyAppointment[]>([]);
+  const [
+    appointments,
+    setAppointments,
+  ] = useState<Appointment[]>([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -254,8 +160,8 @@ function BookingHistory() {
     );
 
   const [
-    cancellingAppointmentId,
-    setCancellingAppointmentId,
+    cancellingId,
+    setCancellingId,
   ] = useState<string | null>(null);
 
   const loadAppointments =
@@ -267,42 +173,23 @@ function BookingHistory() {
         const response =
           await getMyAppointments();
 
-        /*
-         * Dùng cách này nếu service trả về:
-         * {
-         *   success: true,
-         *   appointments: [...]
-         * }
-         */
         setAppointments(
-          response.appointments as LegacyAppointment[]
+          response.appointments
         );
       } catch (requestError) {
-        console.error(
-          "Lỗi tải lịch sử đặt lịch:",
-          requestError
+        setError(
+          getErrorMessage(
+            requestError,
+            "Không thể tải lịch sử đặt lịch."
+          )
         );
-
-        if (
-          axios.isAxiosError(requestError)
-        ) {
-          setError(
-            requestError.response?.data
-              ?.message ||
-              "Không thể tải lịch sử đặt lịch"
-          );
-        } else {
-          setError(
-            "Không thể kết nối đến máy chủ"
-          );
-        }
       } finally {
         setLoading(false);
       }
     }, []);
 
   useEffect(() => {
-    if (isLoading) {
+    if (authLoading) {
       return;
     }
 
@@ -320,52 +207,44 @@ function BookingHistory() {
 
     void loadAppointments();
   }, [
+    authLoading,
     isAuthenticated,
-    isLoading,
-    loadAppointments,
     navigate,
+    loadAppointments,
   ]);
 
   const canCancel = (
-    appointment: LegacyAppointment
-  ): boolean => {
-    return (
-      appointment.status === "PENDING" ||
-      appointment.status === "CONFIRMED"
-    );
-  };
+    appointment: Appointment
+  ): boolean =>
+    appointment.status === "PENDING" ||
+    appointment.status === "CONFIRMED";
 
   const handleCancel = async (
-    appointment: LegacyAppointment
+    appointment: Appointment
   ): Promise<void> => {
-    const cancelReason =
-      window.prompt(
-        "Nhập lý do hủy lịch:",
-        "Tôi có việc đột xuất"
-      );
+    const reason = window.prompt(
+      "Nhập lý do hủy lịch:",
+      "Tôi có việc đột xuất"
+    );
 
-    if (cancelReason === null) {
+    if (reason === null) {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Bạn có chắc muốn hủy lịch ngày ${formatDate(
-          appointment.appointmentDate
-        )}, từ ${appointment.timeSlot} đến ${getAppointmentEndTime(
-          appointment
-        )} không?`
-      );
+    const confirmed = window.confirm(
+      `Bạn có chắc muốn hủy lịch ngày ${formatDate(
+        appointment.appointmentDate
+      )}, từ ${appointment.startTime} đến ${
+        appointment.endTime
+      } không?`
+    );
 
     if (!confirmed) {
       return;
     }
 
     try {
-      setCancellingAppointmentId(
-        appointment._id
-      );
-
+      setCancellingId(appointment._id);
       setError("");
       setMessage("");
 
@@ -373,8 +252,8 @@ function BookingHistory() {
         await cancelAppointment(
           appointment._id,
           {
-            cancelReason:
-              cancelReason.trim() ||
+            reason:
+              reason.trim() ||
               "Khách hàng hủy lịch",
           }
         );
@@ -387,50 +266,31 @@ function BookingHistory() {
             (currentAppointment) =>
               currentAppointment._id ===
               response.appointment._id
-                ? {
-                    ...currentAppointment,
-                    ...response.appointment,
-                  }
+                ? response.appointment
                 : currentAppointment
           )
       );
     } catch (requestError) {
-      console.error(
-        "Lỗi hủy lịch:",
-        requestError
+      setError(
+        getErrorMessage(
+          requestError,
+          "Không thể hủy lịch."
+        )
       );
-
-      if (
-        axios.isAxiosError(requestError)
-      ) {
-        setError(
-          requestError.response?.data
-            ?.message ||
-            "Không thể hủy lịch"
-        );
-      } else {
-        setError(
-          "Không thể kết nối đến máy chủ"
-        );
-      }
     } finally {
-      setCancellingAppointmentId(
-        null
-      );
+      setCancellingId(null);
     }
   };
 
-  if (isLoading || loading) {
+  if (authLoading || loading) {
     return (
       <div className="history-page">
-        <div className="history-container">
-          <div className="history-loading-card">
-            <div className="history-spinner" />
+        <div className="history-loading-card">
+          <div className="history-spinner" />
 
-            <p className="history-loading">
-              Đang tải lịch sử đặt lịch...
-            </p>
-          </div>
+          <p>
+            Đang tải lịch sử đặt lịch...
+          </p>
         </div>
       </div>
     );
@@ -438,8 +298,8 @@ function BookingHistory() {
 
   return (
     <div className="history-page">
-      <div className="history-container">
-        <div className="history-heading">
+      <main className="history-container">
+        <header className="history-heading">
           <p className="history-brand">
             THADS Barber
           </p>
@@ -447,10 +307,10 @@ function BookingHistory() {
           <h1>Lịch sử đặt lịch</h1>
 
           <p>
-            Theo dõi thời gian, dịch vụ và trạng
-            thái các lịch hẹn của bạn
+            Theo dõi dịch vụ, Barber, trạng thái
+            và thanh toán của từng lịch hẹn.
           </p>
-        </div>
+        </header>
 
         <div className="history-actions">
           <Link
@@ -490,18 +350,12 @@ function BookingHistory() {
         )}
 
         {appointments.length === 0 ? (
-          <div className="history-empty">
-            <div className="history-empty-icon">
-              <i className="ti-calendar" />
-            </div>
-
-            <h2>
-              Bạn chưa có lịch hẹn
-            </h2>
+          <section className="history-empty">
+            <h2>Bạn chưa có lịch hẹn</h2>
 
             <p>
-              Hãy đặt lịch để trải nghiệm dịch vụ
-              tại THADS Barber.
+              Hãy đặt lịch để sử dụng dịch vụ tại
+              THADS Barber.
             </p>
 
             <Link
@@ -510,243 +364,266 @@ function BookingHistory() {
             >
               Đặt lịch ngay
             </Link>
-          </div>
+          </section>
         ) : (
           <div className="history-list">
             {appointments.map(
-              (appointment) => {
-                const services =
-                  getAppointmentServices(
-                    appointment
-                  );
+              (appointment) => (
+                <article
+                  className="history-card"
+                  key={appointment._id}
+                >
+                  <div className="history-card-header">
+                    <div>
+                      <p className="history-code">
+                        Mã lịch:{" "}
+                        {appointment._id.slice(
+                          -8
+                        )}
+                      </p>
 
-                const totalPrice =
-                  getAppointmentTotalPrice(
-                    appointment
-                  );
+                      <h2>
+                        {getBarberName(
+                          appointment
+                        )}
+                      </h2>
+                    </div>
 
-                const durationMinutes =
-                  getAppointmentDuration(
-                    appointment
-                  );
-
-                const endTime =
-                  getAppointmentEndTime(
-                    appointment
-                  );
-
-                return (
-                  <article
-                    className="history-card"
-                    key={appointment._id}
-                  >
-                    <div className="history-card-header">
-                      <div>
-                        <p className="history-code">
-                          Mã lịch:{" "}
-                          {appointment._id.slice(
-                            -8
-                          )}
-                        </p>
-
-                        <h2>
-                          Lịch hẹn THADS Barber
-                        </h2>
-                      </div>
-
+                    <div className="history-statuses">
                       <span
                         className={`history-status status-${appointment.status.toLowerCase()}`}
                       >
                         {
-                          statusLabels[
+                          appointmentStatusLabels[
                             appointment.status
                           ]
                         }
                       </span>
+
+                      <span
+                        className={`history-payment payment-${appointment.paymentStatus.toLowerCase()}`}
+                      >
+                        {
+                          paymentStatusLabels[
+                            appointment.paymentStatus
+                          ]
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="history-time-banner">
+                    <div>
+                      <span>Ngày hẹn</span>
+
+                      <strong>
+                        {formatDate(
+                          appointment.appointmentDate
+                        )}
+                      </strong>
                     </div>
 
-                    <div className="history-time-banner">
-                      <div>
-                        <span>Giờ bắt đầu</span>
+                    <div>
+                      <span>Giờ bắt đầu</span>
 
-                        <strong>
-                          {appointment.timeSlot}
-                        </strong>
-                      </div>
-
-                      <div className="history-time-arrow">
-                        <i className="ti-arrow-right" />
-                      </div>
-
-                      <div>
-                        <span>Giờ kết thúc</span>
-
-                        <strong>{endTime}</strong>
-                      </div>
-
-                      <div className="history-duration">
-                        <span>
-                          Tổng thời gian
-                        </span>
-
-                        <strong>
-                          {formatDuration(
-                            durationMinutes
-                          )}
-                        </strong>
-                      </div>
+                      <strong>
+                        {appointment.startTime}
+                      </strong>
                     </div>
 
-                    <div className="history-services">
-                      <div className="history-section-title">
-                        <span>
-                          Dịch vụ đã chọn
-                        </span>
+                    <div>
+                      <span>Giờ kết thúc</span>
 
-                        <small>
-                          {services.length} dịch vụ
-                        </small>
-                      </div>
+                      <strong>
+                        {appointment.endTime}
+                      </strong>
+                    </div>
 
-                      {services.length > 0 ? (
-                        <ul>
-                          {services.map(
-                            (service, index) => (
-                              <li
-                                key={`${service.name}-${index}`}
-                              >
-                                <div>
-                                  <span className="history-service-number">
-                                    {index + 1}
-                                  </span>
+                    <div>
+                      <span>Tổng thời gian</span>
 
-                                  <strong>
-                                    {service.name}
-                                  </strong>
-                                </div>
+                      <strong>
+                        {formatDuration(
+                          appointment.durationMinutes
+                        )}
+                      </strong>
+                    </div>
+                  </div>
 
-                                <span>
-                                  {formatPrice(
-                                    service.price
+                  <section className="history-services">
+                    <div className="history-section-title">
+                      <span>Dịch vụ đã chọn</span>
+
+                      <small>
+                        {
+                          appointment.services
+                            .length
+                        }{" "}
+                        dịch vụ
+                      </small>
+                    </div>
+
+                    <ul>
+                      {appointment.services.map(
+                        (service, index) => (
+                          <li
+                            key={`${service.nameSnapshot}-${index}`}
+                          >
+                            <div>
+                              <span className="history-service-number">
+                                {index + 1}
+                              </span>
+
+                              <div>
+                                <strong>
+                                  {
+                                    service.nameSnapshot
+                                  }
+                                </strong>
+
+                                <small>
+                                  {formatDuration(
+                                    service.durationSnapshot
                                   )}
-                                </span>
-                              </li>
-                            )
-                          )}
-                        </ul>
-                      ) : (
-                        <p className="history-old-data">
-                          Lịch hẹn cũ chưa có thông
-                          tin dịch vụ.
-                        </p>
+                                </small>
+                              </div>
+                            </div>
+
+                            <span>
+                              {formatPrice(
+                                service.priceSnapshot
+                              )}
+                              đ
+                            </span>
+                          </li>
+                        )
                       )}
+                    </ul>
+                  </section>
+
+                  <div className="history-details">
+                    <div>
+                      <span>Barber</span>
+
+                      <strong>
+                        {getBarberName(
+                          appointment
+                        )}
+                      </strong>
                     </div>
 
-                    <div className="history-details">
-                      <div>
-                        <span>Barber</span>
+                    <div>
+                      <span>Tổng tiền</span>
 
-                        <strong>
-                          {
-                            appointment.barberName
-                          }
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>Ngày hẹn</span>
-
-                        <strong>
-                          {formatDate(
-                            appointment.appointmentDate
-                          )}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>Thời gian</span>
-
-                        <strong>
-                          {appointment.timeSlot} -{" "}
-                          {endTime}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>Tổng tiền</span>
-
-                        <strong className="history-total-price">
-                          {formatPrice(
-                            totalPrice
-                          )}
-                        </strong>
-                      </div>
+                      <strong className="history-total-price">
+                        {formatPrice(
+                          appointment.totalPrice
+                        )}
+                        đ
+                      </strong>
                     </div>
 
-                    {appointment.note && (
-                      <div className="history-note">
-                        <span>Ghi chú</span>
+                    <div>
+                      <span>Trạng thái lịch</span>
+
+                      <strong>
+                        {
+                          appointmentStatusLabels[
+                            appointment.status
+                          ]
+                        }
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Thanh toán</span>
+
+                      <strong>
+                        {
+                          paymentStatusLabels[
+                            appointment.paymentStatus
+                          ]
+                        }
+                      </strong>
+                    </div>
+                  </div>
+
+                  {appointment.note && (
+                    <div className="history-note">
+                      <span>Ghi chú</span>
+
+                      <p>
+                        {appointment.note}
+                      </p>
+                    </div>
+                  )}
+
+                  {appointment.status ===
+                    "CANCELLED" &&
+                    appointment.cancellation && (
+                      <div className="history-cancel-reason">
+                        <span>Lý do hủy</span>
 
                         <p>
-                          {appointment.note}
+                          {
+                            appointment
+                              .cancellation
+                              .reason
+                          }
                         </p>
+
+                        {appointment
+                          .cancellation
+                          .cancelledAt && (
+                          <small>
+                            Hủy lúc:{" "}
+                            {formatDateTime(
+                              appointment
+                                .cancellation
+                                .cancelledAt
+                            )}
+                          </small>
+                        )}
                       </div>
                     )}
 
-                    {appointment.status ===
-                      "CANCELLED" &&
-                      appointment.cancelReason && (
-                        <div className="history-cancel-reason">
-                          <span>
-                            Lý do hủy
-                          </span>
-
-                          <p>
-                            {
-                              appointment.cancelReason
-                            }
-                          </p>
-                        </div>
+                  <footer className="history-card-footer">
+                    <small>
+                      Tạo lúc:{" "}
+                      {formatDateTime(
+                        appointment.createdAt
                       )}
+                    </small>
 
-                    <div className="history-card-footer">
-                      <small>
-                        Tạo lúc:{" "}
-                        {formatCreatedAt(
-                          appointment.createdAt
-                        )}
-                      </small>
-
-                      {canCancel(
-                        appointment
-                      ) && (
-                        <button
-                          type="button"
-                          className="history-cancel-button"
-                          disabled={
-                            cancellingAppointmentId ===
-                            appointment._id
-                          }
-                          onClick={() => {
-                            void handleCancel(
-                              appointment
-                            );
-                          }}
-                        >
-                          {cancellingAppointmentId ===
+                    {canCancel(
+                      appointment
+                    ) && (
+                      <button
+                        type="button"
+                        className="history-cancel-button"
+                        disabled={
+                          cancellingId ===
                           appointment._id
-                            ? "Đang hủy..."
-                            : "Hủy lịch"}
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                );
-              }
+                        }
+                        onClick={() =>
+                          void handleCancel(
+                            appointment
+                          )
+                        }
+                      >
+                        {cancellingId ===
+                        appointment._id
+                          ? "Đang hủy..."
+                          : "Hủy lịch"}
+                      </button>
+                    )}
+                  </footer>
+                </article>
+              )
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

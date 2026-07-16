@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+  useEffect,
   useMemo,
   useState,
   type FormEvent,
@@ -10,215 +11,71 @@ import {
 } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { createAppointment } from "../../services/appointment.service";
+
+import {
+  createAppointment,
+  getAvailableSlots,
+  type AvailableSlot,
+} from "../../services/appointment.service";
+
+import {
+  getCatalogBarbers,
+  getCatalogServices,
+} from "../../services/catalog.service";
+
+import type {
+  CatalogBarber,
+  CatalogService,
+  ServiceGroup,
+} from "../../types/Catalog";
 
 import "./css/Booking.css";
 
-type ServiceGroup =
-  | "HAIRCUT"
-  | "BEARD"
-  | "COLOR"
-  | null;
-
-interface ServiceOption {
-  id: string;
-  name: string;
-  price: number;
-  priceLabel: string;
-  durationMinutes: number;
-  exclusiveGroup: ServiceGroup;
+interface ServiceGroupSection {
+  group: ServiceGroup;
+  title: string;
+  description: string;
 }
 
-const serviceOptions: ServiceOption[] = [
+const serviceGroupSections: ServiceGroupSection[] = [
   {
-    id: "basic-haircut",
-    name: "Cắt tóc cơ bản",
-    price: 100000,
-    priceLabel: "100.000đ",
-    durationMinutes: 45,
-    exclusiveGroup: "HAIRCUT",
+    group: "HAIRCUT",
+    title: "Cắt tóc",
+    description:
+      "Chỉ chọn một dịch vụ cắt tóc trong cùng lịch hẹn.",
   },
   {
-    id: "fade-haircut",
-    name: "Cắt Fade chuyên nghiệp",
-    price: 130000,
-    priceLabel: "130.000đ",
-    durationMinutes: 60,
-    exclusiveGroup: "HAIRCUT",
+    group: "BEARD",
+    title: "Chăm sóc râu",
+    description:
+      "Chỉ chọn một dịch vụ chăm sóc râu trong cùng lịch hẹn.",
   },
   {
-    id: "premium-haircut-combo",
-    name: "Combo cắt tóc cao cấp",
-    price: 180000,
-    priceLabel: "180.000đ",
-    durationMinutes: 90,
-    exclusiveGroup: "HAIRCUT",
+    group: "CARE",
+    title: "Chăm sóc thư giãn",
+    description:
+      "Có thể kết hợp nhiều dịch vụ chăm sóc.",
   },
   {
-    id: "basic-beard-trim",
-    name: "Tỉa râu cơ bản",
-    price: 50000,
-    priceLabel: "50.000đ",
-    durationMinutes: 30,
-    exclusiveGroup: "BEARD",
+    group: "COLOR",
+    title: "Nhuộm tóc",
+    description:
+      "Chỉ chọn một dịch vụ nhuộm trong cùng lịch hẹn.",
   },
   {
-    id: "beard-lineup",
-    name: "Tạo kiểu và viền râu",
-    price: 80000,
-    priceLabel: "80.000đ",
-    durationMinutes: 45,
-    exclusiveGroup: "BEARD",
-  },
-  {
-    id: "beard-care-combo",
-    name: "Combo chăm sóc râu",
-    price: 120000,
-    priceLabel: "120.000đ",
-    durationMinutes: 60,
-    exclusiveGroup: "BEARD",
-  },
-  {
-    id: "hot-towel-shave",
-    name: "Cạo mặt khăn nóng",
-    price: 70000,
-    priceLabel: "70.000đ",
-    durationMinutes: 30,
-    exclusiveGroup: null,
-  },
-  {
-    id: "hair-wash-massage",
-    name: "Gội đầu và massage",
-    price: 60000,
-    priceLabel: "60.000đ",
-    durationMinutes: 30,
-    exclusiveGroup: null,
-  },
-  {
-    id: "basic-facial-care",
-    name: "Chăm sóc da mặt cơ bản",
-    price: 150000,
-    priceLabel: "150.000đ",
-    durationMinutes: 60,
-    exclusiveGroup: null,
-  },
-  {
-    id: "hair-perm",
-    name: "Uốn tạo kiểu",
-    price: 400000,
-    priceLabel: "Từ 400.000đ",
-    durationMinutes: 120,
-    exclusiveGroup: null,
-  },
-  {
-    id: "men-hair-color",
-    name: "Nhuộm tóc nam",
-    price: 350000,
-    priceLabel: "Từ 350.000đ",
-    durationMinutes: 90,
-    exclusiveGroup: "COLOR",
-  },
-  {
-    id: "bleach-fashion-color",
-    name: "Tẩy và nhuộm thời trang",
-    price: 650000,
-    priceLabel: "Từ 650.000đ",
-    durationMinutes: 180,
-    exclusiveGroup: "COLOR",
+    group: "OTHER",
+    title: "Dịch vụ khác",
+    description:
+      "Các dịch vụ tạo kiểu và bổ sung.",
   },
 ];
 
-const barberOptions: string[] = [
-  "Nguyễn Minh",
-  "Đức Anh",
-  "Thành Nam",
-  "Hoàng Sơn",
-];
-
-const timeSlotOptions: string[] = [
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "12:00",
-  "12:30",
-  "13:00",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-  "17:00",
-  "17:30",
-  "18:00",
-  "18:30",
-  "19:00",
-  "19:30",
-  "20:00",
-  "20:30",
-];
-
-const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(price);
-};
-
-const getToday = (): string => {
-  const today = new Date();
-
-  const year = today.getFullYear();
-  const month = String(
-    today.getMonth() + 1
-  ).padStart(2, "0");
-  const day = String(today.getDate()).padStart(
-    2,
-    "0"
-  );
-
-  return `${year}-${month}-${day}`;
-};
-
-const timeToMinutes = (time: string): number => {
-  const [hourText, minuteText] = time.split(":");
-
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
-
-  if (
-    Number.isNaN(hour) ||
-    Number.isNaN(minute)
-  ) {
-    return 0;
-  }
-
-  return hour * 60 + minute;
-};
-
-const minutesToTime = (
-  totalMinutes: number
-): string => {
-  const hour = Math.floor(totalMinutes / 60);
-  const minute = totalMinutes % 60;
-
-  return `${String(hour).padStart(
-    2,
-    "0"
-  )}:${String(minute).padStart(2, "0")}`;
-};
+const formatPrice = (price: number): string =>
+  new Intl.NumberFormat("vi-VN").format(price);
 
 const formatDuration = (
   totalMinutes: number
 ): string => {
-  if (totalMinutes <= 0) {
-    return "0 phút";
-  }
-
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
@@ -233,18 +90,53 @@ const formatDuration = (
   return `${minutes} phút`;
 };
 
-const getGroupErrorMessage = (
-  group: Exclude<ServiceGroup, null>
+const formatDateForDisplay = (
+  dateValue: string
 ): string => {
-  if (group === "HAIRCUT") {
-    return "Bạn chỉ được chọn một trong ba dịch vụ cắt tóc: cắt cơ bản, cắt Fade hoặc combo cắt tóc cao cấp.";
+  if (!dateValue) {
+    return "";
   }
 
-  if (group === "BEARD") {
-    return "Bạn chỉ được chọn một trong ba dịch vụ râu: tỉa râu cơ bản, tạo kiểu và viền râu hoặc combo chăm sóc râu.";
+  const [year, month, day] =
+    dateValue.split("-");
+
+  if (!year || !month || !day) {
+    return dateValue;
   }
 
-  return "Bạn không thể chọn đồng thời nhuộm tóc nam và tẩy nhuộm thời trang.";
+  return `${day}/${month}/${year}`;
+};
+
+const getToday = (): string => {
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(
+    today.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    today.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const getErrorMessage = (
+  error: unknown,
+  fallback: string
+): string => {
+  if (axios.isAxiosError(error)) {
+    const responseData =
+      error.response?.data as
+        | {
+            message?: string;
+          }
+        | undefined;
+
+    return responseData?.message || fallback;
+  }
+
+  return fallback;
 };
 
 function Booking() {
@@ -253,15 +145,25 @@ function Booking() {
   const {
     user,
     isAuthenticated,
-    isLoading,
+    isLoading: authLoading,
   } = useAuth();
+
+  const [
+    catalogServices,
+    setCatalogServices,
+  ] = useState<CatalogService[]>([]);
+
+  const [
+    catalogBarbers,
+    setCatalogBarbers,
+  ] = useState<CatalogBarber[]>([]);
 
   const [
     selectedServiceIds,
     setSelectedServiceIds,
   ] = useState<string[]>([]);
 
-  const [barberName, setBarberName] =
+  const [barberId, setBarberId] =
     useState("");
 
   const [
@@ -269,112 +171,299 @@ function Booking() {
     setAppointmentDate,
   ] = useState("");
 
-  const [timeSlot, setTimeSlot] =
+  const [startTime, setStartTime] =
     useState("");
 
-  const [note, setNote] = useState("");
+  const [note, setNote] =
+    useState("");
 
-  const [error, setError] = useState("");
+  const [
+    availableSlots,
+    setAvailableSlots,
+  ] = useState<AvailableSlot[]>([]);
+
+  const [
+    catalogLoading,
+    setCatalogLoading,
+  ] = useState(true);
+
+  const [
+    slotsLoading,
+    setSlotsLoading,
+  ] = useState(false);
+
+  const [
+    submitting,
+    setSubmitting,
+  ] = useState(false);
+
+  const [error, setError] =
+    useState("");
+
   const [success, setSuccess] =
     useState("");
-  const [submitting, setSubmitting] =
-    useState(false);
 
-  const selectedServices = useMemo(() => {
-    return serviceOptions.filter((service) =>
-      selectedServiceIds.includes(service.id)
-    );
-  }, [selectedServiceIds]);
+  useEffect(() => {
+    let active = true;
 
-  const totalPrice = useMemo(() => {
-    return selectedServices.reduce(
-      (total, service) =>
-        total + service.price,
-      0
-    );
-  }, [selectedServices]);
+    const loadCatalog = async (): Promise<void> => {
+      try {
+        setCatalogLoading(true);
+        setError("");
 
-  const totalDurationMinutes = useMemo(() => {
-    return selectedServices.reduce(
-      (total, service) =>
-        total + service.durationMinutes,
-      0
-    );
-  }, [selectedServices]);
+        const [
+          servicesResponse,
+          barbersResponse,
+        ] = await Promise.all([
+          getCatalogServices(),
+          getCatalogBarbers(),
+        ]);
 
-  const expectedEndTime = useMemo(() => {
-    if (!timeSlot || totalDurationMinutes <= 0) {
-      return "";
+        if (!active) {
+          return;
+        }
+
+        setCatalogServices(
+          servicesResponse.services
+        );
+
+        setCatalogBarbers(
+          barbersResponse.barbers
+        );
+      } catch (requestError) {
+        if (!active) {
+          return;
+        }
+
+        setError(
+          getErrorMessage(
+            requestError,
+            "Không thể tải danh sách dịch vụ và Barber."
+          )
+        );
+      } finally {
+        if (active) {
+          setCatalogLoading(false);
+        }
+      }
+    };
+
+    void loadCatalog();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    if (
+      !barberId ||
+      !appointmentDate ||
+      selectedServiceIds.length === 0
+    ) {
+      setAvailableSlots([]);
+      setStartTime("");
+      return;
     }
 
-    const startMinutes =
-      timeToMinutes(timeSlot);
+    const loadAvailableSlots =
+      async (): Promise<void> => {
+        try {
+          setSlotsLoading(true);
+          setError("");
+          setStartTime("");
 
-    return minutesToTime(
-      startMinutes + totalDurationMinutes
+          const response =
+            await getAvailableSlots(
+              barberId,
+              selectedServiceIds,
+              appointmentDate
+            );
+
+          if (!active) {
+            return;
+          }
+
+          setAvailableSlots(
+            response.slots
+          );
+        } catch (requestError) {
+          if (!active) {
+            return;
+          }
+
+          setAvailableSlots([]);
+
+          setError(
+            getErrorMessage(
+              requestError,
+              "Không thể tải khung giờ trống."
+            )
+          );
+        } finally {
+          if (active) {
+            setSlotsLoading(false);
+          }
+        }
+      };
+
+    void loadAvailableSlots();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    barberId,
+    appointmentDate,
+    selectedServiceIds,
+  ]);
+
+  const selectedServices = useMemo(
+    () =>
+      catalogServices.filter(
+        (service) =>
+          selectedServiceIds.includes(
+            service.id
+          )
+      ),
+    [
+      catalogServices,
+      selectedServiceIds,
+    ]
+  );
+
+  const selectedBarber = useMemo(
+    () =>
+      catalogBarbers.find(
+        (barber) =>
+          barber.id === barberId
+      ) ?? null,
+    [catalogBarbers, barberId]
+  );
+
+  const groupedServices = useMemo(
+    () =>
+      serviceGroupSections.map(
+        (section) => ({
+          ...section,
+          services:
+            catalogServices.filter(
+              (service) =>
+                service.group ===
+                section.group
+            ),
+        })
+      ),
+    [catalogServices]
+  );
+
+  const totalPrice = useMemo(
+    () =>
+      selectedServices.reduce(
+        (sum, service) =>
+          sum + service.price,
+        0
+      ),
+    [selectedServices]
+  );
+
+  const totalDurationMinutes = useMemo(
+    () =>
+      selectedServices.reduce(
+        (sum, service) =>
+          sum +
+          service.durationMinutes,
+        0
+      ),
+    [selectedServices]
+  );
+
+  const selectedSlot = useMemo(
+    () =>
+      availableSlots.find(
+        (slot) =>
+          slot.startTime === startTime
+      ) ?? null,
+    [availableSlots, startTime]
+  );
+
+  const isServiceSelected = (
+    serviceId: string
+  ): boolean =>
+    selectedServiceIds.includes(
+      serviceId
     );
-  }, [timeSlot, totalDurationMinutes]);
 
-  const exceedsClosingTime = useMemo(() => {
-    if (!timeSlot || totalDurationMinutes <= 0) {
+  const isServiceDisabled = (
+    service: CatalogService
+  ): boolean => {
+    if (
+      !service.isExclusiveInGroup ||
+      isServiceSelected(service.id)
+    ) {
       return false;
     }
 
-    const startMinutes =
-      timeToMinutes(timeSlot);
-
-    const endMinutes =
-      startMinutes + totalDurationMinutes;
-
-    return endMinutes > timeToMinutes("21:00");
-  }, [timeSlot, totalDurationMinutes]);
+    return selectedServices.some(
+      (selectedService) =>
+        selectedService.group ===
+          service.group &&
+        selectedService.isExclusiveInGroup
+    );
+  };
 
   const handleToggleService = (
-    selectedService: ServiceOption
+    service: CatalogService
   ): void => {
-    setSelectedServiceIds((currentIds) => {
-      const isAlreadySelected =
-        currentIds.includes(selectedService.id);
+    setError("");
+    setSuccess("");
+    setStartTime("");
 
-      if (isAlreadySelected) {
-        setError("");
-        setSuccess("");
-
-        return currentIds.filter(
-          (id) => id !== selectedService.id
-        );
-      }
-
-      if (selectedService.exclusiveGroup) {
-        const conflictingService =
-          serviceOptions.find(
-            (service) =>
-              currentIds.includes(service.id) &&
-              service.exclusiveGroup ===
-                selectedService.exclusiveGroup
+    setSelectedServiceIds(
+      (currentIds) => {
+        if (
+          currentIds.includes(
+            service.id
+          )
+        ) {
+          return currentIds.filter(
+            (id) => id !== service.id
           );
-
-        if (conflictingService) {
-          setError(
-            getGroupErrorMessage(
-              selectedService.exclusiveGroup
-            )
-          );
-
-          setSuccess("");
-
-          return currentIds;
         }
+
+        if (
+          service.isExclusiveInGroup
+        ) {
+          const filteredIds =
+            currentIds.filter((id) => {
+              const currentService =
+                catalogServices.find(
+                  (item) =>
+                    item.id === id
+                );
+
+              return !(
+                currentService &&
+                currentService.group ===
+                  service.group &&
+                currentService.isExclusiveInGroup
+              );
+            });
+
+          return [
+            ...filteredIds,
+            service.id,
+          ];
+        }
+
+        return [
+          ...currentIds,
+          service.id,
+        ];
       }
-
-      setError("");
-      setSuccess("");
-
-      return [
-        ...currentIds,
-        selectedService.id,
-      ];
-    });
+    );
   };
 
   const handleSubmit = async (
@@ -393,35 +482,35 @@ function Booking() {
             "Bạn cần đăng nhập trước khi đặt lịch.",
         },
       });
-
       return;
     }
 
-    if (selectedServices.length === 0) {
+    if (!barberId) {
+      setError(
+        "Vui lòng chọn Barber."
+      );
+      return;
+    }
+
+    if (
+      selectedServiceIds.length === 0
+    ) {
       setError(
         "Vui lòng chọn ít nhất một dịch vụ."
       );
       return;
     }
 
-    if (!barberName) {
-      setError("Vui lòng chọn Barber.");
-      return;
-    }
-
     if (!appointmentDate) {
-      setError("Vui lòng chọn ngày đặt lịch.");
-      return;
-    }
-
-    if (!timeSlot) {
-      setError("Vui lòng chọn khung giờ.");
-      return;
-    }
-
-    if (exceedsClosingTime) {
       setError(
-        `Các dịch vụ dự kiến kết thúc lúc ${expectedEndTime}, vượt quá giờ đóng cửa 21:00. Vui lòng chọn giờ sớm hơn.`
+        "Vui lòng chọn ngày đặt lịch."
+      );
+      return;
+    }
+
+    if (!startTime) {
+      setError(
+        "Vui lòng chọn khung giờ."
       );
       return;
     }
@@ -429,67 +518,48 @@ function Booking() {
     try {
       setSubmitting(true);
 
-      await createAppointment({
-        services: selectedServices.map(
-          (service) => ({
-            name: service.name,
-            price: service.price,
-          })
-        ),
-        barberName,
-        appointmentDate,
-        timeSlot,
-        note: note.trim(),
-      });
+      const response =
+        await createAppointment({
+          barberId,
+          serviceIds:
+            selectedServiceIds,
+          appointmentDate,
+          startTime,
+          note: note.trim(),
+        });
 
-      setSuccess("Đặt lịch thành công.");
+      setSuccess(response.message);
 
       window.setTimeout(() => {
-        navigate("/booking-history", {
-          replace: true,
-          state: {
-            message:
-              "Đặt lịch thành công. Lịch hẹn đang chờ xác nhận.",
-          },
-        });
+        navigate(
+          "/booking-history",
+          {
+            replace: true,
+            state: {
+              message:
+                "Đặt lịch thành công. Lịch hẹn đang chờ xác nhận.",
+            },
+          }
+        );
       }, 700);
     } catch (requestError) {
-      console.error(
-        "Lỗi đặt lịch:",
-        requestError
+      setError(
+        getErrorMessage(
+          requestError,
+          "Không thể đặt lịch."
+        )
       );
-
-      if (
-        axios.isAxiosError(requestError)
-      ) {
-        const responseData =
-          requestError.response?.data as
-            | {
-                message?: string;
-              }
-            | undefined;
-
-        setError(
-          responseData?.message ||
-            "Không thể đặt lịch."
-        );
-      } else {
-        setError(
-          "Không thể kết nối đến máy chủ."
-        );
-      }
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (isLoading) {
+  if (authLoading) {
     return (
       <div className="booking-page">
-        <div className="booking-card booking-auth-card">
-          <p className="booking-loading">
-            Đang kiểm tra đăng nhập...
-          </p>
+        <div className="booking-card booking-state-card">
+          <div className="booking-spinner" />
+          <p>Đang kiểm tra đăng nhập...</p>
         </div>
       </div>
     );
@@ -498,7 +568,7 @@ function Booking() {
   if (!isAuthenticated || !user) {
     return (
       <div className="booking-page">
-        <div className="booking-card booking-auth-card">
+        <div className="booking-card booking-state-card">
           <p className="booking-brand">
             THADS Barber
           </p>
@@ -508,8 +578,7 @@ function Booking() {
           </h1>
 
           <p className="booking-subtitle">
-            Vui lòng đăng nhập để sử dụng chức
-            năng đặt lịch.
+            Vui lòng đăng nhập để sử dụng chức năng đặt lịch.
           </p>
 
           <Link
@@ -532,24 +601,22 @@ function Booking() {
 
   return (
     <div className="booking-page">
-      <div className="booking-card">
-        <div className="booking-heading">
+      <main className="booking-card">
+        <header className="booking-heading">
           <p className="booking-brand">
             THADS Barber
           </p>
 
           <h1 className="booking-title">
-            Đặt lịch cắt tóc
+            Đặt lịch dịch vụ
           </h1>
 
           <p className="booking-subtitle">
-            Bạn có thể chọn nhiều dịch vụ, nhưng
-            mỗi nhóm tương tự chỉ được chọn một
-            dịch vụ.
+            Chọn Barber, dịch vụ, ngày và khung giờ còn trống.
           </p>
-        </div>
+        </header>
 
-        <div className="booking-user-info">
+        <section className="booking-user-info">
           <div>
             <span>Khách hàng</span>
             <strong>{user.fullName}</strong>
@@ -557,317 +624,636 @@ function Booking() {
 
           <div>
             <span>Số điện thoại</span>
-            <strong>{user.phone}</strong>
+            <strong>
+              {user.phone || "Chưa cập nhật"}
+            </strong>
           </div>
 
           <div>
             <span>Email</span>
             <strong>{user.email}</strong>
           </div>
-        </div>
+        </section>
 
-        <form
-          className="booking-form"
-          onSubmit={handleSubmit}
-        >
-          <div className="booking-field booking-services-field">
-            <label>Chọn dịch vụ</label>
+        {error && (
+          <p className="booking-message booking-error">
+            {error}
+          </p>
+        )}
 
-            <p className="booking-services-hint">
-              Không thể chọn nhiều dịch vụ cắt tóc,
-              nhiều dịch vụ râu hoặc đồng thời hai
-              dịch vụ nhuộm trong một lịch hẹn.
+        {success && (
+          <p className="booking-message booking-success">
+            {success}
+          </p>
+        )}
+
+        {catalogLoading ? (
+          <section className="booking-loading-panel">
+            <div className="booking-spinner" />
+            <p>
+              Đang tải danh sách dịch vụ và Barber...
             </p>
-
-            <div className="booking-services-list">
-              {serviceOptions.map((service) => {
-                const checked =
-                  selectedServiceIds.includes(
-                    service.id
-                  );
-
-                const sameGroupSelected =
-                  service.exclusiveGroup
-                    ? selectedServices.some(
-                        (selectedService) =>
-                          selectedService.id !==
-                            service.id &&
-                          selectedService.exclusiveGroup ===
-                            service.exclusiveGroup
-                      )
-                    : false;
-
-                return (
-                  <label
-                    className={[
-                      "booking-service-option",
-                      checked ? "selected" : "",
-                      sameGroupSelected
-                        ? "booking-service-disabled"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    key={service.id}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      disabled={sameGroupSelected}
-                      onChange={() =>
-                        handleToggleService(service)
-                      }
-                    />
-
-                    <span className="booking-service-check">
-                      {checked ? "✓" : ""}
-                    </span>
-
-                    <span className="booking-service-info">
-                      <strong>
-                        {service.name}
-                      </strong>
-
-                      <small>
-                        {service.priceLabel}
-                      </small>
-
-                      <small className="booking-service-duration">
-                        Thời gian:{" "}
-                        {formatDuration(
-                          service.durationMinutes
-                        )}
-                      </small>
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="booking-grid">
-            <div className="booking-field">
-              <label htmlFor="barberName">
-                Barber
-              </label>
-
-              <select
-                id="barberName"
-                value={barberName}
-                onChange={(event) => {
-                  setBarberName(
-                    event.target.value
-                  );
-                  setError("");
-                }}
-                required
-              >
-                <option value="">
-                  Chọn Barber
-                </option>
-
-                {barberOptions.map((barber) => (
-                  <option
-                    key={barber}
-                    value={barber}
-                  >
-                    {barber}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="booking-field">
-              <label htmlFor="appointmentDate">
-                Ngày đặt lịch
-              </label>
-
-              <input
-                id="appointmentDate"
-                type="date"
-                min={getToday()}
-                value={appointmentDate}
-                onChange={(event) => {
-                  setAppointmentDate(
-                    event.target.value
-                  );
-                  setError("");
-                }}
-                required
-              />
-            </div>
-
-            <div className="booking-field">
-              <label htmlFor="timeSlot">
-                Khung giờ bắt đầu
-              </label>
-
-              <select
-                id="timeSlot"
-                value={timeSlot}
-                onChange={(event) => {
-                  setTimeSlot(
-                    event.target.value
-                  );
-                  setError("");
-                }}
-                required
-              >
-                <option value="">
-                  Chọn khung giờ
-                </option>
-
-                {timeSlotOptions.map((slot) => (
-                  <option
-                    key={slot}
-                    value={slot}
-                  >
-                    {slot}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {selectedServices.length > 0 && (
-            <div className="booking-summary booking-multi-summary">
-              <div className="booking-selected-services">
-                <span>Dịch vụ đã chọn</span>
-
-                <ul>
-                  {selectedServices.map(
-                    (service) => (
-                      <li key={service.id}>
-                        <div>
-                          <strong>
-                            {service.name}
-                          </strong>
-
-                          <small>
-                            {formatDuration(
-                              service.durationMinutes
-                            )}
-                          </small>
-                        </div>
-
-                        <span>
-                          {service.priceLabel}
-                        </span>
-                      </li>
-                    )
-                  )}
-                </ul>
-              </div>
-
-              <div className="booking-total-price">
-                <span>Tổng tiền dự kiến</span>
-
-                <strong>
-                  {formatPrice(totalPrice)}
-                </strong>
-
-                <span className="booking-summary-label">
-                  Tổng thời gian
-                </span>
-
-                <strong className="booking-duration-value">
-                  {formatDuration(
-                    totalDurationMinutes
-                  )}
-                </strong>
-
-                {timeSlot && expectedEndTime && (
-                  <>
-                    <span className="booking-summary-label">
-                      Thời gian dự kiến
-                    </span>
-
-                    <strong
-                      className={
-                        exceedsClosingTime
-                          ? "booking-end-time booking-end-time-error"
-                          : "booking-end-time"
-                      }
-                    >
-                      {timeSlot} - {expectedEndTime}
-                    </strong>
-                  </>
-                )}
+          </section>
+        ) : (
+          <form
+            className="booking-form"
+            onSubmit={handleSubmit}
+          >
+            <section className="booking-section">
+              <div className="booking-section-heading">
+                <div>
+                  <span className="booking-step">
+                    Bước 1
+                  </span>
+                  <h2>Chọn Barber</h2>
+                </div>
 
                 <small>
-                  Giá uốn, nhuộm hoặc tẩy là mức
-                  giá tối thiểu và có thể thay đổi
-                  sau khi Barber kiểm tra tóc.
+                  {catalogBarbers.length} Barber đang hoạt động
                 </small>
               </div>
-            </div>
-          )}
 
-          {exceedsClosingTime && (
-            <p className="booking-message booking-error">
-              Lịch dự kiến kết thúc lúc{" "}
-              {expectedEndTime}, vượt quá giờ đóng
-              cửa 21:00. Vui lòng chọn khung giờ
-              sớm hơn.
-            </p>
-          )}
+              {catalogBarbers.length === 0 ? (
+                <p className="booking-empty-text">
+                  Chưa có Barber đang hoạt động.
+                </p>
+              ) : (
+                <div className="booking-barber-list">
+                  {catalogBarbers.map(
+                    (barber) => {
+                      const selected =
+                        barber.id ===
+                        barberId;
 
-          <div className="booking-field">
-            <label htmlFor="note">
-              Ghi chú
-            </label>
+                      return (
+                        <button
+                          key={barber.id}
+                          type="button"
+                          className={`booking-barber-card ${
+                            selected
+                              ? "selected"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            setBarberId(
+                              barber.id
+                            );
+                            setStartTime("");
+                            setError("");
+                            setSuccess("");
+                          }}
+                        >
+                          <div className="booking-barber-avatar">
+                            {barber.profile
+                              .avatar ? (
+                              <img
+                                src={
+                                  barber
+                                    .profile
+                                    .avatar
+                                }
+                                alt={
+                                  barber.fullName
+                                }
+                              />
+                            ) : (
+                              <span>
+                                {barber.fullName
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </span>
+                            )}
+                          </div>
 
-            <textarea
-              id="note"
-              rows={4}
-              maxLength={500}
-              placeholder="Ví dụ: Tư vấn kiểu tóc, màu tóc hoặc yêu cầu khác..."
-              value={note}
-              onChange={(event) =>
-                setNote(event.target.value)
+                          <div className="booking-barber-info">
+                            <strong>
+                              {barber.fullName}
+                            </strong>
+
+                            <span>
+                              {
+                                barber.profile
+                                  .experienceYears
+                              }{" "}
+                              năm kinh nghiệm
+                            </span>
+
+                            <small>
+                              Đánh giá:{" "}
+                              {barber.profile
+                                .averageRating >
+                              0
+                                ? barber.profile.averageRating.toFixed(
+                                    1
+                                  )
+                                : "Chưa có"}
+                            </small>
+                          </div>
+
+                          <span className="booking-barber-check">
+                            {selected
+                              ? "✓"
+                              : ""}
+                          </span>
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
+              )}
+
+              {selectedBarber && (
+                <div className="booking-selected-barber">
+                  <strong>
+                    Đã chọn:{" "}
+                    {
+                      selectedBarber.fullName
+                    }
+                  </strong>
+
+                  {selectedBarber.profile
+                    .bio && (
+                    <p>
+                      {
+                        selectedBarber
+                          .profile.bio
+                      }
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
+
+            <section className="booking-section">
+              <div className="booking-section-heading">
+                <div>
+                  <span className="booking-step">
+                    Bước 2
+                  </span>
+                  <h2>Chọn dịch vụ</h2>
+                </div>
+
+                <small>
+                  Đã chọn{" "}
+                  {
+                    selectedServiceIds.length
+                  }{" "}
+                  dịch vụ
+                </small>
+              </div>
+
+              <p className="booking-services-hint">
+                Bạn có thể chọn nhiều dịch vụ. Trong các nhóm độc quyền,
+                dịch vụ mới sẽ thay thế dịch vụ đã chọn trước đó.
+              </p>
+
+              {groupedServices.map(
+                (section) => {
+                  if (
+                    section.services
+                      .length === 0
+                  ) {
+                    return null;
+                  }
+
+                  return (
+                    <div
+                      className="booking-service-group"
+                      key={
+                        section.group
+                      }
+                    >
+                      <div className="booking-service-group-heading">
+                        <h3>
+                          {section.title}
+                        </h3>
+                        <p>
+                          {
+                            section.description
+                          }
+                        </p>
+                      </div>
+
+                      <div className="booking-services-list">
+                        {section.services.map(
+                          (service) => {
+                            const selected =
+                              isServiceSelected(
+                                service.id
+                              );
+
+                            const disabled =
+                              isServiceDisabled(
+                                service
+                              );
+
+                            return (
+                              <button
+                                type="button"
+                                key={
+                                  service.id
+                                }
+                                disabled={
+                                  disabled
+                                }
+                                className={[
+                                  "booking-service-option",
+                                  selected
+                                    ? "selected"
+                                    : "",
+                                  disabled
+                                    ? "disabled"
+                                    : "",
+                                ]
+                                  .filter(
+                                    Boolean
+                                  )
+                                  .join(" ")}
+                                onClick={() =>
+                                  handleToggleService(
+                                    service
+                                  )
+                                }
+                              >
+                                <span className="booking-service-check">
+                                  {selected
+                                    ? "✓"
+                                    : ""}
+                                </span>
+
+                                <span className="booking-service-info">
+                                  <strong>
+                                    {
+                                      service.name
+                                    }
+                                  </strong>
+
+                                  {service.description && (
+                                    <span className="booking-service-description">
+                                      {
+                                        service.description
+                                      }
+                                    </span>
+                                  )}
+
+                                  <span className="booking-service-meta">
+                                    <small>
+                                      {service.priceFrom
+                                        ? "Từ "
+                                        : ""}
+                                      {formatPrice(
+                                        service.price
+                                      )}
+                                      đ
+                                    </small>
+
+                                    <small>
+                                      {formatDuration(
+                                        service.durationMinutes
+                                      )}
+                                    </small>
+                                  </span>
+                                </span>
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </section>
+
+            <section className="booking-section">
+              <div className="booking-section-heading">
+                <div>
+                  <span className="booking-step">
+                    Bước 3
+                  </span>
+                  <h2>Chọn ngày</h2>
+                </div>
+              </div>
+
+              <div className="booking-grid">
+                <div className="booking-field">
+                  <label htmlFor="appointmentDate">
+                    Ngày đặt lịch
+                  </label>
+
+                  <input
+                    id="appointmentDate"
+                    type="date"
+                    min={getToday()}
+                    value={
+                      appointmentDate
+                    }
+                    onChange={(
+                      event
+                    ) => {
+                      setAppointmentDate(
+                        event.target
+                          .value
+                      );
+                      setStartTime("");
+                      setError("");
+                      setSuccess("");
+                    }}
+                  />
+                </div>
+
+                <div className="booking-field">
+                  <label>
+                    Barber đã chọn
+                  </label>
+
+                  <div className="booking-readonly-field">
+                    {selectedBarber
+                      ? selectedBarber.fullName
+                      : "Chưa chọn Barber"}
+                  </div>
+                </div>
+
+                <div className="booking-field">
+                  <label>
+                    Tổng thời gian
+                  </label>
+
+                  <div className="booking-readonly-field">
+                    {selectedServices.length >
+                    0
+                      ? formatDuration(
+                          totalDurationMinutes
+                        )
+                      : "Chưa chọn dịch vụ"}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="booking-section">
+              <div className="booking-section-heading">
+                <div>
+                  <span className="booking-step">
+                    Bước 4
+                  </span>
+                  <h2>Chọn khung giờ</h2>
+                </div>
+
+                <small>
+                  Khung giờ được tính theo tổng thời lượng dịch vụ
+                </small>
+              </div>
+
+              {!barberId ? (
+                <p className="booking-empty-text">
+                  Vui lòng chọn Barber trước.
+                </p>
+              ) : selectedServiceIds.length ===
+                0 ? (
+                <p className="booking-empty-text">
+                  Vui lòng chọn ít nhất một dịch vụ.
+                </p>
+              ) : !appointmentDate ? (
+                <p className="booking-empty-text">
+                  Vui lòng chọn ngày đặt lịch.
+                </p>
+              ) : slotsLoading ? (
+                <div className="booking-slots-loading">
+                  <div className="booking-spinner" />
+                  <span>
+                    Đang tìm khung giờ trống...
+                  </span>
+                </div>
+              ) : availableSlots.length ===
+                0 ? (
+                <p className="booking-empty-text">
+                  Không còn khung giờ phù hợp. Hãy chọn ngày hoặc Barber khác.
+                </p>
+              ) : (
+                <div className="booking-time-slots">
+                  {availableSlots.map(
+                    (slot) => {
+                      const selected =
+                        startTime ===
+                        slot.startTime;
+
+                      return (
+                        <button
+                          key={`${slot.startTime}-${slot.endTime}`}
+                          type="button"
+                          className={`booking-time-slot ${
+                            selected
+                              ? "selected"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            setStartTime(
+                              slot.startTime
+                            );
+                            setError("");
+                            setSuccess("");
+                          }}
+                        >
+                          <strong>
+                            {
+                              slot.startTime
+                            }
+                          </strong>
+
+                          <span>
+                            đến{" "}
+                            {
+                              slot.endTime
+                            }
+                          </span>
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
+              )}
+            </section>
+
+            <section className="booking-section">
+              <div className="booking-section-heading">
+                <div>
+                  <span className="booking-step">
+                    Bước 5
+                  </span>
+                  <h2>Ghi chú</h2>
+                </div>
+              </div>
+
+              <div className="booking-field">
+                <label htmlFor="note">
+                  Yêu cầu thêm
+                </label>
+
+                <textarea
+                  id="note"
+                  rows={4}
+                  maxLength={500}
+                  value={note}
+                  placeholder="Ví dụ: Tư vấn màu tóc, kiểu tóc hoặc yêu cầu khác..."
+                  onChange={(event) =>
+                    setNote(
+                      event.target.value
+                    )
+                  }
+                />
+
+                <small>
+                  {note.length}/500 ký tự
+                </small>
+              </div>
+            </section>
+
+            {selectedServices.length >
+              0 && (
+              <section className="booking-summary">
+                <div className="booking-selected-services">
+                  <span>
+                    Dịch vụ đã chọn
+                  </span>
+
+                  <ul>
+                    {selectedServices.map(
+                      (service) => (
+                        <li
+                          key={
+                            service.id
+                          }
+                        >
+                          <div>
+                            <strong>
+                              {
+                                service.name
+                              }
+                            </strong>
+                            <small>
+                              {formatDuration(
+                                service.durationMinutes
+                              )}
+                            </small>
+                          </div>
+
+                          <span>
+                            {service.priceFrom
+                              ? "Từ "
+                              : ""}
+                            {formatPrice(
+                              service.price
+                            )}
+                            đ
+                          </span>
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+
+                <div className="booking-total-price">
+                  <span>
+                    Tổng tiền dự kiến
+                  </span>
+
+                  <strong>
+                    {formatPrice(
+                      totalPrice
+                    )}
+                    đ
+                  </strong>
+
+                  <span className="booking-summary-label">
+                    Tổng thời gian
+                  </span>
+
+                  <strong className="booking-summary-value">
+                    {formatDuration(
+                      totalDurationMinutes
+                    )}
+                  </strong>
+
+                  {selectedBarber && (
+                    <>
+                      <span className="booking-summary-label">
+                        Barber
+                      </span>
+                      <strong className="booking-summary-value">
+                        {
+                          selectedBarber.fullName
+                        }
+                      </strong>
+                    </>
+                  )}
+
+                  {appointmentDate && (
+                    <>
+                      <span className="booking-summary-label">
+                        Ngày hẹn
+                      </span>
+                      <strong className="booking-summary-value">
+                        {formatDateForDisplay(
+                          appointmentDate
+                        )}
+                      </strong>
+                    </>
+                  )}
+
+                  {selectedSlot && (
+                    <>
+                      <span className="booking-summary-label">
+                        Khung giờ
+                      </span>
+                      <strong className="booking-summary-value">
+                        {
+                          selectedSlot.startTime
+                        }{" "}
+                        -{" "}
+                        {
+                          selectedSlot.endTime
+                        }
+                      </strong>
+                    </>
+                  )}
+
+                  <small>
+                    Giá có chữ “Từ” có thể thay đổi sau khi Barber kiểm tra tình trạng tóc.
+                  </small>
+                </div>
+              </section>
+            )}
+
+            <button
+              type="submit"
+              className="booking-submit-button"
+              disabled={
+                submitting ||
+                !barberId ||
+                selectedServiceIds.length ===
+                  0 ||
+                !appointmentDate ||
+                !startTime
               }
-            />
+            >
+              {submitting
+                ? "Đang đặt lịch..."
+                : "Xác nhận đặt lịch"}
+            </button>
 
-            <small>
-              {note.length}/500 ký tự
-            </small>
-          </div>
+            <div className="booking-bottom-links">
+              <Link to="/booking-history">
+                Xem lịch sử đặt lịch
+              </Link>
 
-          {error && (
-            <p className="booking-message booking-error">
-              {error}
-            </p>
-          )}
-
-          {success && (
-            <p className="booking-message booking-success">
-              {success}
-            </p>
-          )}
-
-          <button
-            className="booking-submit-button"
-            type="submit"
-            disabled={
-              submitting || exceedsClosingTime
-            }
-          >
-            {submitting
-              ? "Đang đặt lịch..."
-              : "Xác nhận đặt lịch"}
-          </button>
-
-          <div className="booking-bottom-links">
-            <Link to="/booking-history">
-              Xem lịch sử đặt lịch
-            </Link>
-
-            <Link to="/">
-              Quay về trang chủ
-            </Link>
-          </div>
-        </form>
-      </div>
+              <Link to="/">
+                Quay về trang chủ
+              </Link>
+            </div>
+          </form>
+        )}
+      </main>
     </div>
   );
 }

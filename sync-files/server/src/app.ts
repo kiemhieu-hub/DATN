@@ -8,8 +8,6 @@ import express, {
 import authRoutes from "./routes/auth.routes";
 import appointmentRoutes from "./routes/appointment.routes";
 import AppError from "./utils/AppError";
-import catalogRoutes from "./routes/catalog.routes";
-import mongoose from "mongoose";
 
 const app = express();
 
@@ -28,7 +26,6 @@ app.get("/", (_req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
-app.use("/api/catalog",catalogRoutes);
 
 // Error Handler
 app.use(
@@ -37,47 +34,17 @@ app.use(
     _req: Request,
     res: Response,
     _next: NextFunction
-  ): void => {
+  ) => {
     if (error instanceof AppError) {
-      res.status(error.statusCode).json({
+      return res.status(error.statusCode).json({
         success: false,
         message: error.message,
       });
-      return;
-    }
-
-    if (
-      error instanceof mongoose.Error.ValidationError
-    ) {
-      const firstError =
-        Object.values(error.errors)[0];
-
-      res.status(400).json({
-        success: false,
-        message:
-          firstError?.message ||
-          "Dữ liệu không hợp lệ",
-      });
-      return;
-    }
-
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === 11000
-    ) {
-      res.status(409).json({
-        success: false,
-        message:
-          "Email hoặc số điện thoại đã tồn tại",
-      });
-      return;
     }
 
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Lỗi máy chủ",
     });

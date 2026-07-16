@@ -1,12 +1,15 @@
 import api from "./api";
 
-import type { Appointment } from "../types/Appointment";
+import type {
+  Appointment,
+  AppointmentService,
+} from "../types/Appointment";
 
 export interface CreateAppointmentPayload {
-  barberId: string;
-  serviceIds: string[];
+  services: AppointmentService[];
+  barberName: string;
   appointmentDate: string;
-  startTime: string;
+  timeSlot: string;
   note?: string;
 }
 
@@ -22,7 +25,7 @@ export interface GetMyAppointmentsResponse {
 }
 
 export interface CancelAppointmentPayload {
-  reason: string;
+  cancelReason: string;
 }
 
 export interface CancelAppointmentResponse {
@@ -31,16 +34,10 @@ export interface CancelAppointmentResponse {
   appointment: Appointment;
 }
 
-export interface AvailableSlot {
-  startTime: string;
-  endTime: string;
-}
-
-export interface GetAvailableSlotsResponse {
-  success: boolean;
-  slots: AvailableSlot[];
-}
-
+/**
+ * Tạo lịch hẹn mới
+ * POST /api/appointments
+ */
 export const createAppointment = async (
   payload: CreateAppointmentPayload
 ): Promise<CreateAppointmentResponse> => {
@@ -53,7 +50,10 @@ export const createAppointment = async (
   return response.data;
 };
 
-
+/**
+ * Lấy lịch sử đặt lịch của tài khoản hiện tại
+ * GET /api/appointments/my
+ */
 export const getMyAppointments =
   async (): Promise<GetMyAppointmentsResponse> => {
     const response =
@@ -64,7 +64,10 @@ export const getMyAppointments =
     return response.data;
   };
 
-
+/**
+ * Hủy lịch hẹn
+ * PATCH /api/appointments/:id/cancel
+ */
 export const cancelAppointment = async (
   appointmentId: string,
   payload: CancelAppointmentPayload
@@ -73,26 +76,6 @@ export const cancelAppointment = async (
     await api.patch<CancelAppointmentResponse>(
       `/appointments/${appointmentId}/cancel`,
       payload
-    );
-
-  return response.data;
-};
-
-export const getAvailableSlots = async (
-  barberId: string,
-  serviceIds: string[],
-  appointmentDate: string
-): Promise<GetAvailableSlotsResponse> => {
-  const response =
-    await api.get<GetAvailableSlotsResponse>(
-      "/appointments/available-slots",
-      {
-        params: {
-          barberId,
-          appointmentDate,
-          serviceIds: serviceIds.join(","),
-        },
-      }
     );
 
   return response.data;

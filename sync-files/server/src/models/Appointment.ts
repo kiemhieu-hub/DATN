@@ -5,11 +5,23 @@ import mongoose, {
   type Types,
 } from "mongoose";
 
-export type AppointmentStatus =| "PENDING"| "CONFIRMED"| "IN_PROGRESS"| "COMPLETED"| "CANCELLED";
+export type AppointmentStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED";
 
-export type AppointmentPaymentStatus =| "UNPAID"| "PENDING"| "PAID"| "REFUNDED";
+export type PaymentStatus =
+  | "UNPAID"
+  | "PENDING"
+  | "PAID"
+  | "REFUNDED";
 
-export type CancellationRole =| "CLIENT"| "BARBER"| "ADMIN";
+export type CancellationRole =
+  | "CLIENT"
+  | "BARBER"
+  | "ADMIN";
 
 export interface IAppointmentService {
   service: Types.ObjectId;
@@ -37,11 +49,12 @@ export interface IAppointment extends Document {
   durationMinutes: number;
 
   appointmentDate: string;
+
   startTime: string;
   endTime: string;
 
   status: AppointmentStatus;
-  paymentStatus: AppointmentPaymentStatus;
+  paymentStatus: PaymentStatus;
 
   note: string;
 
@@ -57,9 +70,6 @@ export interface IAppointment extends Document {
 
 const timePattern =
   /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-const datePattern =
-  /^\d{4}-\d{2}-\d{2}$/;
 
 const appointmentServiceSchema =
   new Schema<IAppointmentService>(
@@ -80,10 +90,6 @@ const appointmentServiceSchema =
           "Tên dịch vụ tại thời điểm đặt là bắt buộc",
         ],
         trim: true,
-        maxlength: [
-          150,
-          "Tên dịch vụ không được quá 150 ký tự",
-        ],
       },
 
       priceSnapshot: {
@@ -92,10 +98,7 @@ const appointmentServiceSchema =
           true,
           "Giá dịch vụ tại thời điểm đặt là bắt buộc",
         ],
-        min: [
-          0,
-          "Giá dịch vụ không hợp lệ",
-        ],
+        min: 0,
       },
 
       durationSnapshot: {
@@ -104,10 +107,7 @@ const appointmentServiceSchema =
           true,
           "Thời lượng dịch vụ tại thời điểm đặt là bắt buộc",
         ],
-        min: [
-          1,
-          "Thời lượng dịch vụ phải lớn hơn 0",
-        ],
+        min: 1,
       },
     },
     {
@@ -137,10 +137,7 @@ const cancellationSchema =
       reason: {
         type: String,
         trim: true,
-        required: [
-          true,
-          "Lý do hủy là bắt buộc",
-        ],
+        default: "",
         maxlength: [
           500,
           "Lý do hủy không được quá 500 ký tự",
@@ -167,7 +164,6 @@ const appointmentSchema =
           true,
           "Khách hàng là bắt buộc",
         ],
-        index: true,
       },
 
       barber: {
@@ -177,7 +173,6 @@ const appointmentSchema =
           true,
           "Barber là bắt buộc",
         ],
-        index: true,
       },
 
       services: {
@@ -204,10 +199,7 @@ const appointmentSchema =
           true,
           "Tổng tiền là bắt buộc",
         ],
-        min: [
-          0,
-          "Tổng tiền không hợp lệ",
-        ],
+        min: 0,
       },
 
       durationMinutes: {
@@ -216,10 +208,7 @@ const appointmentSchema =
           true,
           "Tổng thời gian là bắt buộc",
         ],
-        min: [
-          1,
-          "Tổng thời gian phải lớn hơn 0",
-        ],
+        min: 1,
       },
 
       appointmentDate: {
@@ -229,10 +218,9 @@ const appointmentSchema =
           "Ngày đặt lịch là bắt buộc",
         ],
         match: [
-          datePattern,
-          "Ngày đặt lịch phải có định dạng YYYY-MM-DD",
+          /^\d{4}-\d{2}-\d{2}$/,
+          "Ngày phải có định dạng YYYY-MM-DD",
         ],
-        index: true,
       },
 
       startTime: {
@@ -269,7 +257,6 @@ const appointmentSchema =
           "CANCELLED",
         ],
         default: "PENDING",
-        index: true,
       },
 
       paymentStatus: {
@@ -281,7 +268,6 @@ const appointmentSchema =
           "REFUNDED",
         ],
         default: "UNPAID",
-        index: true,
       },
 
       note: {
@@ -323,7 +309,6 @@ const appointmentSchema =
 appointmentSchema.index({
   client: 1,
   appointmentDate: -1,
-  startTime: -1,
 });
 
 appointmentSchema.index({
@@ -342,16 +327,8 @@ appointmentSchema.index({
   createdAt: -1,
 });
 
-appointmentSchema.index({
-  barber: 1,
-  appointmentDate: 1,
-  status: 1,
-});
-
 const Appointment: Model<IAppointment> =
-  (mongoose.models.Appointment as
-    | Model<IAppointment>
-    | undefined) ??
+  mongoose.models.Appointment ||
   mongoose.model<IAppointment>(
     "Appointment",
     appointmentSchema
