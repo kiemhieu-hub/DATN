@@ -19,6 +19,8 @@ import ScheduleManager from './pages/Client/ScheduleManager';
 import BarberProfileManager from './pages/Client/BarberProfileManager';
 import BarberLayout from './layouts/BarberLayout';
 import BarberDashboard from './pages/Client/BarberDashboard';
+import AdminLayout from './layouts/AdminLayout';
+import AdminDashboard from './pages/Client/AdminDashboard';
 // Tạo tạm các component ảo để tránh lỗi nếu bạn chưa tạo file cho các trang khác
 
 function App() {
@@ -45,11 +47,15 @@ function App() {
         <Route path="/blog3.html" element={<Blog3 />} />
         <Route path="/blog.html" element={<Blog />} />
         <Route path="/services-page.html" element={<ServicesPage />} />
-        <Route path='/admin/bookings' element={<BookingManager />} />
+        
         <Route element={<BarberLayout />}>
           <Route path='barber/dashboard' element= {<BarberDashboard/>} />
           <Route path='/barber/schedule' element={<ScheduleManager />} />
           <Route path='/barber/profile' element={<BarberProfileManager />} />
+        </Route>
+        <Route element={<AdminLayout />}>
+          <Route path='admin/dashboard' element= {<BarberDashboard/>} />
+          <Route path='/admin/bookings' element={<BookingManager />} />
         </Route>
         {/* Route xử lý khi người dùng gõ sai đường dẫn (404 Not Found) */}
         <Route path="*" element={<div style={{ color: '#fff', padding: '50px', textAlign: 'center' }}><h2>404 - Không tìm thấy trang</h2></div>} />
