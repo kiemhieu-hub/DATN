@@ -14,13 +14,14 @@ import Post from './pages/Client/Post';
 import Blog from './pages/Client/Blog';
 import Blog2 from './pages/Client/Blog2';
 import Blog3 from './pages/Client/Blog3';
-import BookingManager from './pages/Client/BookingManager';
-import ScheduleManager from './pages/Client/ScheduleManager';
-import BarberProfileManager from './pages/Client/BarberProfileManager';
-import BarberLayout from './layouts/BarberLayout';
-import BarberDashboard from './pages/Client/BarberDashboard';
+
+
 import AdminLayout from './layouts/AdminLayout';
-import AdminDashboard from './pages/Client/AdminDashboard';
+
+import Dashboard from './pages/Barber/Dashnoard';
+import Profile from './pages/Barber/Profile';
+import Schedule from './pages/Barber/Schedule';
+import WorkingSchedule from './pages/Barber/WorkingSchedule';
 // Tạo tạm các component ảo để tránh lỗi nếu bạn chưa tạo file cho các trang khác
 
 function App() {
@@ -48,14 +49,13 @@ function App() {
         <Route path="/blog.html" element={<Blog />} />
         <Route path="/services-page.html" element={<ServicesPage />} />
         
-        <Route element={<BarberLayout />}>
-          <Route path='barber/dashboard' element= {<BarberDashboard/>} />
-          <Route path='/barber/schedule' element={<ScheduleManager />} />
-          <Route path='/barber/profile' element={<BarberProfileManager />} />
-        </Route>
+       <Route path="/baber/dashboard" element={<Dashboard />} />
+       <Route path="/baber/profile" element={<Profile />} />
+       <Route path="/baber/schedule" element={<Schedule />} />
+       <Route path="/baber/working-schedule" element={<WorkingSchedule />} />
+
         <Route element={<AdminLayout />}>
-          <Route path='admin/dashboard' element= {<BarberDashboard/>} />
-          <Route path='/admin/bookings' element={<BookingManager />} />
+          
         </Route>
         {/* Route xử lý khi người dùng gõ sai đường dẫn (404 Not Found) */}
         <Route path="*" element={<div style={{ color: '#fff', padding: '50px', textAlign: 'center' }}><h2>404 - Không tìm thấy trang</h2></div>} />
