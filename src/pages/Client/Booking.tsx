@@ -1,34 +1,10 @@
 import axios from "axios";
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from "react";
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
-
+import { useEffect, useMemo, useState,type FormEvent,} from "react";
+import { Link, useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-
-import {
-  createAppointment,
-  getAvailableSlots,
-  type AvailableSlot,
-} from "../../services/appointment.service";
-
-import {
-  getCatalogBarbers,
-  getCatalogServices,
-} from "../../services/catalog.service";
-
-import type {
-  CatalogBarber,
-  CatalogService,
-  ServiceGroup,
-} from "../../types/Catalog";
-
+import { createAppointment, getAvailableSlots, type AvailableSlot,} from "../../services/appointment.service";
+import { getCatalogBarbers, getCatalogServices,} from "../../services/catalog.service";
+import type { CatalogBarber, CatalogService, ServiceGroup,} from "../../types/Catalog";
 import "./css/Booking.css";
 
 interface ServiceGroupSection {
@@ -70,12 +46,9 @@ const serviceGroupSections: ServiceGroupSection[] = [
   },
 ];
 
-const formatPrice = (price: number): string =>
-  new Intl.NumberFormat("vi-VN").format(price);
+const formatPrice = (price: number): string =>new Intl.NumberFormat("vi-VN").format(price);
 
-const formatDuration = (
-  totalMinutes: number
-): string => {
+const formatDuration = ( totalMinutes: number ): string => {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
@@ -90,15 +63,12 @@ const formatDuration = (
   return `${minutes} phút`;
 };
 
-const formatDateForDisplay = (
-  dateValue: string
-): string => {
+const formatDateForDisplay = ( dateValue: string ): string => {
   if (!dateValue) {
     return "";
   }
 
-  const [year, month, day] =
-    dateValue.split("-");
+  const [year, month, day] = dateValue.split("-");
 
   if (!year || !month || !day) {
     return dateValue;
@@ -111,27 +81,16 @@ const getToday = (): string => {
   const today = new Date();
 
   const year = today.getFullYear();
-  const month = String(
-    today.getMonth() + 1
-  ).padStart(2, "0");
-  const day = String(
-    today.getDate()
-  ).padStart(2, "0");
+  const month = String( today.getMonth() + 1 ).padStart(2, "0");
+  const day = String( today.getDate() ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
-const getErrorMessage = (
-  error: unknown,
-  fallback: string
-): string => {
+const getErrorMessage = (error: unknown,fallback: string): string => {
   if (axios.isAxiosError(error)) {
     const responseData =
-      error.response?.data as
-        | {
-            message?: string;
-          }
-        | undefined;
+      error.response?.data as | {message?: string;} | undefined;
 
     return responseData?.message || fallback;
   }
@@ -142,79 +101,42 @@ const getErrorMessage = (
 function Booking() {
   const navigate = useNavigate();
 
-  const {
-    user,
-    isAuthenticated,
-    isLoading: authLoading,
-  } = useAuth();
+  const {user,isAuthenticated,isLoading: authLoading,} = useAuth();
 
-  const [
-    catalogServices,
-    setCatalogServices,
-  ] = useState<CatalogService[]>([]);
+  const [catalogServices, setCatalogServices,] = useState<CatalogService[]>([]);
 
-  const [
-    catalogBarbers,
-    setCatalogBarbers,
-  ] = useState<CatalogBarber[]>([]);
+  const [catalogBarbers,setCatalogBarbers,] = useState<CatalogBarber[]>([]);
 
-  const [
-    selectedServiceIds,
-    setSelectedServiceIds,
-  ] = useState<string[]>([]);
+  const [selectedServiceIds,setSelectedServiceIds,] = useState<string[]>([]);
 
-  const [barberId, setBarberId] =
-    useState("");
+  const [barberId, setBarberId] = useState("");
 
-  const [
-    appointmentDate,
-    setAppointmentDate,
-  ] = useState("");
+  const [appointmentDate,setAppointmentDate,] = useState("");
 
-  const [startTime, setStartTime] =
-    useState("");
+  const [startTime, setStartTime] = useState("");
 
-  const [note, setNote] =
-    useState("");
+  const [note, setNote] = useState("");
 
-  const [
-    availableSlots,
-    setAvailableSlots,
-  ] = useState<AvailableSlot[]>([]);
+  const [availableSlots, setAvailableSlots,] = useState<AvailableSlot[]>([]);
 
-  const [
-    catalogLoading,
-    setCatalogLoading,
-  ] = useState(true);
+  const [catalogLoading,setCatalogLoading,] = useState(true);
 
-  const [
-    slotsLoading,
-    setSlotsLoading,
-  ] = useState(false);
+  const [slotsLoading, setSlotsLoading,] = useState(false);
 
-  const [
-    submitting,
-    setSubmitting,
-  ] = useState(false);
+  const [submitting,setSubmitting,] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [success, setSuccess] =
-    useState("");
+  const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    let active = true;
+  useEffect(() => { let active = true;
 
     const loadCatalog = async (): Promise<void> => {
       try {
         setCatalogLoading(true);
         setError("");
 
-        const [
-          servicesResponse,
-          barbersResponse,
-        ] = await Promise.all([
+        const [servicesResponse,barbersResponse,] = await Promise.all([
           getCatalogServices(),
           getCatalogBarbers(),
         ]);

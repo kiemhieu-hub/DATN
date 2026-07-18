@@ -1,38 +1,16 @@
 import axios from "axios";
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
-
+import {useCallback,useEffect,useState,} from "react";
+import {Link,useLocation,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-
-import {
-  cancelAppointment,
-  getMyAppointments,
-} from "../../services/appointment.service";
-
-import type {
-  Appointment,
-  AppointmentStatus,
-  PaymentStatus,
-} from "../../types/Appointment";
-
+import {cancelAppointment,getMyAppointments,} from "../../services/appointment.service";
+import type {Appointment,AppointmentStatus,PaymentStatus,} from "../../types/Appointment";
 import "./css/BookingHistory.css";
 
 interface LocationState {
   message?: string;
 }
 
-const appointmentStatusLabels: Record<
-  AppointmentStatus,
-  string
-> = {
+const appointmentStatusLabels: Record<AppointmentStatus,string> = {
   PENDING: "Đang chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
   IN_PROGRESS: "Đang thực hiện",
@@ -40,29 +18,19 @@ const appointmentStatusLabels: Record<
   CANCELLED: "Đã hủy",
 };
 
-const paymentStatusLabels: Record<
-  PaymentStatus,
-  string
-> = {
+const paymentStatusLabels: Record<PaymentStatus,string> = {
   UNPAID: "Chưa thanh toán",
   PENDING: "Đang xử lý",
   PAID: "Đã thanh toán",
   REFUNDED: "Đã hoàn tiền",
 };
 
-const formatPrice = (
-  amount: number
-): string =>
-  new Intl.NumberFormat("vi-VN").format(
-    amount
-  );
+const formatPrice = (amount: number): string =>
+  new Intl.NumberFormat("vi-VN").format(amount);
 
-const formatDuration = (
-  minutes: number
-): string => {
+const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
-  const remainingMinutes =
-    minutes % 60;
+  const remainingMinutes = minutes % 60;
 
   if (hours > 0 && remainingMinutes > 0) {
     return `${hours} giờ ${remainingMinutes} phút`;
@@ -75,11 +43,8 @@ const formatDuration = (
   return `${remainingMinutes} phút`;
 };
 
-const formatDate = (
-  dateValue: string
-): string => {
-  const [year, month, day] =
-    dateValue.split("-");
+const formatDate = (dateValue: string): string => {
+  const [year, month, day] = dateValue.split("-");
 
   if (!year || !month || !day) {
     return dateValue;
@@ -88,9 +53,7 @@ const formatDate = (
   return `${day}/${month}/${year}`;
 };
 
-const formatDateTime = (
-  dateValue: string
-): string => {
+const formatDateTime = (dateValue: string): string => {
   const date = new Date(dateValue);
 
   if (Number.isNaN(date.getTime())) {
@@ -100,12 +63,9 @@ const formatDateTime = (
   return date.toLocaleString("vi-VN");
 };
 
-const getBarberName = (
-  appointment: Appointment
-): string => {
+const getBarberName = (appointment: Appointment): string => {
   if (
-    typeof appointment.barber ===
-    "string"
+    typeof appointment.barber ==="string"
   ) {
     return "Barber";
   }
@@ -113,17 +73,9 @@ const getBarberName = (
   return appointment.barber.fullName;
 };
 
-const getErrorMessage = (
-  error: unknown,
-  fallback: string
-): string => {
+const getErrorMessage = (error: unknown,fallback: string): string => {
   if (axios.isAxiosError(error)) {
-    const data =
-      error.response?.data as
-        | {
-            message?: string;
-          }
-        | undefined;
+    const data = error.response?.data as | {message?: string;} | undefined;
 
     return data?.message || fallback;
   }
@@ -261,13 +213,7 @@ function BookingHistory() {
       setMessage(response.message);
 
       setAppointments(
-        (currentAppointments) =>
-          currentAppointments.map(
-            (currentAppointment) =>
-              currentAppointment._id ===
-              response.appointment._id
-                ? response.appointment
-                : currentAppointment
+        (currentAppointments) => currentAppointments.map((currentAppointment) => currentAppointment._id === response.appointment._id ? response.appointment : currentAppointment
           )
       );
     } catch (requestError) {

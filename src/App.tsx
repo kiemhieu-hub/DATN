@@ -26,10 +26,19 @@ import Profile from "./pages/barber/Profile";
 import Login from './pages/Auth/Login';
 import Register from "./pages/Auth/Register";
 
+//Admin
+import AdminDashboard from "./pages/Admin/Dashboard";
+import Barbers from "./pages/Admin/Barbers";
+
+
 function App() {
   return (
     <Router>
       <Routes>
+        {/* ================= ADMIN ================= */}
+        <Route path="/admin/dashboard"element={<AdminDashboard />}/>
+        <Route path="/admin/barbers"element={<Barbers />}/>
+
         {/* ================= AUTH ================= */}
 
         <Route path="/login" element={<Login />} />
@@ -55,12 +64,13 @@ function App() {
         <Route path="/blog3.html" element={<Blog3 />} />
         <Route path="/booking"element={<Booking />}/>
         <Route path="/booking-history"element={<BookingHistory />}/>
+
+        {/* ================= BARBER ================= */}
         <Route path="/barber/schedule"element={<Schedule />}/>
         <Route path="/barber/working-schedule"element={<WorkingSchedule />}/>
         <Route path="/barber/dashboard"element={<Dashboard />}/>
         <Route path="/barber/profile"element={<Profile />}/>
 
-        {/* ================= 404 ================= */}
 
         <Route path="*"element={
             <div

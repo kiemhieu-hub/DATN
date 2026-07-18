@@ -14,6 +14,8 @@ import barberRoutes from "./routes/barber.routes";
 import barberScheduleRoutes from "./routes/barberSchedule.routes";
 import barberDashboardRoutes from "./routes/barberDashboard.routes";
 import barberProfileRoutes from "./routes/barberProfile.routes";
+import adminDashboardRoutes from "./routes/adminDashboard.routes";
+import adminBarberRoutes from "./routes/adminBarber.routes";
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use("/api/barber", barberRoutes);
 app.use("/api/barber/schedule",barberScheduleRoutes);
 app.use("/api/barber/dashboard",barberDashboardRoutes);
 app.use("/api/barber/profile",barberProfileRoutes);
+app.use("/api/admin/dashboard",adminDashboardRoutes);
+app.use("/api/admin/barbers",adminBarberRoutes);
 
 // Error Handler
 app.use(
