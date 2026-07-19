@@ -14,10 +14,11 @@ import Post from './pages/Client/Post';
 import Blog from './pages/Client/Blog';
 import Blog2 from './pages/Client/Blog2';
 import Blog3 from './pages/Client/Blog3';
-
-
+import Login from './pages/Auth/Login';
+import Register from './pages/Auth/Register';
 import AdminLayout from './layouts/AdminLayout';
-
+import Booking from './pages/Client/Booking';
+import BookingHistory from './pages/Client/BookingHistory';
 import Dashboard from './pages/Barber/Dashnoard';
 import Profile from './pages/Barber/Profile';
 import Schedule from './pages/Barber/Schedule';
@@ -28,6 +29,8 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/login" element={<Login/>}/>
+        <Route path="/register" element={<Register/>}/>
         {/* Route cho trang chủ - trỏ vào file index.tsx của bạn */}
         <Route path="/" element={<Index />} />
 
@@ -48,11 +51,12 @@ function App() {
         <Route path="/blog3.html" element={<Blog3 />} />
         <Route path="/blog.html" element={<Blog />} />
         <Route path="/services-page.html" element={<ServicesPage />} />
-        
-       <Route path="/baber/dashboard" element={<Dashboard />} />
-       <Route path="/baber/profile" element={<Profile />} />
-       <Route path="/baber/schedule" element={<Schedule />} />
-       <Route path="/baber/working-schedule" element={<WorkingSchedule />} />
+        <Route path="/booking" element={<Booking />} />
+        <Route path="/booking-history" element={<BookingHistory />} />
+       <Route path="/barber/dashboard" element={<Dashboard />} />
+       <Route path="/barber/profile" element={<Profile />} />
+       <Route path="/barber/schedule" element={<Schedule />} />
+       <Route path="/barber/working-schedule" element={<WorkingSchedule />} />
 
         <Route element={<AdminLayout />}>
           
