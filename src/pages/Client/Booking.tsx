@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useMemo, useState,type FormEvent,} from "react";
-import { Link, useNavigate,} from "react-router-dom";
+import { Link, useNavigate, useLocation,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { createAppointment, getAvailableSlots, type AvailableSlot,} from "../../services/appointment.service";
 import { getCatalogBarbers, getCatalogServices,} from "../../services/catalog.service";
@@ -100,6 +100,7 @@ const getErrorMessage = (error: unknown,fallback: string): string => {
 
 function Booking() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {user,isAuthenticated,isLoading: authLoading,} = useAuth();
 
@@ -115,7 +116,7 @@ function Booking() {
 
   const [startTime, setStartTime] = useState("");
 
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(location.state?.hairstyleNote || "");
 
   const [availableSlots, setAvailableSlots,] = useState<AvailableSlot[]>([]);
 
@@ -1024,6 +1025,11 @@ function Booking() {
                     )
                   }
                 />
+                {location.state?.hairstyleNote && (
+                  <small className="booking-hairstyle-notice">
+                    <i className="fa-solid fa-scissors"></i> Bạn đã chọn kiểu tóc từ Portfolio
+                  </small>
+                )}
 
                 <small>
                   {note.length}/500 ký tự

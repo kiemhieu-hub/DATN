@@ -682,6 +682,17 @@
   }
 }
 
+.booking-hairstyle-notice {
+  display: block;
+  margin-top: 8px;
+  color: #c89b63;
+  font-size: 12px;
+}
+
+.booking-hairstyle-notice i {
+  margin-right: 5px;
+}
+
 @media (max-width: 1040px) {
   .booking-services-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
