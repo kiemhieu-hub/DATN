@@ -11,6 +11,8 @@ export type ServiceGroup =
   | "CARE"
   | "OTHER";
 
+export type ServiceStaffType = "HAIR" | "CARE";
+
 export interface IService extends Document {
   name: string;
   description: string;
@@ -22,6 +24,7 @@ export interface IService extends Document {
 
   group: ServiceGroup;
   isExclusiveInGroup: boolean;
+  staffType: ServiceStaffType;
 
   image: string;
   isActive: boolean;
@@ -103,6 +106,13 @@ const serviceSchema = new Schema<IService>(
     isExclusiveInGroup: {
       type: Boolean,
       default: false,
+    },
+
+    staffType: {
+      type: String,
+      enum: ["HAIR", "CARE"],
+      default: "HAIR",
+      index: true,
     },
 
     image: {

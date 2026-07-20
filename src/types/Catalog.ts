@@ -5,6 +5,8 @@ export type ServiceGroup =
   | "CARE"
   | "OTHER";
 
+export type ServiceStaffType = "HAIR" | "CARE";
+
 export interface CatalogService {
   id: string;
   name: string;
@@ -17,6 +19,7 @@ export interface CatalogService {
 
   group: ServiceGroup;
   isExclusiveInGroup: boolean;
+  staffType: ServiceStaffType;
 
   image: string;
   isActive: boolean;
@@ -38,6 +41,7 @@ export interface BarberProfile {
   averageRating: number;
   reviewCount: number;
   specialties: BarberSpecialty[];
+  staffType: ServiceStaffType;
 }
 
 export interface CatalogBarber {

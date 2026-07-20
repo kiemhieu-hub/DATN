@@ -922,3 +922,20 @@ export const resetAdminBarberPassword =
         barber.email,
     };
   };
+
+/** Xóa tài khoản Barber và toàn bộ dữ liệu vận hành trực thuộc Barber. */
+export const deleteAdminBarber = async (barberId: string) => {
+  const barber = await getBarberByIdOrFail(barberId);
+
+  await Promise.all([
+    BarberProfile.deleteOne({ user: barber._id }),
+    BarberSchedule.deleteMany({ barber: barber._id }),
+  ]);
+
+  await barber.deleteOne();
+
+  return {
+    id: barberId,
+    fullName: barber.fullName,
+  };
+};

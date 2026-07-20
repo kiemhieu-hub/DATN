@@ -31,6 +31,8 @@ export const getActiveServices = async () => {
 
         "isExclusiveInGroup",
 
+        "staffType",
+
         "image",
 
         "isActive",
@@ -84,6 +86,8 @@ export const getActiveServices = async () => {
     isExclusiveInGroup:
 
       service.isExclusiveInGroup,
+
+    staffType: service.staffType ?? (service.group === "CARE" ? "CARE" : "HAIR"),
 
 
 
@@ -263,6 +267,8 @@ export const getActiveBarbers = async () => {
 
             profile.specialties,
 
+          staffType: profile.staffType ?? "HAIR",
+
         },
 
       };
@@ -414,6 +420,8 @@ export const getActiveBarberById =
         specialties:
 
           profile.specialties,
+
+        staffType: profile.staffType ?? "HAIR",
 
       },
 

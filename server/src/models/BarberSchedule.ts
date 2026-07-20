@@ -13,12 +13,6 @@ export interface IScheduleBreak {
 export interface IBarberSchedule extends Document {
   barber: Types.ObjectId;
 
-  /**
-   * 0: Chủ Nhật
-   * 1: Thứ Hai
-   * ...
-   * 6: Thứ Bảy
-   */
   dayOfWeek: number;
 
   startTime: string;

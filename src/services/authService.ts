@@ -1,5 +1,6 @@
 import api from "./api";
-import type {AuthUser,LoginPayload,LoginResponse,RegisterPayload,RegisterResponse,} from "../types/Auth";
+import axios from "axios";
+import type {AuthUser,LoginPayload,LoginResponse,RegisterPayload,RegisterResponse,UserRole,} from "../types/Auth";
 
 export const register = async (
   data: RegisterPayload
@@ -13,21 +14,29 @@ export const register = async (
 };
 
 export const login = async (
-  data: LoginPayload
+  data: LoginPayload,
+  role: UserRole
 ): Promise<LoginResponse> => {
+  const rolePath = role.toLowerCase();
   const response = await api.post<LoginResponse>(
-    "/auth/login",
+    `/auth/${rolePath}/login`,
     data
   );
 
   return response.data;
 };
 
-export const getMe = async (): Promise<AuthUser> => {
-  const response = await api.get<{
+export const getMe = async (
+  accessToken: string
+): Promise<AuthUser> => {
+  const response = await axios.get<{
     success: boolean;
     user: AuthUser;
-  }>("/auth/me");
+  }>("http://localhost:5000/api/auth/me", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 
   return response.data.user;
 };

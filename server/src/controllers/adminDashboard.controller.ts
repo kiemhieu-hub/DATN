@@ -23,7 +23,11 @@ export const getDashboard = async (
     }
 
     const dashboard =
-      await adminDashboardService.getAdminDashboard();
+      await adminDashboardService.getAdminDashboard({
+        period: typeof req.query.period === "string" ? req.query.period as "DAY" | "MONTH" | "YEAR" : undefined,
+        date: typeof req.query.date === "string" ? req.query.date : undefined,
+        barberId: typeof req.query.barberId === "string" ? req.query.barberId : undefined,
+      });
 
     res.status(200).json({
       success: true,

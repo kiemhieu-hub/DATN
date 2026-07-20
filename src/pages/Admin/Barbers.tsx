@@ -15,6 +15,7 @@ import { useAuth } from "../../contexts/AuthContext";
 
 import {
   createAdminBarber,
+  deleteAdminBarber,
   getAdminBarbers,
   resetAdminBarberPassword,
   updateAdminBarber,
@@ -144,7 +145,7 @@ function Barbers() {
     user,
     isAuthenticated,
     isLoading: authLoading,
-  } = useAuth();
+  } = useAuth("ADMIN");
 
   const [barbers, setBarbers] =
     useState<AdminBarber[]>([]);
@@ -257,7 +258,7 @@ function Barbers() {
     }
 
     if (!isAuthenticated || !user) {
-      navigate("/login", {
+      navigate("/admin/login", {
         replace: true,
         state: {
           message:
@@ -268,7 +269,7 @@ function Barbers() {
     }
 
     if (user.role !== "ADMIN") {
-      navigate("/", {
+      navigate("/admin/login", {
         replace: true,
       });
       return;
@@ -594,6 +595,22 @@ function Barbers() {
           "Không thể đặt lại mật khẩu Barber."
         )
       );
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleDeleteBarber = async (barber: AdminBarber): Promise<void> => {
+    if (!window.confirm(`Xóa vĩnh viễn Barber “${barber.fullName}”? Hồ sơ và ca làm của Barber cũng sẽ bị xóa.`)) return;
+    try {
+      setProcessingId(barber.id);
+      setError("");
+      setMessage("");
+      const response = await deleteAdminBarber(barber.id);
+      setMessage(response.message);
+      await loadBarbers();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể xóa Barber."));
     } finally {
       setProcessingId(null);
     }
@@ -1013,6 +1030,15 @@ function Barbers() {
                       Mở khóa
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    className="danger"
+                    disabled={processingId === barber.id}
+                    onClick={() => void handleDeleteBarber(barber)}
+                  >
+                    Xóa
+                  </button>
                 </footer>
               </article>
             ))}

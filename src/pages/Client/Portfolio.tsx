@@ -1,72 +1,15 @@
-import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { favoriteService } from "../../services/favoriteService";
-import "./css/Portfolio.css";
-
-interface HairstyleItem {
-  imageUrl: string;
-  title: string;
-}
 
 function Portfolio() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [loadingFavorites, setLoadingFavorites] = useState(false);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadFavorites();
-    }
-  }, [isAuthenticated]);
-
-  const loadFavorites = async () => {
-    try {
-      const data = await favoriteService.getMyFavorites();
-      setFavorites(data.map((f) => f.imageUrl));
-    } catch {
-      // ignore
-    }
-  };
-
-  const handleToggleFavorite = async (imageUrl: string, title: string) => {
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
-
-    try {
-      if (favorites.includes(imageUrl)) {
-        await favoriteService.removeFavorite(imageUrl);
-        setFavorites((prev) => prev.filter((url) => url !== imageUrl));
-      } else {
-        await favoriteService.addFavorite(imageUrl, title);
-        setFavorites((prev) => [...prev, imageUrl]);
-      }
-    } catch {
-      // ignore
-    }
-  };
 
   const handleLogout = (): void => {
     logout();
     navigate("/", { replace: true });
   };
-
-  const hairstyleItems: HairstyleItem[] = [
-    { imageUrl: "/img/slider/1.jpg", title: "Cắt tóc Undercut" },
-    { imageUrl: "/img/slider/2.jpg", title: "Kiểu tóc Mohican" },
-    { imageUrl: "/img/slider/3.jpg", title: "Cắt tóc Layer" },
-    { imageUrl: "/img/slider/4.jpg", title: "Dịch vụ chăm sóc râu" },
-    { imageUrl: "/img/slider/5.jpg", title: "Cắt tóc nam chuyên nghiệp" },
-    { imageUrl: "/img/slider/16.jpg", title: "Kiểu tóc hiện đại" },
-    { imageUrl: "/img/slider/14.jpg", title: "Barber đang tạo kiểu" },
-    { imageUrl: "/img/slider/8.jpg", title: "Phong cách Fade" },
-    { imageUrl: "/img/slider/9.jpg", title: "Không gian cắt tóc" },
-    { imageUrl: "/img/slider/10.jpg", title: "Dịch vụ tạo kiểu tóc" },
-  ];
 
   return (
     <div>
@@ -307,37 +250,149 @@ function Portfolio() {
           </div>
 
           <div className="row">
-            {hairstyleItems.map((item) => (
-              <div className="col-md-4 gallery-item" key={item.imageUrl}>
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/3.jpg"
+                title="Không gian THADS Barber"
+                className="img-zoom"
+              >
                 <div className="gallery-box">
                   <div className="gallery-img">
-                    <a href={item.imageUrl} title={item.title} className="img-zoom">
-                      <img
-                        src={item.imageUrl}
-                        className="img-fluid mx-auto d-block"
-                        alt={item.title}
-                      />
-                    </a>
-                    <button
-                      type="button"
-                      className={`favorite-btn ${favorites.includes(item.imageUrl) ? "active" : ""}`}
-                      onClick={() => handleToggleFavorite(item.imageUrl, item.title)}
-                      title={favorites.includes(item.imageUrl) ? "Bỏ yêu thích" : "Yêu thích"}
-                    >
-                      <i className={`fa${favorites.includes(item.imageUrl) ? "s" : "r"} fa-heart`} />
-                    </button>
-                    <button
-                      type="button"
-                      className="book-style-btn"
-                      onClick={() => navigate("/booking", { state: { hairstyleNote: `Tôi muốn cắt kiểu tóc: ${item.title}` } })}
-                      title="Đặt lịch kiểu này"
-                    >
-                      <i className="fa-solid fa-calendar-plus"></i>
-                    </button>
+                    <img
+                      src="/img/slider/3.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Không gian THADS Barber"
+                    />
                   </div>
                 </div>
-              </div>
-            ))}
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/4.jpg"
+                title="Dịch vụ chăm sóc râu"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/4.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Dịch vụ chăm sóc râu"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/5.jpg"
+                title="Cắt tóc nam chuyên nghiệp"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/5.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Cắt tóc nam chuyên nghiệp"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-6 gallery-item">
+              <a
+                href="/img/slider/16.jpg"
+                title="Kiểu tóc hiện đại"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/16.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Kiểu tóc hiện đại"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-6 gallery-item">
+              <a
+                href="/img/slider/14.jpg"
+                title="Barber đang tạo kiểu"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/14.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Barber đang tạo kiểu"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/8.jpg"
+                title="Phong cách Fade"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/8.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Phong cách Fade"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/9.jpg"
+                title="Không gian cắt tóc"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/9.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Không gian cắt tóc"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="col-md-4 gallery-item">
+              <a
+                href="/img/slider/10.jpg"
+                title="Dịch vụ tạo kiểu tóc"
+                className="img-zoom"
+              >
+                <div className="gallery-box">
+                  <div className="gallery-img">
+                    <img
+                      src="/img/slider/10.jpg"
+                      className="img-fluid mx-auto d-block"
+                      alt="Dịch vụ tạo kiểu tóc"
+                    />
+                  </div>
+                </div>
+              </a>
+            </div>
           </div>
         </div>
       </section>

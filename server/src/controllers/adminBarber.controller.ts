@@ -287,3 +287,22 @@ export const resetBarberPassword = async (
     next(error);
   }
 };
+
+export const deleteBarber = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const barber = await adminBarberService.deleteAdminBarber(
+      getRouteParam(req.params.id, "Mã Barber")
+    );
+    res.status(200).json({
+      success: true,
+      message: "Xóa Barber thành công",
+      barber,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

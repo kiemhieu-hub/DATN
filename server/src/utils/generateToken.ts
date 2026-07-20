@@ -2,7 +2,7 @@ import jwt, { type SignOptions } from "jsonwebtoken";
 
 export interface TokenPayload {
   userId: string;
-  role: "CLIENT" | "BARBER" | "ADMIN";
+  role: "CLIENT" | "BARBER" | "RECEPTIONIST" | "ADMIN";
 }
 
 export const generateToken = (payload: TokenPayload): string => {

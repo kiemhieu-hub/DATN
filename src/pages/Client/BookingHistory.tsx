@@ -13,8 +13,10 @@ interface LocationState {
 const appointmentStatusLabels: Record<AppointmentStatus,string> = {
   PENDING: "Đang chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
+  CHECKED_IN: "Đã check-in",
   IN_PROGRESS: "Đang thực hiện",
   COMPLETED: "Đã hoàn thành",
+  NO_SHOW: "Vắng mặt",
   CANCELLED: "Đã hủy",
 };
 
@@ -111,6 +113,9 @@ function BookingHistory() {
       locationState?.message ?? ""
     );
 
+  const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+
   const [
     cancellingId,
     setCancellingId,
@@ -167,33 +172,16 @@ function BookingHistory() {
 
   const canCancel = (
     appointment: Appointment
-  ): boolean =>
-    appointment.status === "PENDING" ||
-    appointment.status === "CONFIRMED";
+  ): boolean => {
+    if (!["PENDING", "CONFIRMED"].includes(appointment.status)) return false;
+    const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+    return startsAt.getTime() - Date.now() >= 6 * 60 * 60 * 1000;
+  };
 
   const handleCancel = async (
     appointment: Appointment
   ): Promise<void> => {
-    const reason = window.prompt(
-      "Nhập lý do hủy lịch:",
-      "Tôi có việc đột xuất"
-    );
-
-    if (reason === null) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Bạn có chắc muốn hủy lịch ngày ${formatDate(
-        appointment.appointmentDate
-      )}, từ ${appointment.startTime} đến ${
-        appointment.endTime
-      } không?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
+    if (!cancelReason.trim()) { setError("Vui lòng nhập lý do hủy lịch."); return; }
 
     try {
       setCancellingId(appointment._id);
@@ -204,13 +192,13 @@ function BookingHistory() {
         await cancelAppointment(
           appointment._id,
           {
-            reason:
-              reason.trim() ||
-              "Khách hàng hủy lịch",
+              reason: cancelReason.trim(),
           }
         );
 
       setMessage(response.message);
+      setCancelTarget(null);
+      setCancelReason("");
 
       setAppointments(
         (currentAppointments) => currentAppointments.map((currentAppointment) => currentAppointment._id === response.appointment._id ? response.appointment : currentAppointment
@@ -323,9 +311,7 @@ function BookingHistory() {
                     <div>
                       <p className="history-code">
                         Mã lịch:{" "}
-                        {appointment._id.slice(
-                          -8
-                        )}
+                        {appointment.appointmentCode || appointment._id.slice(-8)}
                       </p>
 
                       <h2>
@@ -449,6 +435,11 @@ function BookingHistory() {
 
                   <div className="history-details">
                     <div>
+                      <span>Khách sử dụng</span>
+                      <strong>{appointment.customer?.fullName || "Chưa có"}</strong>
+                      <small>{appointment.customer?.phone}</small>
+                    </div>
+                    <div>
                       <span>Barber</span>
 
                       <strong>
@@ -468,6 +459,8 @@ function BookingHistory() {
                         đ
                       </strong>
                     </div>
+                    {appointment.discountPercent > 0 && <div><span>Voucher</span><strong>{appointment.voucherCode} (-{appointment.discountPercent}%)</strong></div>}
+                    <div><span>Đặt cọc</span><strong>{appointment.depositRequired ? `${formatPrice(appointment.depositAmount)}đ` : "Không yêu cầu"}</strong></div>
 
                     <div>
                       <span>Trạng thái lịch</span>
@@ -551,11 +544,7 @@ function BookingHistory() {
                           cancellingId ===
                           appointment._id
                         }
-                        onClick={() =>
-                          void handleCancel(
-                            appointment
-                          )
-                        }
+                        onClick={() => { setCancelTarget(appointment); setCancelReason(""); }}
                       >
                         {cancellingId ===
                         appointment._id
@@ -570,6 +559,7 @@ function BookingHistory() {
           </div>
         )}
       </main>
+      {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label><small>Chỉ có thể hủy trước giờ hẹn ít nhất 6 tiếng.</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id}>Xác nhận hủy</button></div></form></div>}
     </div>
   );
 }

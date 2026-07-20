@@ -26,9 +26,22 @@ import Profile from "./pages/barber/Profile";
 import Login from './pages/Auth/Login';
 import Register from "./pages/Auth/Register";
 
+import AdminLogin from "./pages/Auth/AdminLogin";
+import BarberLogin from "./pages/Auth/BarberLogin";
+import ReceptionistLogin from "./pages/Auth/ReceptionistLogin";
+import ReceptionistDashboard from "./pages/Receptionist/Dashboard";
+import ReceptionistBarberSchedules from "./pages/Receptionist/BarberSchedules";
+import AdminLayout from "./layouts/AdminLayout";
+
 //Admin
 import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminRevenue from "./pages/Admin/Revenue";
 import Barbers from "./pages/Admin/Barbers";
+import AdminServices from "./pages/Admin/Services";
+import AdminAppointments from "./pages/Admin/Appointments";
+import AdminPayments from "./pages/Admin/Payments";
+import AdminUsers from "./pages/Admin/Users";
+import AdminContentManager from "./pages/Admin/AdminContentManager";
 
 
 function App() {
@@ -36,13 +49,59 @@ function App() {
     <Router>
       <Routes>
         {/* ================= ADMIN ================= */}
-        <Route path="/admin/dashboard"element={<AdminDashboard />}/>
-        <Route path="/admin/barbers"element={<Barbers />}/>
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="revenue" element={<AdminRevenue />} />
+          <Route path="invoices" element={<AdminPayments />}/>
+          <Route path="vouchers" element={
+            <AdminContentManager
+              eyebrow="KHUYẾN MÃI"
+              title="Quản lý voucher"
+              description="Quản lý mã giảm giá và điều kiện áp dụng cho đơn đặt lịch."
+              kind="vouchers"
+            />
+          }/>
+          <Route path="reviews" element={
+            <AdminContentManager
+              eyebrow="PHẢN HỒI KHÁCH HÀNG"
+              title="Quản lý review"
+              description="Theo dõi, duyệt và xử lý đánh giá của khách hàng."
+              kind="reviews"
+            />
+          }/>
+          <Route path="barbers" element={<Barbers />}/>
+          <Route path="barber-schedules" element={<ReceptionistBarberSchedules />}/>
+          <Route path="services" element={<AdminServices />}/>
+          <Route path="service-categories" element={
+            <AdminContentManager
+              eyebrow="DANH MỤC"
+              title="Quản lý danh mục dịch vụ"
+              description="Tổ chức các dịch vụ theo nhóm để quản lý và hiển thị thống nhất."
+              kind="service-categories"
+            />
+          }/>
+          <Route path="appointments" element={<AdminAppointments />}/>
+          <Route path="operations" element={<ReceptionistDashboard />}/>
+          <Route path="payments" element={<AdminPayments />}/>
+          <Route path="users" element={<AdminUsers />}/>
+          <Route path="hairstyle-gallery" element={
+            <AdminContentManager
+              eyebrow="BỘ SƯU TẬP"
+              title="Quản lý hairstyle gallery"
+              description="Quản lý hình ảnh kiểu tóc được hiển thị cho khách hàng tham khảo."
+              kind="hairstyle-gallery"
+            />
+          }/>
+        </Route>
 
         {/* ================= AUTH ================= */}
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/receptionist/login" element={<ReceptionistLogin />} />
+        <Route path="/receptionist/dashboard" element={<ReceptionistDashboard />} />
+        <Route path="/receptionist/barbers" element={<ReceptionistBarberSchedules />} />
 
         {/* ================= CLIENT ================= */}
 
@@ -66,9 +125,10 @@ function App() {
         <Route path="/booking-history"element={<BookingHistory />}/>
 
         {/* ================= BARBER ================= */}
+        <Route path="/barber/login" element={<BarberLogin />} />
         <Route path="/barber/schedule"element={<Schedule />}/>
         <Route path="/barber/working-schedule"element={<WorkingSchedule />}/>
-        <Route path="/barber/dashboard"element={<Dashboard />}/>
+        <Route path="/barber/dashboard" element={<Dashboard />}/>
         <Route path="/barber/profile"element={<Profile />}/>
 
 

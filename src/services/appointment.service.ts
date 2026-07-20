@@ -4,10 +4,17 @@ import type { Appointment } from "../types/Appointment";
 
 export interface CreateAppointmentPayload {
   barberId: string;
+  careBarberId?: string;
   serviceIds: string[];
   appointmentDate: string;
   startTime: string;
   note?: string;
+  voucherCode?: string;
+  customer: {
+    fullName: string;
+    email: string;
+    phone: string;
+  };
 }
 
 export interface CreateAppointmentResponse {
@@ -34,6 +41,8 @@ export interface CancelAppointmentResponse {
 export interface AvailableSlot {
   startTime: string;
   endTime: string;
+  available: boolean;
+  reason?: string;
 }
 
 export interface GetAvailableSlotsResponse {
@@ -75,6 +84,15 @@ export const cancelAppointment = async (
       payload
     );
 
+  return response.data;
+};
+
+export const confirmAppointmentDeposit = async (
+  appointmentId: string
+): Promise<CreateAppointmentResponse> => {
+  const response = await api.post<CreateAppointmentResponse>(
+    `/appointments/${appointmentId}/deposit`
+  );
   return response.data;
 };
 

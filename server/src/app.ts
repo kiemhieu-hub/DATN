@@ -16,7 +16,12 @@ import barberDashboardRoutes from "./routes/barberDashboard.routes";
 import barberProfileRoutes from "./routes/barberProfile.routes";
 import adminDashboardRoutes from "./routes/adminDashboard.routes";
 import adminBarberRoutes from "./routes/adminBarber.routes";
-import favoriteHairstyleRoutes from "./routes/favoriteHairstyle.routes";
+import adminServiceRoutes from "./routes/adminService.routes";
+import adminAppointmentRoutes from "./routes/adminAppointment.routes";
+import paymentRoutes from "./routes/payment.routes";
+import adminUserRoutes from "./routes/adminUser.routes";
+import receptionistRoutes from "./routes/receptionist.routes";
+import adminContentRoutes from "./routes/adminContent.routes";
 
 const app = express();
 
@@ -42,7 +47,12 @@ app.use("/api/barber/dashboard",barberDashboardRoutes);
 app.use("/api/barber/profile",barberProfileRoutes);
 app.use("/api/admin/dashboard",adminDashboardRoutes);
 app.use("/api/admin/barbers",adminBarberRoutes);
-app.use("/api/favorites", favoriteHairstyleRoutes);
+app.use("/api/admin/services", adminServiceRoutes);
+app.use("/api/admin/appointments", adminAppointmentRoutes);
+app.use("/api/admin/payments", paymentRoutes);
+app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin", adminContentRoutes);
+app.use("/api/receptionist", receptionistRoutes);
 
 // Error Handler
 app.use(

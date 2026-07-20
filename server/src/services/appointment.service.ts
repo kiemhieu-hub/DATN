@@ -11,17 +11,26 @@ import BarberSchedule from "../models/BarberSchedule";
 import Service, {
   type IService,
   type ServiceGroup,
+  type ServiceStaffType,
 } from "../models/Service";
 
 import User from "../models/User";
 import AppError from "../utils/AppError";
+import { sendBookingConfirmationEmail } from "./email.service";
 
 interface CreateAppointmentInput {
   barberId: string;
+  careBarberId?: string;
   serviceIds: string[];
   appointmentDate: string;
   startTime: string;
   note?: string;
+  customer: {
+    fullName: string;
+    email: string;
+    phone: string;
+  };
+  voucherCode?: string;
 }
 
 interface CancelAppointmentInput {
@@ -43,7 +52,7 @@ interface GetAppointmentsOptions {
 interface UpdateAppointmentStatusInput {
   appointmentId: string;
   actorId: string;
-  actorRole: "BARBER" | "ADMIN";
+  actorRole: "RECEPTIONIST" | "ADMIN";
   status: AppointmentStatus;
   reason?: string;
 }
@@ -61,6 +70,7 @@ interface NormalizedService {
   durationSnapshot: number;
   group: ServiceGroup;
   isExclusiveInGroup: boolean;
+  staffType: ServiceStaffType;
 }
 
 interface DateRangeQuery {
@@ -90,8 +100,15 @@ const SLOT_INTERVAL_MINUTES = 30;
 const ACTIVE_APPOINTMENT_STATUSES: AppointmentStatus[] = [
   "PENDING",
   "CONFIRMED",
+  "CHECKED_IN",
   "IN_PROGRESS",
 ];
+
+const VOUCHERS: Record<string, number> = {
+  THADS5: 5,
+  THADS10: 10,
+  THADS15: 15,
+};
 
 const TIME_PATTERN =
   /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -103,9 +120,11 @@ const STATUS_TRANSITIONS: Record<
   AppointmentStatus[]
 > = {
   PENDING: ["CONFIRMED", "CANCELLED"],
-  CONFIRMED: ["IN_PROGRESS", "CANCELLED"],
+  CONFIRMED: ["CHECKED_IN", "NO_SHOW", "CANCELLED"],
+  CHECKED_IN: ["IN_PROGRESS"],
   IN_PROGRESS: ["COMPLETED", "CANCELLED"],
   COMPLETED: [],
+  NO_SHOW: ["CONFIRMED", "IN_PROGRESS"],
   CANCELLED: [],
 };
 
@@ -399,6 +418,7 @@ const normalizeServices = async (
 
         isExclusiveInGroup:
           service.isExclusiveInGroup,
+        staffType: service.staffType ?? (service.group === "CARE" ? "CARE" : "HAIR"),
       };
     }
   );
@@ -494,38 +514,7 @@ const validateBarberSchedule = async (
     );
   }
 
-  const breaks = Array.isArray(
-    schedule.breaks
-  )
-    ? schedule.breaks
-    : [];
-
-  const overlapsBreak =
-    breaks.some((breakTime) => {
-      const breakStart =
-        timeToMinutes(
-          breakTime.startTime
-        );
-
-      const breakEnd =
-        timeToMinutes(
-          breakTime.endTime
-        );
-
-      return isTimeOverlap(
-        appointmentStart,
-        appointmentEnd,
-        breakStart,
-        breakEnd
-      );
-    });
-
-  if (overlapsBreak) {
-    throw new AppError(
-      "Khoảng thời gian đã chọn trùng với giờ nghỉ của Barber",
-      409
-    );
-  }
+  // THADS Barber hoạt động xuyên trưa, không chặn giờ nghỉ giữa ca.
 };
 
 const validateAppointmentConflict =
@@ -536,8 +525,11 @@ const validateAppointmentConflict =
     endTime: string,
     excludedAppointmentId?: string
   ): Promise<void> => {
-    const query: AppointmentQuery = {
-      barber: barberId,
+    const query: AppointmentQuery & { $or?: Array<Record<string, string>> } = {
+      $or: [
+        { barber: barberId },
+        { "staffAssignments.barber": barberId },
+      ],
       appointmentDate,
       status: {
         $in:
@@ -647,7 +639,7 @@ export const createAppointment =
         _id: clientId,
         role: "CLIENT",
         status: "ACTIVE",
-      }).select("_id");
+      }).select("_id fullName email phone");
 
     if (!client) {
       throw new AppError(
@@ -658,11 +650,22 @@ export const createAppointment =
 
     const {
       barberId,
+      careBarberId,
       serviceIds,
       appointmentDate,
       startTime,
       note,
+      customer,
+      voucherCode,
     } = input;
+
+    if (!customer?.fullName?.trim() || !customer?.email?.trim() || !customer?.phone?.trim()) {
+      throw new AppError("Vui lòng nhập đầy đủ thông tin khách sử dụng dịch vụ", 400);
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email.trim())) {
+      throw new AppError("Email khách hàng không hợp lệ", 400);
+    }
 
     if (
       typeof appointmentDate !==
@@ -700,20 +703,47 @@ export const createAppointment =
       );
     }
 
-    await validateBarber(barberId);
+    const latestDate = new Date();
+    latestDate.setHours(23, 59, 59, 999);
+    latestDate.setDate(latestDate.getDate() + 14);
+    if (new Date(`${appointmentDate}T${startTime}:00`) > latestDate) {
+      throw new AppError("Chỉ được đặt lịch trong vòng 14 ngày tới", 400);
+    }
 
     const normalizedServices =
       await normalizeServices(
         serviceIds
       );
 
-    const totalPrice =
+    const hairServices = normalizedServices.filter((service) => service.staffType === "HAIR");
+    const careServices = normalizedServices.filter((service) => service.staffType === "CARE");
+    const primaryBarberId = hairServices.length > 0 ? barberId : (careBarberId || barberId);
+
+    await validateBarber(primaryBarberId);
+
+    if (hairServices.length > 0 && careServices.length > 0) {
+      if (!careBarberId) throw new AppError("Vui lòng chọn nhân viên chăm sóc", 400);
+      if (careBarberId === barberId) throw new AppError("Nhân viên làm tóc và chăm sóc phải khác nhau", 400);
+      await validateBarber(careBarberId);
+    }
+
+    const subtotal =
       normalizedServices.reduce(
         (total, service) =>
           total +
           service.priceSnapshot,
         0
       );
+
+    const normalizedVoucher = typeof voucherCode === "string" ? voucherCode.trim().toUpperCase() : "";
+    const discountPercent = normalizedVoucher ? VOUCHERS[normalizedVoucher] : 0;
+    if (normalizedVoucher && !discountPercent) {
+      throw new AppError("Mã voucher không hợp lệ", 400);
+    }
+    const discountAmount = Math.round(subtotal * discountPercent / 100);
+    const totalPrice = Math.max(0, subtotal - discountAmount);
+    const depositRequired = totalPrice > 200000;
+    const depositAmount = depositRequired ? Math.round(totalPrice * 0.3) : 0;
 
     const durationMinutes =
       normalizedServices.reduce(
@@ -741,23 +771,53 @@ export const createAppointment =
       minutesToTime(endMinutes);
 
     await validateBarberSchedule(
-      barberId,
+      primaryBarberId,
       appointmentDate,
       startTime,
       endTime
     );
 
     await validateAppointmentConflict(
-      barberId,
+      primaryBarberId,
       appointmentDate,
       startTime,
       endTime
     );
 
+    if (hairServices.length > 0 && careServices.length > 0 && careBarberId) {
+      const careStart = minutesToTime(
+        startMinutes + hairServices.reduce((sum, service) => sum + service.durationSnapshot, 0)
+      );
+      await validateBarberSchedule(careBarberId, appointmentDate, careStart, endTime);
+      await validateAppointmentConflict(careBarberId, appointmentDate, careStart, endTime);
+    }
+
     const appointment =
       await Appointment.create({
         client: clientId,
-        barber: barberId,
+        barber: primaryBarberId,
+        appointmentCode: `THADS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+        customer: {
+          fullName: customer.fullName.trim(),
+          email: customer.email.trim().toLowerCase(),
+          phone: customer.phone.trim(),
+        },
+        staffAssignments: [
+          ...(hairServices.length ? [{
+            barber: barberId,
+            staffType: "HAIR" as const,
+            serviceIds: hairServices.map((service) => service.service),
+            startTime,
+            endTime: minutesToTime(startMinutes + hairServices.reduce((sum, service) => sum + service.durationSnapshot, 0)),
+          }] : []),
+          ...(careServices.length ? [{
+            barber: careBarberId || barberId,
+            staffType: "CARE" as const,
+            serviceIds: careServices.map((service) => service.service),
+            startTime: minutesToTime(startMinutes + hairServices.reduce((sum, service) => sum + service.durationSnapshot, 0)),
+            endTime,
+          }] : []),
+        ],
 
         services:
           normalizedServices.map(
@@ -776,7 +836,14 @@ export const createAppointment =
             })
           ),
 
+        subtotal,
+        voucherCode: normalizedVoucher,
+        discountPercent,
+        discountAmount,
         totalPrice,
+        depositRequired,
+        depositAmount,
+        depositPaid: false,
         durationMinutes,
 
         appointmentDate,
@@ -792,9 +859,17 @@ export const createAppointment =
             : "",
       });
 
-    return populateAppointment(
-      String(appointment._id)
-    );
+    void sendBookingConfirmationEmail({
+      to: appointment.customer.email,
+      customerName: appointment.customer.fullName,
+      appointmentCode: appointment.appointmentCode,
+      bookedAt: appointment.createdAt,
+      appointmentDate,
+      startTime,
+      endTime,
+    }).catch((error) => console.error("Không thể gửi email xác nhận:", error));
+
+    return populateAppointment(String(appointment._id));
   };
 
 /**
@@ -889,6 +964,15 @@ export const cancelMyAppointment =
       );
     }
 
+    const appointmentStart = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+    if (appointmentStart.getTime() - Date.now() < 6 * 60 * 60 * 1000) {
+      throw new AppError("Chỉ có thể hủy lịch trước giờ hẹn ít nhất 6 tiếng", 400);
+    }
+
+    if (!reason?.trim()) {
+      throw new AppError("Vui lòng nhập lý do hủy lịch", 400);
+    }
+
     appointment.status =
       "CANCELLED";
 
@@ -980,7 +1064,7 @@ export const getBarberAppointments =
   };
 
 /**
- * BARBER hoặc ADMIN cập nhật trạng thái.
+ * LỄ TÂN hoặc ADMIN cập nhật trạng thái.
  */
 export const updateAppointmentStatus =
   async ({
@@ -1012,18 +1096,6 @@ export const updateAppointmentStatus =
       );
     }
 
-    if (
-      actorRole === "BARBER" &&
-      String(
-        appointment.barber
-      ) !== actorId
-    ) {
-      throw new AppError(
-        "Bạn không có quyền cập nhật lịch hẹn này",
-        403
-      );
-    }
-
     const allowedStatuses =
       STATUS_TRANSITIONS[
         appointment.status
@@ -1052,6 +1124,23 @@ export const updateAppointmentStatus =
         new Date();
     }
 
+    if (status === "CHECKED_IN") {
+      const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+      const earliest = startsAt.getTime() - 60 * 60 * 1000;
+      if (Date.now() < earliest) {
+        throw new AppError("Chỉ được check-in sớm nhất 1 tiếng trước giờ hẹn", 400);
+      }
+      appointment.checkedInAt = new Date();
+    }
+
+    if (status === "NO_SHOW") {
+      const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+      if (Date.now() < startsAt.getTime() + 5 * 60 * 1000) {
+        throw new AppError("Chỉ chuyển vắng mặt sau giờ hẹn 5 phút", 400);
+      }
+      appointment.noShowAt = new Date();
+    }
+
     if (status === "COMPLETED") {
       appointment.completedAt =
         new Date();
@@ -1072,12 +1161,13 @@ export const updateAppointmentStatus =
           `${
             actorRole === "ADMIN"
               ? "Admin"
-              : "Barber"
+              : "Lễ tân"
           } hủy lịch`,
 
         cancelledAt:
           new Date(),
-      };
+};
+
     }
 
     await appointment.save();
@@ -1223,7 +1313,10 @@ export const getAvailableSlots =
 
     const activeAppointments =
       await Appointment.find({
-        barber: barberId,
+        $or: [
+          { barber: barberId },
+          { "staffAssignments.barber": barberId },
+        ],
         appointmentDate,
         status: {
           $in:
@@ -1245,16 +1338,11 @@ export const getAvailableSlots =
         schedule.endTime
       );
 
-    const breaks =
-      Array.isArray(
-        schedule.breaks
-      )
-        ? schedule.breaks
-        : [];
-
     const slots: Array<{
       startTime: string;
       endTime: string;
+      available: boolean;
+      reason?: string;
     }> = [];
 
     for (
@@ -1268,25 +1356,6 @@ export const getAvailableSlots =
       const slotEnd =
         slotStart +
         durationMinutes;
-
-      const overlapsBreak =
-        breaks.some(
-          (breakTime) =>
-            isTimeOverlap(
-              slotStart,
-              slotEnd,
-              timeToMinutes(
-                breakTime.startTime
-              ),
-              timeToMinutes(
-                breakTime.endTime
-              )
-            )
-        );
-
-      if (overlapsBreak) {
-        continue;
-      }
 
       const overlapsAppointment =
         activeAppointments.some(
@@ -1302,10 +1371,6 @@ export const getAvailableSlots =
               )
             )
         );
-
-      if (overlapsAppointment) {
-        continue;
-      }
 
       const startTime =
         minutesToTime(
@@ -1327,8 +1392,51 @@ export const getAvailableSlots =
           minutesToTime(
             slotEnd
           ),
+        available: !overlapsAppointment,
+        reason: overlapsAppointment ? "Khung giờ đã có lịch" : undefined,
       });
     }
 
     return slots;
   };
+
+/** Tự động đánh dấu vắng mặt khi quá giờ hẹn 5 phút mà chưa check-in. */
+export const markOverdueAppointmentsAsNoShow = async (): Promise<number> => {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const candidates = await Appointment.find({
+    status: "CONFIRMED",
+    appointmentDate: { $lte: today },
+  }).select("appointmentDate startTime");
+
+  const overdueIds = candidates
+    .filter((appointment) => {
+      const startsAt = new Date(
+        `${appointment.appointmentDate}T${appointment.startTime}:00`
+      );
+      return now.getTime() > startsAt.getTime() + 5 * 60 * 1000;
+    })
+    .map((appointment) => appointment._id);
+
+  if (overdueIds.length === 0) return 0;
+
+  const result = await Appointment.updateMany(
+    { _id: { $in: overdueIds }, status: "CONFIRMED" },
+    { $set: { status: "NO_SHOW", noShowAt: now } }
+  );
+  return result.modifiedCount;
+};
+
+export const confirmClientDeposit = async (appointmentId: string, clientId: string) => {
+  assertObjectId(appointmentId, "Mã lịch hẹn không hợp lệ");
+  const appointment = await Appointment.findOne({ _id: appointmentId, client: clientId });
+  if (!appointment) throw new AppError("Không tìm thấy lịch hẹn", 404);
+  if (!appointment.depositRequired) throw new AppError("Lịch hẹn này không yêu cầu đặt cọc", 400);
+  if (["CANCELLED", "COMPLETED"].includes(appointment.status)) {
+    throw new AppError("Không thể thanh toán cọc cho lịch này", 400);
+  }
+  appointment.depositPaid = true;
+  appointment.paymentStatus = "PENDING";
+  await appointment.save();
+  return populateAppointment(appointmentId);
+};

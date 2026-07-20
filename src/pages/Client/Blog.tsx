@@ -39,7 +39,7 @@ function Blog() {
                   Pages <i className="ti-angle-down"></i>
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a href="/portfolio.html" className="dropdown-item"><span>Portfolio</span></a></li>
+                  <li><a href="portfolio.html" className="dropdown-item"><span>Portfolio</span></a></li>
                   <li><a href="team.html" className="dropdown-item"><span>Team</span></a></li>
                   <li><a href="faq.html" className="dropdown-item"><span>Faq</span></a></li>
                   <li><a href="services-page.html" className="dropdown-item"><span>Services Page</span></a></li>

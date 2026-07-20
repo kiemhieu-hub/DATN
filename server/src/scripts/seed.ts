@@ -22,6 +22,7 @@ interface SeedService {
     | "CARE"
     | "OTHER";
   isExclusiveInGroup: boolean;
+  staffType: "HAIR" | "CARE";
   image: string;
   isActive: boolean;
 }
@@ -40,6 +41,7 @@ interface SeedBarber {
   password: string;
   bio: string;
   experienceYears: number;
+  staffType: "HAIR" | "CARE";
 }
 
 const services: SeedService[] = [
@@ -52,7 +54,8 @@ const services: SeedService[] = [
     durationMinutes: 45,
     group: "HAIRCUT",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/1.jpg",
     isActive: true,
   },
   {
@@ -64,7 +67,8 @@ const services: SeedService[] = [
     durationMinutes: 60,
     group: "HAIRCUT",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/2.jpg",
     isActive: true,
   },
   {
@@ -76,7 +80,8 @@ const services: SeedService[] = [
     durationMinutes: 90,
     group: "HAIRCUT",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/3.jpg",
     isActive: true,
   },
   {
@@ -88,7 +93,8 @@ const services: SeedService[] = [
     durationMinutes: 30,
     group: "BEARD",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/1.jpg",
     isActive: true,
   },
   {
@@ -100,7 +106,8 @@ const services: SeedService[] = [
     durationMinutes: 45,
     group: "BEARD",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/2.jpg",
     isActive: true,
   },
   {
@@ -112,7 +119,8 @@ const services: SeedService[] = [
     durationMinutes: 60,
     group: "BEARD",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/3.jpg",
     isActive: true,
   },
   {
@@ -124,7 +132,8 @@ const services: SeedService[] = [
     durationMinutes: 30,
     group: "CARE",
     isExclusiveInGroup: false,
-    image: "",
+    staffType: "CARE",
+    image: "/img/services/1.jpg",
     isActive: true,
   },
   {
@@ -136,7 +145,8 @@ const services: SeedService[] = [
     durationMinutes: 30,
     group: "CARE",
     isExclusiveInGroup: false,
-    image: "",
+    staffType: "CARE",
+    image: "/img/services/2.jpg",
     isActive: true,
   },
   {
@@ -148,7 +158,8 @@ const services: SeedService[] = [
     durationMinutes: 60,
     group: "CARE",
     isExclusiveInGroup: false,
-    image: "",
+    staffType: "CARE",
+    image: "/img/services/3.jpg",
     isActive: true,
   },
   {
@@ -160,7 +171,8 @@ const services: SeedService[] = [
     durationMinutes: 120,
     group: "OTHER",
     isExclusiveInGroup: false,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/1.jpg",
     isActive: true,
   },
   {
@@ -172,7 +184,8 @@ const services: SeedService[] = [
     durationMinutes: 90,
     group: "COLOR",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/2.jpg",
     isActive: true,
   },
   {
@@ -184,7 +197,8 @@ const services: SeedService[] = [
     durationMinutes: 180,
     group: "COLOR",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/3.jpg",
     isActive: true,
   },
 ];
@@ -198,6 +212,13 @@ const admins: SeedAdmin[] = [
   },
 ];
 
+const receptionists: SeedAdmin[] = [{
+  fullName: "Lễ tân THADS",
+  email: "letan@thads.com",
+  phone: "0900000099",
+  password: "123456",
+}];
+
 const barbers: SeedBarber[] = [
   {
     fullName: "Nguyễn Minh",
@@ -206,6 +227,7 @@ const barbers: SeedBarber[] = [
     password: "123456",
     bio: "Chuyên Fade, cắt tóc nam hiện đại và tạo kiểu.",
     experienceYears: 5,
+    staffType: "HAIR",
   },
   {
     fullName: "Đức Anh",
@@ -214,6 +236,7 @@ const barbers: SeedBarber[] = [
     password: "123456",
     bio: "Chuyên tóc cổ điển, chăm sóc râu và cạo mặt.",
     experienceYears: 4,
+    staffType: "HAIR",
   },
   {
     fullName: "Thành Nam",
@@ -222,6 +245,7 @@ const barbers: SeedBarber[] = [
     password: "123456",
     bio: "Chuyên uốn, nhuộm và tư vấn kiểu tóc.",
     experienceYears: 6,
+    staffType: "HAIR",
   },
   {
     fullName: "Hoàng Sơn",
@@ -230,6 +254,7 @@ const barbers: SeedBarber[] = [
     password: "123456",
     bio: "Chuyên combo cắt tóc cao cấp và chăm sóc tóc.",
     experienceYears: 3,
+    staffType: "CARE",
   },
 ];
 
@@ -261,14 +286,7 @@ const createDefaultSchedules = async (
           dayOfWeek,
           startTime: "09:00",
           endTime: "21:00",
-          breaks: isSunday
-            ? []
-            : [
-                {
-                  startTime: "12:00",
-                  endTime: "13:00",
-                },
-              ],
+          breaks: [],
           isWorking: !isSunday,
         },
       },
@@ -369,16 +387,23 @@ const seedAdmins =
     }
   };
 
+const seedReceptionists = async (): Promise<void> => {
+  for (const data of receptionists) {
+    const email = data.email.toLowerCase().trim();
+    const existing = await User.findOne({ email }).select("+password");
+    if (existing) {
+      existing.fullName = data.fullName; existing.phone = data.phone; existing.role = "RECEPTIONIST"; existing.status = "ACTIVE"; await existing.save();
+    } else {
+      await User.create({ ...data, email, password: await hashPassword(data.password), avatar: "", role: "RECEPTIONIST", status: "ACTIVE" });
+    }
+  }
+};
+
 const seedBarbers = async (
   serviceDocuments: Awaited<
     ReturnType<typeof seedServices>
   >
 ): Promise<void> => {
-  const allServiceIds =
-    serviceDocuments.map(
-      (service) => service._id
-    );
-
   for (const barberData of barbers) {
     const normalizedEmail =
       barberData.email
@@ -441,7 +466,8 @@ const seedBarbers = async (
           experienceYears:
             barberData.experienceYears,
           specialties:
-            allServiceIds,
+            serviceDocuments.filter((service) => (service.staffType ?? (service.group === "CARE" ? "CARE" : "HAIR")) === barberData.staffType).map((service) => service._id),
+          staffType: barberData.staffType,
           averageRating: 0,
           reviewCount: 0,
           isActive: true,
@@ -489,6 +515,8 @@ const runSeed =
 
       await seedAdmins();
 
+      await seedReceptionists();
+
       await seedBarbers(
         serviceDocuments
       );
@@ -504,6 +532,7 @@ const runSeed =
       console.log(
         "Mật khẩu Barber mặc định: 123456"
       );
+      console.log("Tài khoản Lễ tân: letan@thads.com / 123456");
     } catch (error) {
       console.error(
         "Seed dữ liệu thất bại:",

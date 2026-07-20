@@ -73,7 +73,7 @@ const getLastSevenDates =
   };
 
 export const getAdminDashboard =
-  async () => {
+  async (filters: { period?: "DAY" | "MONTH" | "YEAR"; date?: string; barberId?: string } = {}) => {
     const today =
       getDateString(new Date());
 
@@ -259,10 +259,39 @@ export const getAdminDashboard =
           revenueMap.get(date)!
       );
 
+    const selectedDate = filters.date || today;
+    const period = filters.period || "MONTH";
+    const dateMatch = period === "DAY"
+      ? { appointmentDate: selectedDate }
+      : period === "YEAR"
+        ? { appointmentDate: { $regex: `^${selectedDate.slice(0, 4)}` } }
+        : { appointmentDate: { $regex: `^${selectedDate.slice(0, 7)}` } };
+    const revenueFilter: Record<string, unknown> = {
+      status: "COMPLETED",
+      paymentStatus: "PAID",
+      ...dateMatch,
+    };
+    if (filters.barberId) revenueFilter.barber = filters.barberId;
+    const revenueRows = await Appointment.aggregate([
+      { $match: revenueFilter },
+      { $group: { _id: "$barber", revenue: { $sum: "$totalPrice" }, appointments: { $sum: 1 } } },
+      { $sort: { revenue: -1 } },
+    ]);
+    const barberUsers = await User.find({ _id: { $in: revenueRows.map((row) => row._id) } }).select("fullName").lean();
+    const barberMap = new Map(barberUsers.map((barber) => [String(barber._id), barber.fullName]));
+    const revenueByBarber = revenueRows.map((row) => ({
+      barberId: String(row._id),
+      barberName: barberMap.get(String(row._id)) || "Barber",
+      revenue: row.revenue,
+      appointments: row.appointments,
+    }));
+
     return {
       date: today,
       statistics,
       revenueLastSevenDays,
       recentAppointments,
+      revenueByBarber,
+      revenueFilter: { period, date: selectedDate, barberId: filters.barberId || "" },
     };
   };
