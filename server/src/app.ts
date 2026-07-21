@@ -22,6 +22,8 @@ import paymentRoutes from "./routes/payment.routes";
 import adminUserRoutes from "./routes/adminUser.routes";
 import receptionistRoutes from "./routes/receptionist.routes";
 import adminContentRoutes from "./routes/adminContent.routes";
+import adminVoucherRoutes from "./routes/adminVoucher.routes";
+import voucherRoutes from "./routes/voucher.routes";
 
 const app = express();
 
@@ -40,6 +42,7 @@ app.get("/", (_req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/vouchers", voucherRoutes);
 app.use("/api/catalog",catalogRoutes);
 app.use("/api/barber", barberRoutes);
 app.use("/api/barber/schedule",barberScheduleRoutes);
@@ -51,8 +54,10 @@ app.use("/api/admin/services", adminServiceRoutes);
 app.use("/api/admin/appointments", adminAppointmentRoutes);
 app.use("/api/admin/payments", paymentRoutes);
 app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin/vouchers", adminVoucherRoutes);
 app.use("/api/admin", adminContentRoutes);
 app.use("/api/receptionist", receptionistRoutes);
+
 
 // Error Handler
 app.use(

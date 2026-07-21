@@ -13,6 +13,8 @@ export interface IVoucher extends Document {
   usageLimit: number;
   usedCount: number;
   perUserLimit: number;
+  applicableServiceGroups: Array<"HAIRCUT" | "BEARD" | "COLOR" | "CARE" | "OTHER">;
+  applicableBarbers: mongoose.Types.ObjectId[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +33,14 @@ const voucherSchema = new Schema<IVoucher>({
   usageLimit: { type: Number, default: 0, min: 0 },
   usedCount: { type: Number, default: 0, min: 0 },
   perUserLimit: { type: Number, default: 1, min: 1 },
+  applicableServiceGroups: [{
+    type: String,
+    enum: ["HAIRCUT", "BEARD", "COLOR", "CARE", "OTHER"],
+  }],
+  applicableBarbers: [{
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  }],
   isActive: { type: Boolean, default: true },
 }, { timestamps: true, versionKey: false });
 

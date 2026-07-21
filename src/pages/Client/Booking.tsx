@@ -19,6 +19,8 @@ import type {
   ServiceGroup,
   ServiceStaffType,
 } from "../../types/Catalog";
+import { validateVoucher } from "../../services/voucher.service";
+import type { VoucherCalculation } from "../../types/Voucher";
 import "./css/Booking.css";
 import "./css/BookingDeposit.css";
 
@@ -28,12 +30,6 @@ const groupNames: Record<ServiceGroup, string> = {
   COLOR: "Nhuộm tóc",
   CARE: "Chăm sóc thư giãn",
   OTHER: "Uốn và tạo kiểu",
-};
-
-const vouchers: Record<string, number> = {
-  THADS5: 5,
-  THADS10: 10,
-  THADS15: 15,
 };
 
 const money = (value: number) =>
@@ -68,6 +64,8 @@ function Booking() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [voucherInput, setVoucherInput] = useState("");
   const [voucherCode, setVoucherCode] = useState("");
+  const [voucherCalculation, setVoucherCalculation] = useState<VoucherCalculation | null>(null);
+  const [voucherApplying, setVoucherApplying] = useState(false);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -137,9 +135,9 @@ function Booking() {
   }, [slotBarberId, appointmentDate, serviceIds]);
 
   const subtotal = selectedServices.reduce((sum, service) => sum + service.price, 0);
-  const discountPercent = vouchers[voucherCode] || 0;
-  const discountAmount = Math.round(subtotal * discountPercent / 100);
-  const total = subtotal - discountAmount;
+  const discountPercent = voucherCalculation?.discountPercent ?? 0;
+  const discountAmount = voucherCalculation?.discountAmount ?? 0;
+  const total = voucherCalculation?.total ?? subtotal;
   const depositRequired = total > 200000;
   const depositAmount = depositRequired ? Math.round(total * 0.3) : 0;
 
@@ -148,6 +146,9 @@ function Booking() {
     setHairBarberId("");
     setCareBarberId("");
     setStartTime("");
+    setVoucherCode("");
+    setVoucherCalculation(null);
+    setVoucherMessage("");
     setServiceIds((current) => {
       if (current.includes(service.id)) return current.filter((id) => id !== service.id);
       if (!service.isExclusiveInGroup) return [...current, service.id];
@@ -161,15 +162,44 @@ function Booking() {
     });
   };
 
-  const applyVoucher = () => {
+  const applyVoucher = async () => {
     const code = voucherInput.trim().toUpperCase();
-    if (!vouchers[code]) {
+    if (!code) {
       setVoucherCode("");
-      setVoucherMessage("Mã không hợp lệ. Dùng THADS5, THADS10 hoặc THADS15.");
+      setVoucherCalculation(null);
+      setVoucherMessage("Vui lòng nhập mã voucher.");
       return;
     }
-    setVoucherCode(code);
-    setVoucherMessage(`Đã áp dụng giảm ${vouchers[code]}%.`);
+    if (!serviceIds.length) {
+      setVoucherMessage("Vui lòng chọn dịch vụ trước khi áp dụng voucher.");
+      return;
+    }
+
+    try {
+      setVoucherApplying(true);
+      setVoucherMessage("");
+      const barberIds = [hairBarberId, careBarberId].filter(Boolean);
+      const response = await validateVoucher(code, serviceIds, barberIds);
+      setVoucherCode(response.calculation.code);
+      setVoucherCalculation(response.calculation);
+      setVoucherMessage(`${response.message}. Bạn được giảm ${money(response.calculation.discountAmount)}đ.`);
+    } catch (requestError) {
+      setVoucherCode("");
+      setVoucherCalculation(null);
+      setVoucherMessage(getError(requestError));
+    } finally {
+      setVoucherApplying(false);
+    }
+  };
+
+  const changeBarber = (
+    setter: (id: string) => void,
+    id: string
+  ) => {
+    setter(id);
+    setVoucherCode("");
+    setVoucherCalculation(null);
+    setVoucherMessage("");
   };
 
   const submit = async (event: FormEvent) => {
@@ -263,8 +293,8 @@ function Booking() {
 
           {serviceIds.length > 0 && <section className="booking-panel">
             <div className="booking-panel-title"><b>02</b><div><h2>Chọn nhân viên</h2><p>Dịch vụ làm tóc và chăm sóc được phân cho nhân viên khác nhau.</p></div></div>
-            {needsHair && <BarberPicker title="Nhân viên làm tóc" items={hairBarbers} value={hairBarberId} onChange={setHairBarberId} />}
-            {needsCare && <BarberPicker title="Nhân viên gội đầu & chăm sóc" items={careBarbers} value={careBarberId} onChange={setCareBarberId} />}
+            {needsHair && <BarberPicker title="Nhân viên làm tóc" items={hairBarbers} value={hairBarberId} onChange={(id) => changeBarber(setHairBarberId, id)} />}
+            {needsCare && <BarberPicker title="Nhân viên gội đầu & chăm sóc" items={careBarbers} value={careBarberId} onChange={(id) => changeBarber(setCareBarberId, id)} />}
           </section>}
 
           <section className="booking-panel">
@@ -283,8 +313,8 @@ function Booking() {
         <aside className="booking-summary">
           <span>ĐƠN ĐẶT LỊCH</span><h2>Dịch vụ đã chọn</h2>
           {!selectedServices.length ? <p className="booking-summary-empty">Chưa chọn dịch vụ.</p> : <ul>{selectedServices.map((service) => <li key={service.id}><div><b>{service.name}</b><small>{service.durationMinutes} phút</small></div><strong>{money(service.price)}đ</strong></li>)}</ul>}
-          <div className="booking-voucher"><label>Mã voucher</label><div><input value={voucherInput} onChange={(e) => setVoucherInput(e.target.value)} placeholder="THADS5" /><button type="button" onClick={applyVoucher}>Áp dụng</button></div>{voucherMessage && <small>{voucherMessage}</small>}</div>
-          <div className="booking-totals"><p><span>Tạm tính</span><b>{money(subtotal)}đ</b></p>{discountPercent > 0 && <p className="discount"><span>Giảm {discountPercent}%</span><b>-{money(discountAmount)}đ</b></p>}<p className="grand-total"><span>Tổng cộng</span><b>{money(total)}đ</b></p></div>
+          <div className="booking-voucher"><label>Mã voucher</label><div><input value={voucherInput} onChange={(e) => setVoucherInput(e.target.value.toUpperCase())} placeholder="Nhập mã voucher" /><button type="button" disabled={voucherApplying} onClick={() => void applyVoucher()}>{voucherApplying ? "Đang kiểm tra..." : "Áp dụng"}</button></div>{voucherMessage && <small>{voucherMessage}</small>}</div>
+          <div className="booking-totals"><p><span>Tạm tính</span><b>{money(subtotal)}đ</b></p>{discountAmount > 0 && <p className="discount"><span>{discountPercent > 0 ? `Giảm ${discountPercent}%` : `Voucher ${voucherCode}`}</span><b>-{money(discountAmount)}đ</b></p>}<p className="grand-total"><span>Tổng cộng</span><b>{money(total)}đ</b></p></div>
           <div className={`booking-deposit ${depositRequired ? "required" : "free"}`}>{depositRequired ? <><b>Cần đặt cọc 30%</b><strong>{money(depositAmount)}đ</strong><p>Thanh toán tiền cọc để giữ lịch.</p></> : <><b>Không cần đặt cọc</b><p>Giá trị sau giảm không vượt quá 200.000đ.</p></>}</div>
           <button className="booking-submit" disabled={submitting}>{submitting ? "Đang đặt lịch..." : "Xác nhận đặt lịch"}</button>
           <Link className="booking-history-link" to="/booking-history">Xem lịch đã đặt</Link>

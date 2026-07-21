@@ -17,6 +17,11 @@ import Service, {
 import User from "../models/User";
 import AppError from "../utils/AppError";
 import { sendBookingConfirmationEmail } from "./email.service";
+import {
+  consumeVoucher,
+  evaluateVoucher,
+  type VoucherCalculation,
+} from "./voucher.service";
 
 interface CreateAppointmentInput {
   barberId: string;
@@ -103,12 +108,6 @@ const ACTIVE_APPOINTMENT_STATUSES: AppointmentStatus[] = [
   "CHECKED_IN",
   "IN_PROGRESS",
 ];
-
-const VOUCHERS: Record<string, number> = {
-  THADS5: 5,
-  THADS10: 10,
-  THADS15: 15,
-};
 
 const TIME_PATTERN =
   /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -735,13 +734,28 @@ export const createAppointment =
         0
       );
 
-    const normalizedVoucher = typeof voucherCode === "string" ? voucherCode.trim().toUpperCase() : "";
-    const discountPercent = normalizedVoucher ? VOUCHERS[normalizedVoucher] : 0;
-    if (normalizedVoucher && !discountPercent) {
-      throw new AppError("Mã voucher không hợp lệ", 400);
+    const normalizedVoucher = typeof voucherCode === "string"
+      ? voucherCode.trim().toUpperCase()
+      : "";
+    let voucherCalculation: VoucherCalculation | null = null;
+
+    if (normalizedVoucher) {
+      voucherCalculation = await evaluateVoucher({
+        code: normalizedVoucher,
+        clientId,
+        barberIds: [primaryBarberId, careBarberId].filter(
+          (id): id is string => typeof id === "string" && Boolean(id)
+        ),
+        items: normalizedServices.map((service) => ({
+          price: service.priceSnapshot,
+          group: service.group,
+        })),
+      });
     }
-    const discountAmount = Math.round(subtotal * discountPercent / 100);
-    const totalPrice = Math.max(0, subtotal - discountAmount);
+
+    const discountPercent = voucherCalculation?.discountPercent ?? 0;
+    const discountAmount = voucherCalculation?.discountAmount ?? 0;
+    const totalPrice = voucherCalculation?.total ?? subtotal;
     const depositRequired = totalPrice > 200000;
     const depositAmount = depositRequired ? Math.round(totalPrice * 0.3) : 0;
 
@@ -858,6 +872,15 @@ export const createAppointment =
             ? note.trim()
             : "",
       });
+
+    if (voucherCalculation) {
+      try {
+        await consumeVoucher(voucherCalculation.voucherId);
+      } catch (error) {
+        await Appointment.deleteOne({ _id: appointment._id });
+        throw error;
+      }
+    }
 
     void sendBookingConfirmationEmail({
       to: appointment.customer.email,
