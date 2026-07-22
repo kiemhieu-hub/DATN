@@ -44,6 +44,7 @@ import AdminUsers from "./pages/Admin/Users";
 import AdminContentManager from "./pages/Admin/AdminContentManager";
 import AdminVouchers from "./pages/Admin/Vouchers";
 import AdminServiceCategories from "./pages/Admin/ServiceCategories";
+import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
 
 function App() {
   return (
@@ -64,6 +65,7 @@ function App() {
           <Route path="operations" element={<ReceptionistDashboard />}/>
           <Route path="payments" element={<AdminPayments />}/>
           <Route path="users" element={<AdminUsers />}/>
+          <Route path="hairstyle-gallery" element={<AdminHairstyleGallery />}/>
           <Route path="vouchers" element={
             <AdminContentManager
               eyebrow="KHUYẾN MÃI"
@@ -111,21 +113,21 @@ function App() {
         {/* ================= CLIENT ================= */}
 
         <Route path="/" element={<Index />} />
-        <Route path="/index.html" element={<Index />} />
-        <Route path="/about.html" element={<About />} />
-        <Route path="/services.html" element={<Services />} />
-        <Route path="/pricing.html" element={<Pricing />} />
-        <Route path="/contact.html" element={<Contact />} />
-        <Route path="/services-page.html" element={<ServicesPage />} />
-        <Route path="/team.html" element={<Team />} />
-        <Route path="/team-details.html" element={<TeamDetails />} />
-        <Route path="/portfolio.html" element={<Portfolio />} />
-        <Route path="/faq.html" element={<Faq />} />
-        <Route path="/404.html" element={<NotFound />} />
-        <Route path="/post.html" element={<Post />} />
-        <Route path="/blog.html" element={<Blog />} />
-        <Route path="/blog2.html" element={<Blog2 />} />
-        <Route path="/blog3.html" element={<Blog3 />} />
+        <Route path="/index" element={<Index />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/services-page" element={<ServicesPage />} />
+        <Route path="/team" element={<Team />} />
+        <Route path="/team-details" element={<TeamDetails />} />
+        <Route path="/portfolio" element={<Portfolio />} />
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/404" element={<NotFound />} />
+        <Route path="/post" element={<Post />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog2" element={<Blog2 />} />
+        <Route path="/blog3" element={<Blog3 />} />
         <Route path="/booking"element={<Booking />}/>
         <Route path="/booking-history"element={<BookingHistory />}/>
 

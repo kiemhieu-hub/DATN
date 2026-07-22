@@ -1,10 +1,31 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../../contexts/AuthContext";
+import { getPublicHairstyles } from "../../services/hairstyleGallery.service";
+import type { HairstyleGalleryItem } from "../../types/HairstyleGallery";
+import "./css/Portfolio.css";
 
 function Portfolio() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const [hairstyles, setHairstyles] = useState<HairstyleGalleryItem[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [galleryCategory, setGalleryCategory] = useState("ALL");
+
+  useEffect(() => {
+    getPublicHairstyles()
+      .then((response) => setHairstyles(response.items))
+      .catch(() => setHairstyles([]))
+      .finally(() => setGalleryLoading(false));
+  }, []);
+
+  const galleryCategories = useMemo(
+    () => [...new Set(hairstyles.map((item) => item.category).filter(Boolean))],
+    [hairstyles]
+  );
+  const visibleHairstyles = galleryCategory === "ALL"
+    ? hairstyles
+    : hairstyles.filter((item) => item.category === galleryCategory);
 
   const handleLogout = (): void => {
     logout();
@@ -235,7 +256,57 @@ function Portfolio() {
       {/* Image Gallery */}
       <section className="section-padding">
         <div className="container">
+          <div className="portfolio-gallery-filter">
+            <button
+              type="button"
+              className={galleryCategory === "ALL" ? "active" : ""}
+              onClick={() => setGalleryCategory("ALL")}
+            >
+              Tất cả
+            </button>
+
+            {galleryCategories.map((category) => (
+              <button
+                type="button"
+                key={category}
+                className={galleryCategory === category ? "active" : ""}
+                onClick={() => setGalleryCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
           <div className="row">
+            {galleryLoading ? (
+              <p className="portfolio-gallery-empty">Đang tải thư viện...</p>
+            ) : visibleHairstyles.length === 0 ? (
+              <p className="portfolio-gallery-empty">
+                Chưa có hình ảnh trong thư viện.
+              </p>
+            ) : (
+              visibleHairstyles.map((item) => (
+                <div
+                  className={item.isFeatured ? "col-md-6" : "col-md-4"}
+                  key={item._id}
+                >
+                  <article className="portfolio-dynamic-card">
+                    <a href={item.image} className="img-zoom" title={item.title}>
+                      <img src={item.image} alt={item.title} />
+                    </a>
+
+                    <div className="portfolio-dynamic-info">
+                      <span>{item.category || "THADS STYLE"}</span>
+                      <h3>{item.title}</h3>
+                      {item.description && <p>{item.description}</p>}
+                    </div>
+                  </article>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="row" style={{ display: "none" }} aria-hidden="true">
             <div className="col-md-12">
               <div className="section-head text-center">
                 <div className="section-subtitle">
