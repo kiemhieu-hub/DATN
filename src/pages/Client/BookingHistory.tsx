@@ -2,7 +2,9 @@ import axios from "axios";
 import {useCallback,useEffect,useState,} from "react";
 import {Link,useLocation,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import ReviewModal from "../../components/ReviewModal";
 import {cancelAppointment,getMyAppointments,} from "../../services/appointment.service";
+import { getMyReviews } from "../../services/review.service";
 import type {Appointment,AppointmentStatus,PaymentStatus,} from "../../types/Appointment";
 import "./css/BookingHistory.css";
 
@@ -114,6 +116,8 @@ function BookingHistory() {
     );
 
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<Appointment | null>(null);
+  const [reviewedAppointmentIds, setReviewedAppointmentIds] = useState<Set<string>>(new Set());
   const [cancelReason, setCancelReason] = useState("");
 
   const [
@@ -127,11 +131,16 @@ function BookingHistory() {
         setLoading(true);
         setError("");
 
-        const response =
-          await getMyAppointments();
+        const [response, reviewResponse] = await Promise.all([
+          getMyAppointments(),
+          getMyReviews(),
+        ]);
 
         setAppointments(
           response.appointments
+        );
+        setReviewedAppointmentIds(
+          new Set(reviewResponse.reviews.map((review) => String(review.appointment)))
         );
       } catch (requestError) {
         setError(
@@ -552,6 +561,19 @@ function BookingHistory() {
                           : "Hủy lịch"}
                       </button>
                     )}
+                    {appointment.status === "COMPLETED" && (
+                      reviewedAppointmentIds.has(appointment._id) ? (
+                        <span className="history-reviewed-label">✓ Đã gửi đánh giá</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="history-review-button"
+                          onClick={() => setReviewTarget(appointment)}
+                        >
+                          Đánh giá dịch vụ
+                        </button>
+                      )
+                    )}
                   </footer>
                 </article>
               )
@@ -560,6 +582,19 @@ function BookingHistory() {
         )}
       </main>
       {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label><small>Chỉ có thể hủy trước giờ hẹn ít nhất 6 tiếng.</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id}>Xác nhận hủy</button></div></form></div>}
+      {reviewTarget && (
+        <ReviewModal
+          appointment={reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          onError={(reviewError) => setError(reviewError)}
+          onSuccess={(appointmentId, successMessage) => {
+            setReviewedAppointmentIds((current) => new Set(current).add(appointmentId));
+            setMessage(successMessage);
+            setError("");
+            setReviewTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }

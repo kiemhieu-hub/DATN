@@ -1158,13 +1158,18 @@ export const updateAppointmentStatus =
 
     if (status === "NO_SHOW") {
       const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
-      if (Date.now() < startsAt.getTime() + 5 * 60 * 1000) {
-        throw new AppError("Chỉ chuyển vắng mặt sau giờ hẹn 5 phút", 400);
+      if (Date.now() < startsAt.getTime() + 15 * 60 * 1000) {
+        throw new AppError("Chỉ chuyển vắng mặt sau giờ hẹn 15 phút", 400);
       }
       appointment.noShowAt = new Date();
     }
 
     if (status === "COMPLETED") {
+      const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+      const endsAt = new Date(`${appointment.appointmentDate}T${appointment.endTime}:00`);
+      if (Date.now() < startsAt.getTime() || Date.now() > endsAt.getTime()) {
+        throw new AppError("Chỉ được nhấn hoàn thành trong khung thời gian của lịch hẹn", 400);
+      }
       appointment.completedAt =
         new Date();
     }
@@ -1423,12 +1428,16 @@ export const getAvailableSlots =
     return slots;
   };
 
-/** Tự động đánh dấu vắng mặt khi quá giờ hẹn 5 phút mà chưa check-in. */
-export const markOverdueAppointmentsAsNoShow = async (): Promise<number> => {
+/** Tự động cập nhật vắng mặt sau 15 phút và hoàn thành khi hết giờ. */
+export const processAutomaticAppointmentStatuses = async () => {
   const now = new Date();
-  const today = now.toISOString().slice(0, 10);
+  const today = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
   const candidates = await Appointment.find({
-    status: "CONFIRMED",
+    status: { $in: ["PENDING", "CONFIRMED"] },
     appointmentDate: { $lte: today },
   }).select("appointmentDate startTime");
 
@@ -1437,18 +1446,35 @@ export const markOverdueAppointmentsAsNoShow = async (): Promise<number> => {
       const startsAt = new Date(
         `${appointment.appointmentDate}T${appointment.startTime}:00`
       );
-      return now.getTime() > startsAt.getTime() + 5 * 60 * 1000;
+      return now.getTime() >= startsAt.getTime() + 15 * 60 * 1000;
     })
     .map((appointment) => appointment._id);
 
-  if (overdueIds.length === 0) return 0;
-
-  const result = await Appointment.updateMany(
-    { _id: { $in: overdueIds }, status: "CONFIRMED" },
-    { $set: { status: "NO_SHOW", noShowAt: now } }
-  );
-  return result.modifiedCount;
+  const result = overdueIds.length
+    ? await Appointment.updateMany(
+        { _id: { $in: overdueIds }, status: { $in: ["PENDING", "CONFIRMED"] } },
+        { $set: { status: "NO_SHOW", noShowAt: now } }
+      )
+    : { modifiedCount: 0 };
+  const running = await Appointment.find({
+    status: "IN_PROGRESS",
+    appointmentDate: { $lte: today },
+  }).select("appointmentDate endTime");
+  const completedIds = running.filter((appointment) => {
+    const endsAt = new Date(`${appointment.appointmentDate}T${appointment.endTime}:00`);
+    return now.getTime() >= endsAt.getTime();
+  }).map((appointment) => appointment._id);
+  const completedResult = completedIds.length
+    ? await Appointment.updateMany(
+        { _id: { $in: completedIds }, status: "IN_PROGRESS" },
+        { $set: { status: "COMPLETED", completedAt: now } }
+      )
+    : { modifiedCount: 0 };
+  return { noShow: result.modifiedCount, completed: completedResult.modifiedCount };
 };
+
+export const markOverdueAppointmentsAsNoShow = async (): Promise<number> =>
+  (await processAutomaticAppointmentStatuses()).noShow;
 
 export const confirmClientDeposit = async (appointmentId: string, clientId: string) => {
   assertObjectId(appointmentId, "Mã lịch hẹn không hợp lệ");

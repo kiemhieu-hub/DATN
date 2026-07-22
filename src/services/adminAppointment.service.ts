@@ -10,6 +10,15 @@ export const updateAdminAppointmentStatus = async (id: string, status: Appointme
   (await api.patch<AdminAppointmentMutationResponse>(`/admin/appointments/${id}/status`, { status, reason })).data;
 export const changeAdminAppointmentBarber = async (id: string, barberId: string) =>
   (await api.patch<AdminAppointmentMutationResponse>(`/admin/appointments/${id}/barber`, { barberId })).data;
+export const reopenAdminNoShowAppointment = async (
+  id: string,
+  payload: {
+    mode: "CHECK_IN" | "RESCHEDULE";
+    appointmentDate?: string;
+    startTime?: string;
+    barberId?: string;
+  }
+) => (await api.patch<AdminAppointmentMutationResponse>(`/admin/appointments/${id}/reopen`, payload)).data;
 export const rescheduleAdminAppointment = async (id: string, appointmentDate: string, startTime: string, customerConsent: boolean) =>
   (await api.patch<AdminAppointmentMutationResponse>(`/admin/appointments/${id}/reschedule`, { appointmentDate, startTime, customerConsent })).data;
 export const updateAdminAppointmentServices = async (id: string, serviceIds: string[]) =>

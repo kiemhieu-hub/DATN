@@ -12,5 +12,6 @@ export interface AdminAppointmentMutationResponse {
 }
 export interface AdminAppointmentParams {
   keyword?: string; status?: AppointmentStatus | "ALL"; barberId?: string;
-  appointmentDate?: string; page?: number; limit?: number;
+  appointmentDate?: string; appointmentTime?: string;
+  sortOrder?: "priority" | "newest" | "oldest"; page?: number; limit?: number;
 }

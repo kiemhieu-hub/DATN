@@ -58,6 +58,11 @@ const navigationItems: AdminNavigationItem[] = [
     icon: "LH",
   },
   {
+    to: "/admin/barber-schedules",
+    label: "Lịch làm việc Barber",
+    icon: "LB",
+  },
+  {
     to: "/admin/hairstyle-gallery",
     label: "Quản lý hairstyle gallery",
     icon: "HG",

@@ -110,7 +110,7 @@
 
 .appointment-filters {
   display: grid;
-  grid-template-columns: minmax(230px, 2fr) repeat(3, minmax(155px, 1fr)) auto;
+  grid-template-columns: minmax(220px, 2fr) repeat(5, minmax(140px, 1fr)) auto;
   gap: 14px;
   align-items: end;
   padding: 20px;
@@ -175,6 +175,124 @@
 
 .appointment-search-button:hover {
   background: #d9b66e;
+}
+
+/* Modal bật lại lịch vắng mặt */
+.appointment-reopen-modal {
+  width: min(640px, 100%);
+}
+
+.appointment-reopen-description {
+  margin: -6px 0 20px;
+  color: #aaa69e;
+}
+
+.appointment-reopen-options {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.appointment-reopen-options > label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #45423b;
+  border-radius: 6px;
+  background: #141412;
+  cursor: pointer;
+}
+
+.appointment-reopen-options input {
+  width: auto;
+  margin-top: 4px;
+  accent-color: #c6a15b;
+}
+
+.appointment-reopen-options span,
+.appointment-reopen-options small {
+  display: block;
+}
+
+.appointment-reopen-options small {
+  margin-top: 5px;
+  color: #aaa69e;
+  line-height: 1.45;
+}
+
+.appointment-reopen-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.appointment-reopen-grid label {
+  display: grid;
+  gap: 7px;
+  color: #c8c2b8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.appointment-reopen-grid input,
+.appointment-reopen-grid select {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #45423b;
+  border-radius: 5px;
+  background: #11110f;
+  color: #f2eee7;
+  font: inherit;
+}
+
+.appointment-reopen-barber {
+  grid-column: 1 / -1;
+}
+
+.appointment-reopen-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.appointment-reopen-actions button {
+  min-height: 42px;
+  padding: 0 17px;
+  border-radius: 5px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.appointment-reopen-cancel {
+  border: 1px solid #4a463e;
+  background: #1b1b19;
+  color: #f2eee7;
+}
+
+.appointment-reopen-submit {
+  border: 1px solid #c6a15b;
+  background: #c6a15b;
+  color: #11110f;
+}
+
+.appointment-reopen-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .appointment-reopen-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .appointment-reopen-barber {
+    grid-column: auto;
+  }
 }
 
 /* =========================
@@ -759,3 +877,5 @@
     padding: 24px 18px;
   }
 }
+
+.appointment-receipt{width:min(620px,100%);max-height:90vh;padding:30px;overflow:auto;color:#111;background:#fff}.appointment-receipt h2{text-align:center}.appointment-receipt ul{padding:0;list-style:none}.appointment-receipt li{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid #ddd}.appointment-receipt img{display:block;width:220px;height:220px;margin:20px auto}.appointment-receipt>div{display:flex;justify-content:flex-end;gap:10px}.appointment-receipt button{padding:10px 16px;cursor:pointer}

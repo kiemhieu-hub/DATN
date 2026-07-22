@@ -436,6 +436,29 @@
   cursor: not-allowed;
 }
 
+.history-review-button {
+  min-height: 41px;
+  padding: 0 19px;
+  color: #1d1915;
+  background: #c89b63;
+  border: 1px solid #c89b63;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.history-review-button:hover {
+  color: #fff;
+  background: transparent;
+}
+
+.history-reviewed-label {
+  color: #afe8ba;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 /* Trống và loading */
 
 .history-empty {

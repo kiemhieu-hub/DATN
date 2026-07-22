@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   getReceptionBarberSchedules,
@@ -8,6 +8,7 @@ import {
 } from "../../services/receptionist.service";
 import type { BarberScheduleDay } from "../../types/BarberSchedule";
 import "./Receptionist.css";
+import {Link} from "react-router-dom";
 
 const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
@@ -55,10 +56,10 @@ function BarberSchedules() {
     }
   ));
 
-  return <div className="reception-page">
-    {!isAdminPage && <aside className="reception-sidebar"><h2>THADS</h2><span>LỄ TÂN</span><nav><Link to="/receptionist/dashboard">Lịch hẹn</Link><Link to="/receptionist/barbers">Lịch Barber</Link></nav></aside>}
-    <main className="reception-main" style={isAdminPage ? { marginLeft: 0, width: "100%" } : undefined}>
+  return <div className="reception-page reception-page-embedded">
+    <main className="reception-main" style={{ marginLeft: 0, width: "100%" }}>
       <header><div><h1>Lịch làm việc Barber</h1><p>Lễ tân và Admin có thể thay đổi ca làm. Không sử dụng giờ nghỉ trưa.</p></div></header>
+      <Link to= {"/receptionist/dashboard"}>Quay lại</Link>
       {message && <div className="reception-alert success">{message}</div>}
       <div className="reception-schedule-list">{items.map((item, barberIndex) =>
         <section key={item.barber._id}><h2>{item.barber.fullName}</h2><p>{item.barber.phone} · {item.barber.email}</p>

@@ -7,6 +7,7 @@ import {
 } from "react";
 import {
   Link,
+  useLocation,
   useNavigate,
 } from "react-router-dom";
 
@@ -16,16 +17,19 @@ import {
   changeAdminAppointmentBarber,
   deleteAdminAppointment,
   getAdminAppointments,
+  reopenAdminNoShowAppointment,
+  rescheduleAdminAppointment,
+  updateAdminAppointmentServices,
   updateAdminAppointmentStatus,
 } from "../../services/adminAppointment.service";
-import { getCatalogBarbers } from "../../services/catalog.service";
-import { confirmCashPayment } from "../../services/payment.service";
+import { getCatalogBarbers, getCatalogServices } from "../../services/catalog.service";
+import { confirmBankTransfer, confirmCashPayment } from "../../services/payment.service";
 
 import type {
   Appointment,
   AppointmentStatus,
 } from "../../types/Appointment";
-import type { CatalogBarber } from "../../types/Catalog";
+import type { CatalogBarber, CatalogService } from "../../types/Catalog";
 
 import "./css/Appointments.css";
 
@@ -69,6 +73,10 @@ const nextActions: Partial<
   ],
   CONFIRMED: [
     {
+      status: "NO_SHOW",
+      label: "Vắng mặt",
+    },
+    {
       status: "CHECKED_IN",
       label: "Check-in",
     },
@@ -79,9 +87,6 @@ const nextActions: Partial<
   ],
   CHECKED_IN: [
     { status: "IN_PROGRESS", label: "Bắt đầu" },
-  ],
-  NO_SHOW: [
-    { status: "IN_PROGRESS", label: "Bật lại" },
   ],
   IN_PROGRESS: [
     {
@@ -136,18 +141,22 @@ const getErrorMessage = (
 
 function Appointments() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isReceptionistPage = location.pathname.startsWith("/receptionist");
+  const authRole = isReceptionistPage ? "RECEPTIONIST" : "ADMIN";
 
   const {
     user,
     isAuthenticated,
     isLoading: authLoading,
-  } = useAuth("ADMIN");
+  } = useAuth(authRole);
 
   const [appointments, setAppointments] =
     useState<Appointment[]>([]);
 
   const [barbers, setBarbers] =
     useState<CatalogBarber[]>([]);
+  const [services, setServices] = useState<CatalogService[]>([]);
 
   const [keyword, setKeyword] = useState("");
   const [submittedKeyword, setSubmittedKeyword] =
@@ -161,6 +170,10 @@ function Appointments() {
 
   const [dateFilter, setDateFilter] =
     useState("");
+  const [timeFilter, setTimeFilter] = useState("");
+  const [sortOrder, setSortOrder] = useState<
+    "priority" | "newest" | "oldest"
+  >("priority");
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -177,6 +190,17 @@ function Appointments() {
 
   const [selectedBarberId, setSelectedBarberId] =
     useState("");
+  const [reopenForm, setReopenForm] = useState<{
+    appointment: Appointment;
+    mode: "CHECK_IN" | "RESCHEDULE";
+    appointmentDate: string;
+    startTime: string;
+    barberId: string;
+  } | null>(null);
+  const [receipt, setReceipt] = useState<{
+    appointment: Appointment;
+    method: "CASH" | "BANK_TRANSFER";
+  } | null>(null);
 
   const loadAppointments = useCallback(async () => {
     try {
@@ -188,6 +212,8 @@ function Appointments() {
         status: statusFilter,
         barberId: barberFilter || undefined,
         appointmentDate: dateFilter || undefined,
+        appointmentTime: timeFilter || undefined,
+        sortOrder,
         page,
         limit: 10,
       });
@@ -209,6 +235,8 @@ function Appointments() {
     statusFilter,
     barberFilter,
     dateFilter,
+    timeFilter,
+    sortOrder,
     page,
   ]);
 
@@ -226,20 +254,29 @@ function Appointments() {
     }
   }, []);
 
+  const loadServices = useCallback(async () => {
+    try {
+      const response = await getCatalogServices();
+      setServices(response.services);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể tải danh sách dịch vụ"));
+    }
+  }, []);
+
   useEffect(() => {
     if (authLoading) {
       return;
     }
 
     if (!isAuthenticated || !user) {
-      navigate("/admin/login", {
+      navigate(isReceptionistPage ? "/receptionist/login" : "/admin/login", {
         replace: true,
       });
       return;
     }
 
-    if (user.role !== "ADMIN") {
-      navigate("/admin/login", {
+    if (user.role !== authRole) {
+      navigate(isReceptionistPage ? "/receptionist/login" : "/admin/login", {
         replace: true,
       });
       return;
@@ -247,6 +284,7 @@ function Appointments() {
 
     void loadAppointments();
     void loadBarbers();
+    void loadServices();
   }, [
     authLoading,
     isAuthenticated,
@@ -254,7 +292,18 @@ function Appointments() {
     navigate,
     loadAppointments,
     loadBarbers,
+    loadServices,
+    authRole,
+    isReceptionistPage,
   ]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user || user.role !== authRole) return;
+    const refreshTimer = window.setInterval(() => {
+      void loadAppointments();
+    }, 60_000);
+    return () => window.clearInterval(refreshTimer);
+  }, [authRole, isAuthenticated, loadAppointments, user]);
 
   const handleSearch = (event: FormEvent): void => {
     event.preventDefault();
@@ -404,6 +453,7 @@ function Appointments() {
       );
 
       setMessage(response.message);
+      setReceipt({ appointment: response.appointment, method: "CASH" });
 
       if (selectedAppointment?._id === appointment._id) {
         setSelectedAppointment(response.appointment);
@@ -420,6 +470,122 @@ function Appointments() {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const openReopenModal = (appointment: Appointment): void => {
+    const currentBarberId = typeof appointment.barber === "string"
+      ? appointment.barber
+      : appointment.barber._id;
+
+    setReopenForm({
+      appointment,
+      mode: "CHECK_IN",
+      appointmentDate: appointment.appointmentDate,
+      startTime: appointment.startTime,
+      barberId: currentBarberId,
+    });
+    setError("");
+  };
+
+  const handleReopenNoShow = async (): Promise<void> => {
+    if (!reopenForm) return;
+
+    try {
+      setProcessingId(reopenForm.appointment._id);
+      setError("");
+      setMessage("");
+
+      const response = await reopenAdminNoShowAppointment(
+        reopenForm.appointment._id,
+        reopenForm.mode === "CHECK_IN"
+          ? { mode: "CHECK_IN" }
+          : {
+              mode: "RESCHEDULE",
+              appointmentDate: reopenForm.appointmentDate,
+              startTime: reopenForm.startTime,
+              barberId: reopenForm.barberId,
+            }
+      );
+
+      setMessage(response.message);
+      setReopenForm(null);
+      if (selectedAppointment?._id === response.appointment._id) {
+        setSelectedAppointment(response.appointment);
+      }
+      await loadAppointments();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể bật lại lịch vắng mặt"));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleBankTransfer = async (appointment: Appointment): Promise<void> => {
+    if (!window.confirm("Xác nhận khách hàng đã chuyển khoản?")) return;
+    try {
+      setProcessingId(appointment._id);
+      setError("");
+      const response = await confirmBankTransfer(appointment._id);
+      setMessage(response.message);
+      setReceipt({ appointment: response.appointment, method: "BANK_TRANSFER" });
+      if (selectedAppointment?._id === appointment._id) {
+        setSelectedAppointment(response.appointment);
+      }
+      await loadAppointments();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể xác nhận chuyển khoản"));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReschedule = async (appointment: Appointment): Promise<void> => {
+    const date = window.prompt("Ngày hẹn mới (YYYY-MM-DD):", appointment.appointmentDate);
+    if (!date) return;
+    const time = window.prompt("Giờ bắt đầu mới (HH:mm):", appointment.startTime);
+    if (!time || !window.confirm("Xác nhận khách hàng đã đồng ý đổi lịch?")) return;
+    try {
+      setProcessingId(appointment._id);
+      const response = await rescheduleAdminAppointment(appointment._id, date, time, true);
+      setMessage(response.message);
+      if (selectedAppointment?._id === appointment._id) setSelectedAppointment(response.appointment);
+      await loadAppointments();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể đổi lịch hẹn"));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleUpdateServices = async (appointment: Appointment): Promise<void> => {
+    const currentIds = appointment.services.map((item) =>
+      typeof item.service === "string" ? item.service : item.service._id
+    );
+    const available = services.map((item) => `${item.name}: ${item.id}`).join("\n");
+    const input = window.prompt(
+      `Nhập ID dịch vụ, cách nhau bằng dấu phẩy. Không được nhập trùng.\n\n${available}`,
+      currentIds.join(",")
+    );
+    if (!input) return;
+    const serviceIds = input.split(",").map((id) => id.trim()).filter(Boolean);
+    try {
+      setProcessingId(appointment._id);
+      const response = await updateAdminAppointmentServices(appointment._id, serviceIds);
+      setMessage(response.message);
+      if (selectedAppointment?._id === appointment._id) setSelectedAppointment(response.appointment);
+      await loadAppointments();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể cập nhật dịch vụ"));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const canCompleteNow = (appointment: Appointment): boolean => {
+    const now = Date.now();
+    const start = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`).getTime();
+    const end = new Date(`${appointment.appointmentDate}T${appointment.endTime}:00`).getTime();
+    return now >= start && now <= end;
   };
 
   const handleDeleteAppointment = async (appointment: Appointment): Promise<void> => {
@@ -450,7 +616,7 @@ function Appointments() {
     );
   }
 
-  if (!user || user.role !== "ADMIN") {
+  if (!user || user.role !== authRole) {
     return null;
   }
 
@@ -466,14 +632,15 @@ function Appointments() {
             <h1>Quản lý lịch hẹn</h1>
 
             <p className="admin-appointments-description">
-              Theo dõi và xử lý toàn bộ lịch hẹn trong hệ thống.
+              {isReceptionistPage
+                ? "Xác nhận, check-in, điều phối dịch vụ và thanh toán lịch hẹn."
+                : "Theo dõi và xử lý toàn bộ lịch hẹn trong hệ thống."}
             </p>
           </div>
 
           <nav className="admin-appointments-navigation">
-            <Link to="/admin/dashboard">Dashboard</Link>
-            <Link to="/admin/services">Dịch vụ</Link>
-            <Link to="/admin/barbers">Barber</Link>
+            <Link to={isReceptionistPage ? "/receptionist/dashboard" : "/admin/dashboard"}>Dashboard</Link>
+            <Link to={isReceptionistPage ? "/receptionist/barbers" : "/admin/barber-schedules"}>Lịch Barber</Link>
           </nav>
         </header>
 
@@ -533,6 +700,34 @@ function Appointments() {
                   </option>
                 )
               )}
+            </select>
+          </div>
+
+          <div className="appointment-filter-field">
+            <label htmlFor="appointment-time">Giờ bắt đầu</label>
+            <input
+              id="appointment-time"
+              type="time"
+              value={timeFilter}
+              onChange={(event) => { setTimeFilter(event.target.value); setPage(1); }}
+            />
+          </div>
+
+          <div className="appointment-filter-field">
+            <label htmlFor="appointment-sort">Thứ tự</label>
+            <select
+              id="appointment-sort"
+              value={sortOrder}
+              onChange={(event) => {
+                setSortOrder(
+                  event.target.value as "priority" | "newest" | "oldest"
+                );
+                setPage(1);
+              }}
+            >
+              <option value="priority">Ưu tiên xử lý (mặc định)</option>
+              <option value="newest">Mới nhất → cũ nhất</option>
+              <option value="oldest">Cũ nhất → mới nhất</option>
             </select>
           </div>
 
@@ -673,12 +868,42 @@ function Appointments() {
                           Chi tiết
                         </button>
 
+                        {!(["COMPLETED", "CANCELLED"] as AppointmentStatus[]).includes(
+                          appointment.status
+                        ) && (
+                          <button
+                            type="button"
+                            className="appointment-action-detail"
+                            disabled={processingId === appointment._id}
+                            onClick={() => openDetail(appointment)}
+                          >
+                            Đổi Barber
+                          </button>
+                        )}
+
+                        {appointment.status === "NO_SHOW" && (
+                          <button
+                            type="button"
+                            className="appointment-action-primary"
+                            disabled={processingId === appointment._id}
+                            onClick={() => openReopenModal(appointment)}
+                          >
+                            Bật lại
+                          </button>
+                        )}
+
                         {(nextActions[appointment.status] ?? []).map(
                           (action) => (
                             <button
                               type="button"
                               key={action.status}
-                              disabled={processingId === appointment._id}
+                              disabled={
+                                processingId === appointment._id ||
+                                (action.status === "COMPLETED" && !canCompleteNow(appointment))
+                              }
+                              title={action.status === "COMPLETED" && !canCompleteNow(appointment)
+                                ? "Chỉ được hoàn thành trong khung giờ của lịch hẹn"
+                                : undefined}
                               className={
                                 action.status === "CANCELLED"
                                   ? "appointment-action-cancel"
@@ -696,6 +921,28 @@ function Appointments() {
                           )
                         )}
 
+                        {!(["COMPLETED", "CANCELLED"] as AppointmentStatus[]).includes(appointment.status) && (
+                          <button
+                            type="button"
+                            className="appointment-action-detail"
+                            disabled={processingId === appointment._id}
+                            onClick={() => void handleReschedule(appointment)}
+                          >
+                            Đổi lịch
+                          </button>
+                        )}
+
+                        {(["CHECKED_IN", "IN_PROGRESS"] as AppointmentStatus[]).includes(appointment.status) && (
+                          <button
+                            type="button"
+                            className="appointment-action-detail"
+                            disabled={processingId === appointment._id}
+                            onClick={() => void handleUpdateServices(appointment)}
+                          >
+                            Sửa dịch vụ
+                          </button>
+                        )}
+
                         {["IN_PROGRESS", "COMPLETED"].includes(
                           appointment.status
                         ) && appointment.paymentStatus !== "PAID" && (
@@ -711,14 +958,27 @@ function Appointments() {
                           </button>
                         )}
 
-                        <button
+                        {(["IN_PROGRESS", "COMPLETED"] as AppointmentStatus[]).includes(
+                          appointment.status
+                        ) && appointment.paymentStatus !== "PAID" && (
+                          <button
+                            type="button"
+                            className="appointment-action-payment"
+                            disabled={processingId === appointment._id}
+                            onClick={() => void handleBankTransfer(appointment)}
+                          >
+                            Chuyển khoản
+                          </button>
+                        )}
+
+                        {!isReceptionistPage && <button
                           type="button"
                           className="appointment-action-delete"
                           disabled={processingId === appointment._id}
                           onClick={() => void handleDeleteAppointment(appointment)}
                         >
                           Xóa
-                        </button>
+                        </button>}
                       </div>
                     </td>
                   </tr>
@@ -897,6 +1157,155 @@ function Appointments() {
                 </button>
               </div>
             )}
+          </section>
+        </div>
+      )}
+      {reopenForm && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setReopenForm(null)}
+        >
+          <section
+            className="appointment-modal appointment-reopen-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              onClick={() => setReopenForm(null)}
+              disabled={Boolean(processingId)}
+            >
+              ×
+            </button>
+
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2>Bật lại lịch vắng mặt</h2>
+            <p className="appointment-reopen-description">
+              {reopenForm.appointment.appointmentCode} · {getUserName(reopenForm.appointment.client)}
+            </p>
+
+            <div className="appointment-reopen-options">
+              <label>
+                <input
+                  type="radio"
+                  name="reopen-mode"
+                  checked={reopenForm.mode === "CHECK_IN"}
+                  onChange={() => setReopenForm({ ...reopenForm, mode: "CHECK_IN" })}
+                />
+                <span>
+                  <strong>Bật lại và check-in ngay</strong>
+                  <small>Giữ khung giờ và Barber cũ. Hệ thống sẽ kiểm tra Barber còn rảnh.</small>
+                </span>
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="reopen-mode"
+                  checked={reopenForm.mode === "RESCHEDULE"}
+                  onChange={() => setReopenForm({ ...reopenForm, mode: "RESCHEDULE" })}
+                />
+                <span>
+                  <strong>Đặt lại lịch</strong>
+                  <small>Chọn lại ngày, giờ và Barber; lịch sẽ trở về trạng thái đã xác nhận.</small>
+                </span>
+              </label>
+            </div>
+
+            {reopenForm.mode === "RESCHEDULE" && (
+              <div className="appointment-reopen-grid">
+                <label>
+                  Ngày hẹn mới
+                  <input
+                    type="date"
+                    value={reopenForm.appointmentDate}
+                    onChange={(event) => setReopenForm({
+                      ...reopenForm,
+                      appointmentDate: event.target.value,
+                    })}
+                  />
+                </label>
+
+                <label>
+                  Giờ bắt đầu mới
+                  <input
+                    type="time"
+                    value={reopenForm.startTime}
+                    onChange={(event) => setReopenForm({
+                      ...reopenForm,
+                      startTime: event.target.value,
+                    })}
+                  />
+                </label>
+
+                <label className="appointment-reopen-barber">
+                  Barber
+                  <select
+                    value={reopenForm.barberId}
+                    onChange={(event) => setReopenForm({
+                      ...reopenForm,
+                      barberId: event.target.value,
+                    })}
+                  >
+                    {barbers.map((barber) => (
+                      <option key={barber.id} value={barber.id}>
+                        {barber.fullName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+
+            <div className="appointment-reopen-actions">
+              <button
+                type="button"
+                className="appointment-reopen-cancel"
+                disabled={Boolean(processingId)}
+                onClick={() => setReopenForm(null)}
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                className="appointment-reopen-submit"
+                disabled={Boolean(processingId)}
+                onClick={() => void handleReopenNoShow()}
+              >
+                {processingId ? "Đang xử lý..." : "Xác nhận bật lại"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {receipt && (
+        <div className="appointment-modal-backdrop">
+          <section className="appointment-receipt">
+            <h2>HÓA ĐƠN THADS BARBER</h2>
+            <p>Mã lịch: <b>{receipt.appointment.appointmentCode}</b></p>
+            <p>Khách hàng: {receipt.appointment.customer?.fullName}</p>
+            <ul>
+              {receipt.appointment.services.map((service, index) => (
+                <li key={`${service.nameSnapshot}-${index}`}>
+                  <span>{service.nameSnapshot}</span>
+                  <b>{formatMoney(service.priceSnapshot)}đ</b>
+                </li>
+              ))}
+            </ul>
+            <h3>Tổng: {formatMoney(receipt.appointment.totalPrice)}đ</h3>
+            {receipt.method === "BANK_TRANSFER" && (
+              <img
+                alt="QR chuyển khoản"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                  `THADS|${receipt.appointment.appointmentCode}|${receipt.appointment.totalPrice}`
+                )}`}
+              />
+            )}
+            <p>{receipt.method === "CASH" ? "Đã thanh toán tiền mặt" : "Đã thanh toán chuyển khoản"}</p>
+            <div>
+              <button type="button" onClick={() => window.print()}>In hóa đơn</button>
+              <button type="button" onClick={() => setReceipt(null)}>Đóng</button>
+            </div>
           </section>
         </div>
       )}

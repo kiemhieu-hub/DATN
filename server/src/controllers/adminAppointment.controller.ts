@@ -13,6 +13,10 @@ export const getAppointments = async (req: Request, res: Response, next: NextFun
       status: typeof req.query.status === "string" ? req.query.status as AppointmentStatus | "ALL" : undefined,
       barberId: typeof req.query.barberId === "string" ? req.query.barberId : undefined,
       appointmentDate: typeof req.query.appointmentDate === "string" ? req.query.appointmentDate : undefined,
+      appointmentTime: typeof req.query.appointmentTime === "string" ? req.query.appointmentTime : undefined,
+      sortOrder: req.query.sortOrder === "newest" || req.query.sortOrder === "oldest"
+        ? req.query.sortOrder
+        : "priority",
       page: Number(req.query.page), limit: Number(req.query.limit),
     });
     res.json({ success: true, ...result });
@@ -56,6 +60,16 @@ export const changeBarber = async (req: Request, res: Response, next: NextFuncti
   try {
     const appointment = await service.reassignAppointmentBarber(idParam(req.params.id), req.body.barberId);
     res.json({ success: true, message: "Đổi Barber thành công", appointment });
+  } catch (error) { next(error); }
+};
+
+export const reopenNoShow = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const appointment = await service.reopenNoShowAppointment(
+      idParam(req.params.id), req.body.mode, req.body.appointmentDate,
+      req.body.startTime, req.body.barberId
+    );
+    res.json({ success: true, message: "Bật lại lịch hẹn thành công", appointment });
   } catch (error) { next(error); }
 };
 

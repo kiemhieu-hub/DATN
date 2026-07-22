@@ -32,6 +32,7 @@ import ReceptionistLogin from "./pages/Auth/ReceptionistLogin";
 import ReceptionistDashboard from "./pages/Receptionist/Dashboard";
 import ReceptionistBarberSchedules from "./pages/Receptionist/BarberSchedules";
 import AdminLayout from "./layouts/AdminLayout";
+import ReceptionistLayout from "./layouts/ReceptionistLayout";
 
 //Admin
 import AdminDashboard from "./pages/Admin/Dashboard";
@@ -45,6 +46,7 @@ import AdminContentManager from "./pages/Admin/AdminContentManager";
 import AdminVouchers from "./pages/Admin/Vouchers";
 import AdminServiceCategories from "./pages/Admin/ServiceCategories";
 import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
+import AdminReviews from "./pages/Admin/Reviews";
 
 function App() {
   return (
@@ -66,6 +68,7 @@ function App() {
           <Route path="payments" element={<AdminPayments />}/>
           <Route path="users" element={<AdminUsers />}/>
           <Route path="hairstyle-gallery" element={<AdminHairstyleGallery />}/>
+          <Route path="reviews" element={<AdminReviews />}/>
           <Route path="vouchers" element={
             <AdminContentManager
               eyebrow="KHUYẾN MÃI"
@@ -107,6 +110,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/receptionist/login" element={<ReceptionistLogin />} />
+        <Route path="/receptionist" element={<ReceptionistLayout />}></Route>
         <Route path="/receptionist/dashboard" element={<ReceptionistDashboard />} />
         <Route path="/receptionist/barbers" element={<ReceptionistBarberSchedules />} />
 
