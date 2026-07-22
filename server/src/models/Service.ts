@@ -21,6 +21,7 @@ export interface IService extends Document {
   priceFrom: boolean;
 
   durationMinutes: number;
+  category?: mongoose.Types.ObjectId;
 
   group: ServiceGroup;
   isExclusiveInGroup: boolean;
@@ -86,6 +87,13 @@ const serviceSchema = new Schema<IService>(
         1,
         "Thời lượng dịch vụ phải lớn hơn 0",
       ],
+    },
+
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "ServiceCategory",
+      default: null,
+      index: true,
     },
 
     group: {

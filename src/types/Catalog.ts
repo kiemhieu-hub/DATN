@@ -1,12 +1,5 @@
-export type ServiceGroup =
-  | "HAIRCUT"
-  | "BEARD"
-  | "COLOR"
-  | "CARE"
-  | "OTHER";
-
+export type ServiceGroup =| "HAIRCUT"| "BEARD"| "COLOR"| "CARE"| "OTHER";
 export type ServiceStaffType = "HAIR" | "CARE";
-
 export interface CatalogService {
   id: string;
   name: string;
@@ -23,6 +16,12 @@ export interface CatalogService {
 
   image: string;
   isActive: boolean;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+    sortOrder: number;
+  } | null;
 }
 
 export interface BarberSpecialty {

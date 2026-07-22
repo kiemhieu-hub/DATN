@@ -13,6 +13,12 @@ export interface AdminService {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+    isActive: boolean;
+  } | null;
 }
 
 export interface AdminServicePayload {
@@ -24,6 +30,7 @@ export interface AdminServicePayload {
   group: ServiceGroup;
   image: string;
   isActive: boolean;
+  categoryId: string;
 }
 
 export interface AdminServicePagination {

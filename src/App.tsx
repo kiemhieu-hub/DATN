@@ -43,6 +43,7 @@ import AdminPayments from "./pages/Admin/Payments";
 import AdminUsers from "./pages/Admin/Users";
 import AdminContentManager from "./pages/Admin/AdminContentManager";
 import AdminVouchers from "./pages/Admin/Vouchers";
+import AdminServiceCategories from "./pages/Admin/ServiceCategories";
 
 function App() {
   return (
@@ -55,6 +56,7 @@ function App() {
           <Route path="revenue" element={<AdminRevenue />} />
           <Route path="invoices" element={<AdminPayments />}/>
           <Route path="vouchers" element={<AdminVouchers />}/>
+          <Route path="service-categories" element={<AdminServiceCategories />}/>
           <Route path="barbers" element={<Barbers />}/>
           <Route path="barber-schedules" element={<ReceptionistBarberSchedules />}/>
           <Route path="services" element={<AdminServices />}/>

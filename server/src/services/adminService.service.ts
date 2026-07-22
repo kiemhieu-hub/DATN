@@ -5,6 +5,7 @@ import Service, {
 } from "../models/Service";
 import AppError from "../utils/AppError";
 import BarberProfile from "../models/BarberProfile";
+import ServiceCategory from "../models/ServiceCategory";
 
 export interface AdminServiceInput {
   name?: string;
@@ -16,6 +17,7 @@ export interface AdminServiceInput {
   isExclusiveInGroup?: boolean;
   image?: string;
   isActive?: boolean;
+  categoryId?: string;
 }
 
 interface GetAdminServicesInput {
@@ -40,11 +42,11 @@ const assertObjectId = (id: string): void => {
   }
 };
 
-const normalizePayload = (
+const normalizePayload = async (
   input: AdminServiceInput,
   partial = false
-): AdminServiceInput => {
-  const payload: AdminServiceInput = {};
+) => {
+  const payload: AdminServiceInput & { category?: mongoose.Types.ObjectId } = {};
 
   if (!partial || input.name !== undefined) {
     const name = String(input.name ?? "").trim();
@@ -90,6 +92,16 @@ const normalizePayload = (
     payload.isActive = Boolean(input.isActive);
   }
 
+  if (!partial || input.categoryId !== undefined) {
+    const categoryId = String(input.categoryId ?? "");
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      throw new AppError("Vui lòng chọn danh mục dịch vụ", 400);
+    }
+    const category = await ServiceCategory.exists({ _id: categoryId });
+    if (!category) throw new AppError("Danh mục dịch vụ không tồn tại", 404);
+    payload.category = new mongoose.Types.ObjectId(categoryId);
+  }
+
   // Theo quy tắc dự án, chỉ HAIRCUT và COLOR là nhóm chọn độc quyền.
   if (payload.group !== undefined) {
     payload.isExclusiveInGroup =
@@ -114,6 +126,14 @@ const serialize = (service: any) => ({
   isActive: service.isActive,
   createdAt: service.createdAt,
   updatedAt: service.updatedAt,
+  category: service.category && typeof service.category === "object" && service.category.name
+    ? {
+        id: String(service.category._id),
+        name: service.category.name,
+        slug: service.category.slug,
+        isActive: service.category.isActive,
+      }
+    : null,
 });
 
 export const getAdminServices = async (input: GetAdminServicesInput) => {
@@ -134,6 +154,7 @@ export const getAdminServices = async (input: GetAdminServicesInput) => {
 
   const [items, totalItems] = await Promise.all([
     Service.find(query)
+      .populate("category", "name slug isActive")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -154,13 +175,15 @@ export const getAdminServices = async (input: GetAdminServicesInput) => {
 
 export const getAdminServiceById = async (id: string) => {
   assertObjectId(id);
-  const service = await Service.findById(id).lean();
+  const service = await Service.findById(id)
+    .populate("category", "name slug isActive")
+    .lean();
   if (!service) throw new AppError("Không tìm thấy dịch vụ", 404);
   return serialize(service);
 };
 
 export const createAdminService = async (input: AdminServiceInput) => {
-  const payload = normalizePayload(input);
+  const payload = await normalizePayload(input);
   const duplicated = await Service.exists({
     name: { $regex: `^${String(payload.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
   });
@@ -173,12 +196,15 @@ export const createAdminService = async (input: AdminServiceInput) => {
     priceFrom: payload.priceFrom ?? false,
     isActive: payload.isActive ?? true,
   });
-  return serialize(service.toObject());
+  const populated = await Service.findById(service._id)
+    .populate("category", "name slug isActive")
+    .lean();
+  return serialize(populated);
 };
 
 export const updateAdminService = async (id: string, input: AdminServiceInput) => {
   assertObjectId(id);
-  const payload = normalizePayload(input, true);
+  const payload = await normalizePayload(input, true);
   if (payload.name) {
     const duplicated = await Service.exists({
       _id: { $ne: id },
@@ -194,7 +220,10 @@ export const updateAdminService = async (id: string, input: AdminServiceInput) =
   }
   Object.assign(current, payload);
   await current.save();
-  return serialize(current.toObject());
+  const populated = await Service.findById(current._id)
+    .populate("category", "name slug isActive")
+    .lean();
+  return serialize(populated);
 };
 
 export const updateAdminServiceStatus = async (id: string, isActive: unknown) => {
@@ -206,7 +235,7 @@ export const updateAdminServiceStatus = async (id: string, isActive: unknown) =>
     id,
     { isActive },
     { new: true, runValidators: true }
-  ).lean();
+  ).populate("category", "name slug isActive").lean();
   if (!service) throw new AppError("Không tìm thấy dịch vụ", 404);
   return serialize(service);
 };
