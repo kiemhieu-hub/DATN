@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 
 import Index from './pages/Client/Index';
 import About from './pages/Client/About';
@@ -42,7 +47,6 @@ import AdminServices from "./pages/Admin/Services";
 import AdminAppointments from "./pages/Admin/Appointments";
 import AdminPayments from "./pages/Admin/Payments";
 import AdminUsers from "./pages/Admin/Users";
-import AdminContentManager from "./pages/Admin/AdminContentManager";
 import AdminVouchers from "./pages/Admin/Vouchers";
 import AdminServiceCategories from "./pages/Admin/ServiceCategories";
 import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
@@ -55,6 +59,7 @@ function App() {
         {/* ================= ADMIN ================= */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="revenue" element={<AdminRevenue />} />
           <Route path="invoices" element={<AdminPayments />}/>
@@ -69,40 +74,6 @@ function App() {
           <Route path="users" element={<AdminUsers />}/>
           <Route path="hairstyle-gallery" element={<AdminHairstyleGallery />}/>
           <Route path="reviews" element={<AdminReviews />}/>
-          <Route path="vouchers" element={
-            <AdminContentManager
-              eyebrow="KHUYẾN MÃI"
-              title="Quản lý voucher"
-              description="Quản lý mã giảm giá và điều kiện áp dụng cho đơn đặt lịch."
-              kind="vouchers"
-            />
-          }/>
-          <Route path="reviews" element={
-            <AdminContentManager
-              eyebrow="PHẢN HỒI KHÁCH HÀNG"
-              title="Quản lý review"
-              description="Theo dõi, duyệt và xử lý đánh giá của khách hàng."
-              kind="reviews"
-            />
-          }/>
-          
-          <Route path="service-categories" element={
-            <AdminContentManager
-              eyebrow="DANH MỤC"
-              title="Quản lý danh mục dịch vụ"
-              description="Tổ chức các dịch vụ theo nhóm để quản lý và hiển thị thống nhất."
-              kind="service-categories"
-            />
-          }/>
-          
-          <Route path="hairstyle-gallery" element={
-            <AdminContentManager
-              eyebrow="BỘ SƯU TẬP"
-              title="Quản lý hairstyle gallery"
-              description="Quản lý hình ảnh kiểu tóc được hiển thị cho khách hàng tham khảo."
-              kind="hairstyle-gallery"
-            />
-          }/>
         </Route>
 
         {/* ================= AUTH ================= */}
@@ -110,9 +81,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/receptionist/login" element={<ReceptionistLogin />} />
-        <Route path="/receptionist" element={<ReceptionistLayout />}></Route>
-        <Route path="/receptionist/dashboard" element={<ReceptionistDashboard />} />
-        <Route path="/receptionist/barbers" element={<ReceptionistBarberSchedules />} />
+        <Route path="/receptionist" element={<ReceptionistLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<ReceptionistDashboard />} />
+          <Route path="barbers" element={<ReceptionistBarberSchedules />} />
+        </Route>
 
         {/* ================= CLIENT ================= */}
 

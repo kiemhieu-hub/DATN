@@ -5,6 +5,7 @@ import Payment from "../models/Payment";
 import AppError from "../utils/AppError";
 import User from "../models/User";
 import { recordAppointmentActivity } from "./appointmentActivity.service";
+import { sendAppointmentLifecycleEmail } from "./email.service";
 
 interface GetPaymentsInput {
   keyword?: string;
@@ -163,6 +164,45 @@ export const confirmCashPayment = async (
       .populate("barber", "fullName email phone role status")
       .populate("services.service", "name image group isActive")
       .lean();
+
+    if (appointment) {
+      const barberName =
+        typeof appointment.barber === "object" &&
+        appointment.barber &&
+        "fullName" in appointment.barber
+          ? String(appointment.barber.fullName)
+          : undefined;
+
+      void sendAppointmentLifecycleEmail({
+        event: "PAID",
+        to: appointment.customer.email,
+        customerName:
+          appointment.customer.fullName,
+        appointmentCode:
+          appointment.appointmentCode,
+        appointmentDate:
+          appointment.appointmentDate,
+        startTime: appointment.startTime,
+        endTime: appointment.endTime,
+        barberName,
+        services:
+          appointment.services.map(
+            (service) =>
+              service.nameSnapshot
+          ),
+        totalPrice:
+          appointment.totalPrice,
+        message:
+          method === "CASH"
+            ? "THADS Barber đã xác nhận thanh toán tiền mặt thành công."
+            : "THADS Barber đã xác nhận thanh toán chuyển khoản thành công.",
+      }).catch((error: unknown) => {
+        console.error(
+          "Không thể gửi email thanh toán:",
+          error
+        );
+      });
+    }
 
     return {
       payment,

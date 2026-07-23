@@ -16,7 +16,11 @@ import Service, {
 
 import User from "../models/User";
 import AppError from "../utils/AppError";
-import { sendBookingConfirmationEmail } from "./email.service";
+import {
+  sendAppointmentLifecycleEmail,
+  sendBookingConfirmationEmail,
+  type AppointmentEmailEvent,
+} from "./email.service";
 import {
   consumeVoucher,
   evaluateVoucher,
@@ -26,6 +30,58 @@ import {
   recordAppointmentActivity,
   recordSystemActivities,
 } from "./appointmentActivity.service";
+
+interface LifecycleEmailAppointment {
+  appointmentCode: string;
+  customer: {
+    fullName: string;
+    email: string;
+  };
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+  totalPrice: number;
+  services: Array<{
+    nameSnapshot: string;
+  }>;
+  barber?: {
+    fullName?: string;
+  } | mongoose.Types.ObjectId;
+}
+
+const queueAppointmentLifecycleEmail = (
+  appointment: LifecycleEmailAppointment,
+  event: AppointmentEmailEvent,
+  message: string
+) => {
+  const barberName =
+    appointment.barber &&
+    !(appointment.barber instanceof mongoose.Types.ObjectId) &&
+    appointment.barber.fullName
+      ? appointment.barber.fullName
+      : undefined;
+
+  void sendAppointmentLifecycleEmail({
+    event,
+    to: appointment.customer.email,
+    customerName: appointment.customer.fullName,
+    appointmentCode: appointment.appointmentCode,
+    appointmentDate: appointment.appointmentDate,
+    startTime: appointment.startTime,
+    endTime: appointment.endTime,
+    barberName,
+    services: appointment.services.map(
+      (service) => service.nameSnapshot
+    ),
+    totalPrice: appointment.totalPrice,
+    message,
+  }).catch((error: unknown) => {
+    console.error(
+      `Không thể gửi email ${event}:`,
+      error
+    );
+  });
+};
 
 interface CreateAppointmentInput {
   barberId: string;
@@ -1051,6 +1107,12 @@ export const cancelMyAppointment =
       },
     });
 
+    queueAppointmentLifecycleEmail(
+      appointment,
+      "CANCELLED",
+      `Bạn đã hủy lịch hẹn. Lý do: ${reason.trim()}`
+    );
+
     return populateAppointment(
       String(appointment._id)
     );
@@ -1536,6 +1598,38 @@ export const processAutomaticAppointmentStatuses = async () => {
       { previousStatus: "IN_PROGRESS", newStatus: "COMPLETED" }
     ),
   ]);
+
+  const automaticEmailAppointments =
+    await Appointment.find({
+      _id: {
+        $in: [
+          ...overdueIds,
+          ...completedIds,
+        ],
+      },
+    })
+      .populate("barber", "fullName")
+      .lean();
+
+  automaticEmailAppointments.forEach(
+    (appointment) => {
+      const wasNoShow = overdueIds.some(
+        (id) =>
+          String(id) ===
+          String(appointment._id)
+      );
+
+      queueAppointmentLifecycleEmail(
+        appointment,
+        wasNoShow
+          ? "NO_SHOW"
+          : "COMPLETED",
+        wasNoShow
+          ? "Khách hàng chưa check-in sau giờ hẹn 15 phút nên lịch đã được ghi nhận vắng mặt."
+          : "Khung giờ dịch vụ đã kết thúc và lịch hẹn được hệ thống chuyển sang hoàn thành."
+      );
+    }
+  );
 
   return { noShow: result.modifiedCount, completed: completedResult.modifiedCount };
 };

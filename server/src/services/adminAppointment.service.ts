@@ -12,8 +12,55 @@ import {
   getAppointmentActivities,
   recordAppointmentActivity,
 } from "./appointmentActivity.service";
+import {
+  sendAppointmentLifecycleEmail,
+  type AppointmentEmailEvent,
+} from "./email.service";
 
 type StaffRole = "ADMIN" | "RECEPTIONIST";
+
+interface AppointmentEmailSource {
+  appointmentCode: string;
+  customer: {
+    fullName: string;
+    email: string;
+  };
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+  totalPrice: number;
+  services: Array<{
+    nameSnapshot: string;
+  }>;
+}
+
+const queueLifecycleEmail = (
+  appointment: AppointmentEmailSource,
+  event: AppointmentEmailEvent,
+  message: string,
+  barberName?: string
+) => {
+  void sendAppointmentLifecycleEmail({
+    event,
+    to: appointment.customer.email,
+    customerName: appointment.customer.fullName,
+    appointmentCode: appointment.appointmentCode,
+    appointmentDate: appointment.appointmentDate,
+    startTime: appointment.startTime,
+    endTime: appointment.endTime,
+    barberName,
+    services: appointment.services.map(
+      (service) => service.nameSnapshot
+    ),
+    totalPrice: appointment.totalPrice,
+    message,
+  }).catch((error: unknown) => {
+    console.error(
+      `Không thể gửi email ${event}:`,
+      error
+    );
+  });
+};
 
 interface ListInput {
   keyword?: string;
@@ -189,7 +236,36 @@ export const changeAdminAppointmentStatus = async (
   if (!statuses.includes(status)) throw new AppError("Trạng thái không hợp lệ", 400);
   if (status === "CANCELLED" && !reason?.trim()) throw new AppError("Vui lòng nhập lý do hủy lịch", 400);
   await updateAppointmentStatus({ appointmentId, actorId, actorRole, status, reason });
-  return getAdminAppointmentDetail(appointmentId);
+  const appointment = await getAdminAppointmentDetail(appointmentId);
+  const emailEvent =
+    status === "CONFIRMED"
+      ? "CONFIRMED"
+      : status === "CANCELLED"
+        ? "CANCELLED"
+        : status === "NO_SHOW"
+          ? "NO_SHOW"
+          : status === "COMPLETED"
+            ? "COMPLETED"
+            : undefined;
+
+  if (emailEvent) {
+    const barberName =
+      typeof appointment.barber === "object" &&
+      appointment.barber &&
+      "fullName" in appointment.barber
+        ? String(appointment.barber.fullName)
+        : undefined;
+    queueLifecycleEmail(
+      appointment,
+      emailEvent,
+      status === "CANCELLED"
+        ? `Lịch hẹn đã được hủy. Lý do: ${reason ?? "Không có"}`
+        : `Trạng thái lịch hẹn đã chuyển sang ${status}.`,
+      barberName
+    );
+  }
+
+  return appointment;
 };
 
 export const reassignAppointmentBarber = async (
@@ -228,7 +304,14 @@ export const reassignAppointmentBarber = async (
       newBarberId: barberId,
     },
   });
-  return getAdminAppointmentDetail(appointmentId);
+  const detail = await getAdminAppointmentDetail(appointmentId);
+  queueLifecycleEmail(
+    detail,
+    "BARBER_CHANGED",
+    `Barber phụ trách đã đổi từ ${previousBarber?.fullName ?? "không xác định"} sang ${nextBarber?.fullName ?? "không xác định"}.`,
+    nextBarber?.fullName
+  );
+  return detail;
 };
 
 export const rescheduleAppointment = async (
@@ -273,7 +356,13 @@ export const rescheduleAppointment = async (
       customerConsent: consent,
     },
   });
-  return getAdminAppointmentDetail(appointmentId);
+  const detail = await getAdminAppointmentDetail(appointmentId);
+  queueLifecycleEmail(
+    detail,
+    "RESCHEDULED",
+    `Thời gian cũ: ${previousSchedule.appointmentDate} ${previousSchedule.startTime}–${previousSchedule.endTime}. Thời gian mới được hiển thị bên dưới.`
+  );
+  return detail;
 };
 
 export const reopenNoShowAppointment = async (
@@ -362,7 +451,22 @@ export const reopenNoShowAppointment = async (
     throw new AppError("Phương thức bật lại lịch không hợp lệ", 400);
   }
 
-  return getAdminAppointmentDetail(appointmentId);
+  const detail = await getAdminAppointmentDetail(appointmentId);
+  const barberName =
+    typeof detail.barber === "object" &&
+    detail.barber &&
+    "fullName" in detail.barber
+      ? String(detail.barber.fullName)
+      : undefined;
+  queueLifecycleEmail(
+    detail,
+    "REOPENED",
+    mode === "CHECK_IN"
+      ? "Lịch vắng mặt đã được bật lại và khách hàng được check-in."
+      : "Lịch vắng mặt đã được bật lại với ngày giờ mới.",
+    barberName
+  );
+  return detail;
 };
 
 export const replaceAppointmentServices = async (
