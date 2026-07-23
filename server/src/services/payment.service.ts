@@ -4,6 +4,7 @@ import Appointment from "../models/Appointment";
 import Payment from "../models/Payment";
 import AppError from "../utils/AppError";
 import User from "../models/User";
+import { recordAppointmentActivity } from "./appointmentActivity.service";
 
 interface GetPaymentsInput {
   keyword?: string;
@@ -47,7 +48,8 @@ const createTransactionCode = (): string => {
 export const confirmCashPayment = async (
   appointmentId: string,
   adminId: string,
-  method: "CASH" | "BANK_TRANSFER" = "CASH"
+  method: "CASH" | "BANK_TRANSFER" = "CASH",
+  actorRole: "ADMIN" | "RECEPTIONIST" = "ADMIN"
 ) => {
   if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
     throw new AppError("Mã lịch hẹn không hợp lệ", 400);
@@ -120,6 +122,23 @@ export const confirmCashPayment = async (
 
       appointment.paymentStatus = "PAID";
       await appointment.save({ session });
+      await recordAppointmentActivity({
+        appointmentId: appointment._id,
+        action: "PAYMENT_CONFIRMED",
+        description:
+          method === "CASH"
+            ? `Đã xác nhận thanh toán tiền mặt ${appointment.totalPrice.toLocaleString("vi-VN")}đ`
+            : `Đã xác nhận chuyển khoản ${appointment.totalPrice.toLocaleString("vi-VN")}đ`,
+        actorId: adminId,
+        actorRole,
+        metadata: {
+          method,
+          amount: appointment.totalPrice,
+          paymentStatus: "PAID",
+          transactionCode: payment.transactionCode,
+        },
+        session,
+      });
 
       createdPaymentId = String(payment._id);
     });
@@ -337,7 +356,11 @@ export const getAdminPaymentById = async (
   return payment;
 };
 
-export const deleteAdminPayment = async (paymentId: string) => {
+export const deleteAdminPayment = async (
+  paymentId: string,
+  actorId: string,
+  actorRole: "ADMIN" | "RECEPTIONIST"
+) => {
   if (!mongoose.Types.ObjectId.isValid(paymentId)) {
     throw new AppError("Mã giao dịch không hợp lệ", 400);
   }
@@ -349,6 +372,19 @@ export const deleteAdminPayment = async (paymentId: string) => {
     { _id: payment.appointment },
     { $set: { paymentStatus: "UNPAID" } }
   );
+  await recordAppointmentActivity({
+    appointmentId: payment.appointment,
+    action: "PAYMENT_DELETED",
+    description: "Đã xóa giao dịch và chuyển lịch về chưa thanh toán",
+    actorId,
+    actorRole,
+    metadata: {
+      transactionCode: payment.transactionCode,
+      amount: payment.amount,
+      previousPaymentStatus: "PAID",
+      newPaymentStatus: "UNPAID",
+    },
+  });
 
   return { id: paymentId, transactionCode: payment.transactionCode };
 };

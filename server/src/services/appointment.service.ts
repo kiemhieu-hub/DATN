@@ -22,6 +22,10 @@ import {
   evaluateVoucher,
   type VoucherCalculation,
 } from "./voucher.service";
+import {
+  recordAppointmentActivity,
+  recordSystemActivities,
+} from "./appointmentActivity.service";
 
 interface CreateAppointmentInput {
   barberId: string;
@@ -882,6 +886,21 @@ export const createAppointment =
       }
     }
 
+    await recordAppointmentActivity({
+      appointmentId: appointment._id,
+      action: "APPOINTMENT_CREATED",
+      description: "Khách hàng đã tạo lịch hẹn",
+      actorId: clientId,
+      actorRole: "CLIENT",
+      metadata: {
+        appointmentDate,
+        startTime,
+        endTime,
+        totalPrice,
+        voucherCode: normalizedVoucher || undefined,
+      },
+    });
+
     void sendBookingConfirmationEmail({
       to: appointment.customer.email,
       customerName: appointment.customer.fullName,
@@ -964,6 +983,9 @@ export const cancelMyAppointment =
       );
     }
 
+    const previousStatus =
+      appointment.status;
+
     if (
       !["PENDING", "CONFIRMED"].includes(
         appointment.status
@@ -1015,6 +1037,19 @@ export const cancelMyAppointment =
     };
 
     await appointment.save();
+
+    await recordAppointmentActivity({
+      appointmentId: appointment._id,
+      action: "STATUS_CHANGED",
+      description: "Khách hàng đã hủy lịch hẹn",
+      actorId: userId,
+      actorRole: role,
+      metadata: {
+        previousStatus,
+        newStatus: "CANCELLED",
+        reason: reason?.trim() || undefined,
+      },
+    });
 
     return populateAppointment(
       String(appointment._id)
@@ -1119,6 +1154,9 @@ export const updateAppointmentStatus =
       );
     }
 
+    const previousStatus =
+      appointment.status;
+
     const allowedStatuses =
       STATUS_TRANSITIONS[
         appointment.status
@@ -1199,6 +1237,19 @@ export const updateAppointmentStatus =
     }
 
     await appointment.save();
+
+    await recordAppointmentActivity({
+      appointmentId: appointment._id,
+      action: "STATUS_CHANGED",
+      description: `Chuyển trạng thái từ ${previousStatus} sang ${status}`,
+      actorId,
+      actorRole,
+      metadata: {
+        previousStatus,
+        newStatus: status,
+        reason: reason?.trim() || undefined,
+      },
+    });
 
     return populateAppointment(
       String(appointment._id)
@@ -1470,6 +1521,22 @@ export const processAutomaticAppointmentStatuses = async () => {
         { $set: { status: "COMPLETED", completedAt: now } }
       )
     : { modifiedCount: 0 };
+
+  await Promise.all([
+    recordSystemActivities(
+      overdueIds,
+      "AUTO_NO_SHOW",
+      "Hệ thống tự động chuyển lịch sang vắng mặt sau 15 phút",
+      { previousStatus: "PENDING_OR_CONFIRMED", newStatus: "NO_SHOW" }
+    ),
+    recordSystemActivities(
+      completedIds,
+      "AUTO_COMPLETED",
+      "Hệ thống tự động hoàn thành lịch khi hết khung giờ",
+      { previousStatus: "IN_PROGRESS", newStatus: "COMPLETED" }
+    ),
+  ]);
+
   return { noShow: result.modifiedCount, completed: completedResult.modifiedCount };
 };
 
@@ -1487,5 +1554,16 @@ export const confirmClientDeposit = async (appointmentId: string, clientId: stri
   appointment.depositPaid = true;
   appointment.paymentStatus = "PENDING";
   await appointment.save();
+  await recordAppointmentActivity({
+    appointmentId: appointment._id,
+    action: "DEPOSIT_CONFIRMED",
+    description: "Khách hàng đã xác nhận thanh toán tiền cọc",
+    actorId: clientId,
+    actorRole: "CLIENT",
+    metadata: {
+      depositAmount: appointment.depositAmount,
+      paymentStatus: "PENDING",
+    },
+  });
   return populateAppointment(appointmentId);
 };

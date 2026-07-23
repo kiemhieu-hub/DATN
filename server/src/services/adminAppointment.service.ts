@@ -7,6 +7,13 @@ import Service from "../models/Service";
 import { processAutomaticAppointmentStatuses, updateAppointmentStatus } from "./appointment.service";
 import Payment from "../models/Payment";
 import Review from "../models/Review";
+import {
+  deleteAppointmentActivities,
+  getAppointmentActivities,
+  recordAppointmentActivity,
+} from "./appointmentActivity.service";
+
+type StaffRole = "ADMIN" | "RECEPTIONIST";
 
 interface ListInput {
   keyword?: string;
@@ -164,9 +171,12 @@ export const listAdminAppointments = async (input: ListInput) => {
 
 export const getAdminAppointmentDetail = async (id: string) => {
   assertId(id, "Mã lịch hẹn không hợp lệ");
-  const item = await populate(Appointment.findById(id)).lean();
+  const [item, activities] = await Promise.all([
+    populate(Appointment.findById(id)).lean(),
+    getAppointmentActivities(id),
+  ]);
   if (!item) throw new AppError("Không tìm thấy lịch hẹn", 404);
-  return item;
+  return { ...item, activities };
 };
 
 export const changeAdminAppointmentStatus = async (
@@ -178,10 +188,16 @@ export const changeAdminAppointmentStatus = async (
 ) => {
   if (!statuses.includes(status)) throw new AppError("Trạng thái không hợp lệ", 400);
   if (status === "CANCELLED" && !reason?.trim()) throw new AppError("Vui lòng nhập lý do hủy lịch", 400);
-  return updateAppointmentStatus({ appointmentId, actorId, actorRole, status, reason });
+  await updateAppointmentStatus({ appointmentId, actorId, actorRole, status, reason });
+  return getAdminAppointmentDetail(appointmentId);
 };
 
-export const reassignAppointmentBarber = async (appointmentId: string, barberId: string) => {
+export const reassignAppointmentBarber = async (
+  appointmentId: string,
+  barberId: string,
+  actorId: string,
+  actorRole: StaffRole
+) => {
   assertId(appointmentId, "Mã lịch hẹn không hợp lệ");
   assertId(barberId, "Mã Barber không hợp lệ");
   const appointment = await Appointment.findById(appointmentId);
@@ -194,8 +210,24 @@ export const reassignAppointmentBarber = async (appointmentId: string, barberId:
     appointment.startTime, appointment.endTime
   );
 
+  const previousBarberId = String(appointment.barber);
+  const [previousBarber, nextBarber] = await Promise.all([
+    User.findById(previousBarberId).select("fullName").lean(),
+    User.findById(barberId).select("fullName").lean(),
+  ]);
   appointment.barber = new mongoose.Types.ObjectId(barberId);
   await appointment.save();
+  await recordAppointmentActivity({
+    appointmentId,
+    action: "BARBER_CHANGED",
+    description: `Đổi Barber từ ${previousBarber?.fullName ?? "không xác định"} sang ${nextBarber?.fullName ?? "không xác định"}`,
+    actorId,
+    actorRole,
+    metadata: {
+      previousBarberId,
+      newBarberId: barberId,
+    },
+  });
   return getAdminAppointmentDetail(appointmentId);
 };
 
@@ -203,7 +235,9 @@ export const rescheduleAppointment = async (
   appointmentId: string,
   appointmentDate: string,
   startTime: string,
-  consent: boolean
+  consent: boolean,
+  actorId: string,
+  actorRole: StaffRole
 ) => {
   assertId(appointmentId, "Mã lịch hẹn không hợp lệ");
   if (!consent) throw new AppError("Cần xác nhận khách hàng đã đồng ý đổi lịch", 400);
@@ -216,12 +250,29 @@ export const rescheduleAppointment = async (
   }
   const duration = appointment.durationMinutes;
   const endTime = `${String(Math.floor((timeToMinutes(startTime) + duration) / 60)).padStart(2, "0")}:${String((timeToMinutes(startTime) + duration) % 60).padStart(2, "0")}`;
+  const previousSchedule = {
+    appointmentDate: appointment.appointmentDate,
+    startTime: appointment.startTime,
+    endTime: appointment.endTime,
+  };
   appointment.appointmentDate = appointmentDate;
   appointment.startTime = startTime;
   appointment.endTime = endTime;
   appointment.rescheduleConsent = true;
   if (appointment.status === "NO_SHOW") appointment.status = "CONFIRMED";
   await appointment.save();
+  await recordAppointmentActivity({
+    appointmentId,
+    action: "APPOINTMENT_RESCHEDULED",
+    description: `Đổi lịch từ ${previousSchedule.appointmentDate} ${previousSchedule.startTime} sang ${appointmentDate} ${startTime}`,
+    actorId,
+    actorRole,
+    metadata: {
+      previousSchedule,
+      newSchedule: { appointmentDate, startTime, endTime },
+      customerConsent: consent,
+    },
+  });
   return getAdminAppointmentDetail(appointmentId);
 };
 
@@ -230,7 +281,9 @@ export const reopenNoShowAppointment = async (
   mode: "CHECK_IN" | "RESCHEDULE",
   appointmentDate?: string,
   startTime?: string,
-  barberId?: string
+  barberId?: string,
+  actorId?: string,
+  actorRole: StaffRole = "ADMIN"
 ) => {
   assertId(appointmentId, "Mã lịch hẹn không hợp lệ");
   const appointment = await Appointment.findById(appointmentId);
@@ -252,6 +305,15 @@ export const reopenNoShowAppointment = async (
     appointment.status = "CHECKED_IN";
     appointment.checkedInAt = now;
     appointment.reopenedAt = now;
+    await appointment.save();
+    await recordAppointmentActivity({
+      appointmentId,
+      action: "NO_SHOW_REOPENED_CHECK_IN",
+      description: "Đã bật lại lịch vắng mặt và check-in khách hàng",
+      actorId,
+      actorRole,
+      metadata: { newStatus: "CHECKED_IN" },
+    });
   } else if (mode === "RESCHEDULE") {
     if (!appointmentDate || !startTime || !barberId) {
       throw new AppError("Vui lòng chọn đầy đủ ngày, giờ và Barber mới", 400);
@@ -264,6 +326,12 @@ export const reopenNoShowAppointment = async (
     const endTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
     await assertBarberAvailability(barberId, appointmentId, appointmentDate, startTime, endTime);
 
+    const previousSchedule = {
+      appointmentDate: appointment.appointmentDate,
+      startTime: appointment.startTime,
+      endTime: appointment.endTime,
+      barberId: String(appointment.barber),
+    };
     appointment.appointmentDate = appointmentDate;
     appointment.startTime = startTime;
     appointment.endTime = endTime;
@@ -272,17 +340,36 @@ export const reopenNoShowAppointment = async (
     appointment.confirmedAt = new Date();
     appointment.reopenedAt = new Date();
     appointment.rescheduleConsent = true;
+    await appointment.save();
+    await recordAppointmentActivity({
+      appointmentId,
+      action: "NO_SHOW_REOPENED_RESCHEDULED",
+      description: `Bật lại lịch vắng mặt và đặt lại sang ${appointmentDate} ${startTime}`,
+      actorId,
+      actorRole,
+      metadata: {
+        previousSchedule,
+        newSchedule: {
+          appointmentDate,
+          startTime,
+          endTime,
+          barberId,
+        },
+        newStatus: "CONFIRMED",
+      },
+    });
   } else {
     throw new AppError("Phương thức bật lại lịch không hợp lệ", 400);
   }
 
-  await appointment.save();
   return getAdminAppointmentDetail(appointmentId);
 };
 
 export const replaceAppointmentServices = async (
   appointmentId: string,
-  serviceIds: string[]
+  serviceIds: string[],
+  actorId: string,
+  actorRole: StaffRole
 ) => {
   assertId(appointmentId, "Mã lịch hẹn không hợp lệ");
   const uniqueIds = [...new Set(serviceIds ?? [])];
@@ -299,6 +386,12 @@ export const replaceAppointmentServices = async (
     throw new AppError("Chỉ được chỉnh dịch vụ sau khi khách đã check-in", 400);
   }
   if (services.length !== uniqueIds.length) throw new AppError("Có dịch vụ không tồn tại", 404);
+  const previousServices = appointment.services.map((item) => ({
+    serviceId: String(item.service),
+    name: item.nameSnapshot,
+    price: item.priceSnapshot,
+  }));
+  const previousTotal = appointment.totalPrice;
   const map = new Map(services.map((item) => [String(item._id), item]));
   appointment.services = uniqueIds.map((id) => {
     const item = map.get(id)!;
@@ -313,6 +406,23 @@ export const replaceAppointmentServices = async (
   const endMinutes = timeToMinutes(appointment.startTime) + appointment.durationMinutes;
   appointment.endTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
   await appointment.save();
+  await recordAppointmentActivity({
+    appointmentId,
+    action: "SERVICES_CHANGED",
+    description: `Cập nhật dịch vụ: ${previousServices.map((item) => item.name).join(", ")} → ${appointment.services.map((item) => item.nameSnapshot).join(", ")}`,
+    actorId,
+    actorRole,
+    metadata: {
+      previousServices,
+      newServices: appointment.services.map((item) => ({
+        serviceId: String(item.service),
+        name: item.nameSnapshot,
+        price: item.priceSnapshot,
+      })),
+      previousTotal,
+      newTotal: appointment.totalPrice,
+    },
+  });
   return getAdminAppointmentDetail(appointmentId);
 };
 
@@ -324,6 +434,7 @@ export const deleteAdminAppointment = async (appointmentId: string) => {
   await Promise.all([
     Payment.deleteMany({ appointment: appointment._id }),
     Review.deleteMany({ appointment: appointment._id }),
+    deleteAppointmentActivities(appointment._id),
   ]);
   await appointment.deleteOne();
 

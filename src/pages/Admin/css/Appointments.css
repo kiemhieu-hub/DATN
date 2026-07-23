@@ -17,10 +17,6 @@
   margin: 0 auto;
 }
 
-/* =========================
-   PHẦN ĐẦU TRANG
-========================= */
-
 .admin-appointments-header {
   display: flex;
   align-items: flex-end;
@@ -293,6 +289,80 @@
   .appointment-reopen-barber {
     grid-column: auto;
   }
+}
+
+/* =========================
+   NHẬT KÝ LỊCH HẸN
+========================= */
+
+.appointment-activity-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #3c3933;
+}
+
+.appointment-activity-section h3 {
+  margin: 0 0 16px;
+  color: #f2eee7;
+}
+
+.appointment-activity-timeline {
+  position: relative;
+  display: grid;
+  gap: 0;
+  padding-left: 9px;
+}
+
+.appointment-activity-timeline::before {
+  position: absolute;
+  top: 8px;
+  bottom: 18px;
+  left: 13px;
+  width: 1px;
+  background: #4a463e;
+  content: "";
+}
+
+.appointment-activity-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 14px;
+  padding: 0 0 18px;
+}
+
+.appointment-activity-dot {
+  position: relative;
+  z-index: 1;
+  width: 11px;
+  height: 11px;
+  margin-top: 5px;
+  border: 2px solid #171715;
+  border-radius: 50%;
+  background: #c6a15b;
+  box-shadow: 0 0 0 2px #c6a15b;
+}
+
+.appointment-activity-item strong {
+  display: block;
+  color: #ece8e1;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.appointment-activity-item p {
+  margin: 5px 0 0;
+  color: #918d85;
+  font-size: 12px;
+}
+
+.appointment-activity-empty {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed #45423b;
+  border-radius: 6px;
+  color: #918d85;
+  text-align: center;
 }
 
 /* =========================

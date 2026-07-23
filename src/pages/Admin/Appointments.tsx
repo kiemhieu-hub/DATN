@@ -16,6 +16,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import {
   changeAdminAppointmentBarber,
   deleteAdminAppointment,
+  getAdminAppointment,
   getAdminAppointments,
   reopenAdminNoShowAppointment,
   rescheduleAdminAppointment,
@@ -311,16 +312,24 @@ function Appointments() {
     setSubmittedKeyword(keyword.trim());
   };
 
-  const openDetail = (appointment: Appointment): void => {
-    setSelectedAppointment(appointment);
+  const openDetail = async (appointment: Appointment): Promise<void> => {
+    try {
+      setProcessingId(appointment._id);
+      setError("");
+      const response = await getAdminAppointment(appointment._id);
+      setSelectedAppointment(response.appointment);
 
-    const currentBarberId =
-      typeof appointment.barber === "string"
-        ? appointment.barber
-        : appointment.barber._id;
+      const currentBarberId =
+        typeof response.appointment.barber === "string"
+          ? response.appointment.barber
+          : response.appointment.barber._id;
 
-    setSelectedBarberId(currentBarberId);
-    setError("");
+      setSelectedBarberId(currentBarberId);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể tải chi tiết lịch hẹn"));
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const closeDetail = (): void => {
@@ -620,6 +629,9 @@ function Appointments() {
     return null;
   }
 
+  const selectedActivities =
+    selectedAppointment?.activities ?? [];
+
   return (
     <div className="admin-appointments-page">
       <main className="admin-appointments-container">
@@ -863,7 +875,7 @@ function Appointments() {
                         <button
                           type="button"
                           className="appointment-action-detail"
-                          onClick={() => openDetail(appointment)}
+                          onClick={() => void openDetail(appointment)}
                         >
                           Chi tiết
                         </button>
@@ -875,7 +887,7 @@ function Appointments() {
                             type="button"
                             className="appointment-action-detail"
                             disabled={processingId === appointment._id}
-                            onClick={() => openDetail(appointment)}
+                            onClick={() => void openDetail(appointment)}
                           >
                             Đổi Barber
                           </button>
@@ -1102,6 +1114,46 @@ function Appointments() {
                 <span>{selectedAppointment.cancellation.reason}</span>
               </div>
             )}
+
+            <section className="appointment-activity-section">
+              <h3>Lịch sử hoạt động</h3>
+
+              {selectedActivities.length > 0 ? (
+                <div className="appointment-activity-timeline">
+                  {selectedActivities.map((activity) => {
+                    const actorName =
+                      activity.actor && typeof activity.actor !== "string"
+                        ? activity.actor.fullName
+                        : activity.actorRole === "SYSTEM"
+                          ? "Hệ thống"
+                          : activity.actorRole;
+
+                    return (
+                      <article
+                        className="appointment-activity-item"
+                        key={activity._id}
+                      >
+                        <span className="appointment-activity-dot" />
+                        <div>
+                          <strong>{activity.description}</strong>
+                          <p>
+                            {actorName} ·{" "}
+                            {new Intl.DateTimeFormat("vi-VN", {
+                              dateStyle: "short",
+                              timeStyle: "medium",
+                            }).format(new Date(activity.createdAt))}
+                          </p>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="appointment-activity-empty">
+                  Lịch hẹn chưa có hoạt động được ghi nhận.
+                </p>
+              )}
+            </section>
 
             {["IN_PROGRESS", "COMPLETED"].includes(
               selectedAppointment.status

@@ -29,8 +29,13 @@ export const deletePayment = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
     const paymentId = Array.isArray(req.params.id) ? req.params.id[0] ?? "" : req.params.id ?? "";
-    const payment = await deleteAdminPayment(paymentId);
+    const payment = await deleteAdminPayment(
+      paymentId,
+      req.user.userId,
+      req.user.role as "ADMIN" | "RECEPTIONIST"
+    );
     res.status(200).json({ success: true, message: "Xóa hóa đơn thành công", payment });
   } catch (error) {
     next(error);
@@ -49,7 +54,9 @@ export const payCash = async (
 
     const result = await confirmCashPayment(
       getAppointmentId(req.params.appointmentId),
-      req.user.userId
+      req.user.userId,
+      "CASH",
+      req.user.role as "ADMIN" | "RECEPTIONIST"
     );
 
     res.status(201).json({
@@ -72,7 +79,8 @@ export const payBankTransfer = async (
     const result = await confirmCashPayment(
       getAppointmentId(req.params.appointmentId),
       req.user.userId,
-      "BANK_TRANSFER"
+      "BANK_TRANSFER",
+      req.user.role as "ADMIN" | "RECEPTIONIST"
     );
     res.status(201).json({ success: true, message: "Xác nhận chuyển khoản thành công", ...result });
   } catch (error) { next(error); }

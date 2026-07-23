@@ -40,34 +40,47 @@ export const updateStatus = async (req: AuthenticatedRequest, res: Response, nex
   } catch (error) { next(error); }
 };
 
-export const reschedule = async (req: Request, res: Response, next: NextFunction) => {
+export const reschedule = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
     const appointment = await service.rescheduleAppointment(
-      idParam(req.params.id), req.body.appointmentDate, req.body.startTime, req.body.customerConsent
+      idParam(req.params.id), req.body.appointmentDate, req.body.startTime,
+      req.body.customerConsent, req.user.userId,
+      req.user.role as "ADMIN" | "RECEPTIONIST"
     );
     res.json({ success: true, message: "Đổi lịch hẹn thành công", appointment });
   } catch (error) { next(error); }
 };
 
-export const updateServices = async (req: Request, res: Response, next: NextFunction) => {
+export const updateServices = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const appointment = await service.replaceAppointmentServices(idParam(req.params.id), req.body.serviceIds);
+    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
+    const appointment = await service.replaceAppointmentServices(
+      idParam(req.params.id), req.body.serviceIds, req.user.userId,
+      req.user.role as "ADMIN" | "RECEPTIONIST"
+    );
     res.json({ success: true, message: "Cập nhật dịch vụ phát sinh thành công", appointment });
   } catch (error) { next(error); }
 };
 
-export const changeBarber = async (req: Request, res: Response, next: NextFunction) => {
+export const changeBarber = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const appointment = await service.reassignAppointmentBarber(idParam(req.params.id), req.body.barberId);
+    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
+    const appointment = await service.reassignAppointmentBarber(
+      idParam(req.params.id), req.body.barberId, req.user.userId,
+      req.user.role as "ADMIN" | "RECEPTIONIST"
+    );
     res.json({ success: true, message: "Đổi Barber thành công", appointment });
   } catch (error) { next(error); }
 };
 
-export const reopenNoShow = async (req: Request, res: Response, next: NextFunction) => {
+export const reopenNoShow = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
     const appointment = await service.reopenNoShowAppointment(
       idParam(req.params.id), req.body.mode, req.body.appointmentDate,
-      req.body.startTime, req.body.barberId
+      req.body.startTime, req.body.barberId, req.user.userId,
+      req.user.role as "ADMIN" | "RECEPTIONIST"
     );
     res.json({ success: true, message: "Bật lại lịch hẹn thành công", appointment });
   } catch (error) { next(error); }

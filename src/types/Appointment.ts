@@ -1,23 +1,6 @@
-export type AppointmentStatus =
-  | "PENDING"
-  | "CONFIRMED"
-  | "CHECKED_IN"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "NO_SHOW"
-  | "CANCELLED";
-
-export type PaymentStatus =
-  | "UNPAID"
-  | "PENDING"
-  | "PAID"
-  | "REFUNDED";
-
-export type UserRole =
-  | "CLIENT"
-  | "BARBER"
-  | "RECEPTIONIST"
-  | "ADMIN";
+export type AppointmentStatus =| "PENDING"| "CONFIRMED"| "CHECKED_IN"| "IN_PROGRESS"| "COMPLETED"| "NO_SHOW"| "CANCELLED";
+export type PaymentStatus =| "UNPAID"| "PENDING"| "PAID"| "REFUNDED";
+export type UserRole =| "CLIENT"| "BARBER"| "RECEPTIONIST"| "ADMIN";
 
 export interface AppointmentUser {
   _id: string;
@@ -59,6 +42,23 @@ export interface AppointmentCancellation {
 
   reason: string;
   cancelledAt?: string;
+}
+
+export interface AppointmentActivityActor {
+  _id: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface AppointmentActivity {
+  _id: string;
+  action: string;
+  description: string;
+  actor?: string | AppointmentActivityActor;
+  actorRole: UserRole | "SYSTEM";
+  metadata: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface Appointment {
@@ -107,6 +107,7 @@ export interface Appointment {
   checkedInAt?: string;
   noShowAt?: string;
   rescheduleConsent?: boolean;
+  activities?: AppointmentActivity[];
 
   createdAt: string;
 
