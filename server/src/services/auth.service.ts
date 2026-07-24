@@ -14,7 +14,7 @@ interface RegisterInput {
 }
 
 interface LoginInput {
-  email: string;
+  emailOrPhone: string;
   password: string;
 }
 
@@ -70,14 +70,26 @@ export const loginUser = async (
   input: LoginInput,
   expectedRole: UserRole
 ) => {
-  const { email, password } = input;
+  const { emailOrPhone, password } = input;
 
-  const user = await User.findOne({
-    email: email.toLowerCase().trim(),
-  }).select("+password");
+  if (!emailOrPhone || !password) {
+    throw new AppError("Vui lòng nhập email/số điện thoại và mật khẩu", 400);
+  }
+
+  // Check if input is email or phone
+  const isEmail = emailOrPhone.includes("@");
+  const normalizedInput = isEmail
+    ? emailOrPhone.toLowerCase().trim()
+    : emailOrPhone.trim();
+
+  const user = await User.findOne(
+    isEmail
+      ? { email: normalizedInput }
+      : { phone: normalizedInput }
+  ).select("+password");
 
   if (!user) {
-    throw new AppError("Email hoặc mật khẩu không chính xác", 401);
+    throw new AppError("Email hoặc số điện thoại không tồn tại trong hệ thống", 401);
   }
 
   if (user.role !== expectedRole) {
@@ -94,7 +106,7 @@ export const loginUser = async (
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
-    throw new AppError("Email hoặc mật khẩu không chính xác", 401);
+    throw new AppError("Mật khẩu không chính xác", 401);
   }
 
   const accessToken = generateToken({

@@ -15,7 +15,7 @@ export interface AuthUser {
 }
 
 export interface LoginPayload {
-  email: string;
+  emailOrPhone: string;
   password: string;
 }
 

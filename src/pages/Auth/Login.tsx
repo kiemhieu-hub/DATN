@@ -71,7 +71,7 @@ function Login({
 
     if (!email.trim() || !password) {
       setError(
-        "Vui lòng nhập đầy đủ email và mật khẩu"
+        "Vui lòng nhập đầy đủ email/số điện thoại và mật khẩu"
       );
 
       return;
@@ -81,9 +81,7 @@ function Login({
       setLoading(true);
 
       await login({
-        email: email
-          .trim()
-          .toLowerCase(),
+        emailOrPhone: email.trim(),
         password,
       });
 
@@ -104,7 +102,7 @@ function Login({
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message ||
-            "Email hoặc mật khẩu không chính xác"
+            "Email/số điện thoại hoặc mật khẩu không chính xác"
         );
       } else if (err instanceof Error) {
         setError(err.message);
@@ -140,23 +138,23 @@ function Login({
           onSubmit={handleSubmit}
         >
           <div className="login-field">
-            <label htmlFor={`${role}-email`}>
-              Email
+            <label htmlFor={`${role}-emailOrPhone`}>
+              Email / Số điện thoại
             </label>
 
             <div className="login-input-wrap">
               <input
-                id={`${role}-email`}
+                id={`${role}-emailOrPhone`}
                 className="login-input"
-                type="email"
-                placeholder="Nhập email"
+                type="text"
+                placeholder="Nhập email hoặc số điện thoại"
                 value={email}
                 onChange={(event) =>
                   setEmail(
                     event.target.value
                   )
                 }
-                autoComplete="email"
+                autoComplete="username"
                 required
               />
             </div>
