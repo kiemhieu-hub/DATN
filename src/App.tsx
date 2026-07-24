@@ -30,6 +30,8 @@ import Profile from "./pages/barber/Profile";
 // Auth
 import Login from './pages/Auth/Login';
 import Register from "./pages/Auth/Register";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 
 import AdminLogin from "./pages/Auth/AdminLogin";
 import BarberLogin from "./pages/Auth/BarberLogin";
@@ -80,6 +82,8 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/receptionist/login" element={<ReceptionistLogin />} />
         <Route path="/receptionist" element={<ReceptionistLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />

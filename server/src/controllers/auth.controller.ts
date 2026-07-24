@@ -6,9 +6,11 @@ import {
 
 import type { AuthenticatedRequest } from "../middleware/authenticate";
 import {
+  forgotPassword,
   getCurrentUser,
   loginUser,
   registerClient,
+  resetPassword,
 } from "../services/auth.service";
 import type { UserRole } from "../models/User";
 
@@ -64,6 +66,40 @@ export const me = async (
     res.status(200).json({
       success: true,
       user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const forgot = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const result = await forgotPassword(req.body);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const reset = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const result = await resetPassword(req.body);
+
+    res.status(200).json({
+      success: true,
+      ...result,
     });
   } catch (error) {
     next(error);

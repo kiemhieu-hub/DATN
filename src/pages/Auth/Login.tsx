@@ -214,6 +214,27 @@ function Login({
             </p>
           )}
 
+          <div className="login-options">
+            {showRegister && (
+              <p className="login-register-text" style={{ margin: 0 }}>
+                Chưa có tài khoản?{" "}
+                <Link
+                  className="login-register-link"
+                  to="/register"
+                >
+                  Đăng ký
+                </Link>
+              </p>
+            )}
+
+            <Link
+              className="login-forgot"
+              to="/forgot-password"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
+
           <button
             className="login-button"
             type="submit"
@@ -224,19 +245,6 @@ function Login({
               : "Đăng nhập"}
           </button>
         </form>
-
-        {showRegister && (
-          <p className="login-register-text">
-            Chưa có tài khoản?{" "}
-
-            <Link
-              className="login-register-link"
-              to="/register"
-            >
-              Đăng ký
-            </Link>
-          </p>
-        )}
 
         <Link
           className="login-back-home"

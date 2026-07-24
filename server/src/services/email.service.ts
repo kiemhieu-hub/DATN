@@ -85,6 +85,48 @@ const emailTitles: Record<
   PAID: "Thanh toán thành công",
 };
 
+interface ResetPasswordEmailInput {
+  to: string;
+  customerName: string;
+  resetUrl: string;
+}
+
+export const sendResetPasswordEmail = async (
+  input: ResetPasswordEmailInput
+): Promise<void> => {
+  const { SMTP_USER, SMTP_FROM, CLIENT_URL } = process.env;
+  const transporter = getTransporter();
+
+  if (!transporter || !SMTP_USER) {
+    console.warn("Chưa cấu hình SMTP, bỏ qua email đặt lại mật khẩu");
+    return;
+  }
+
+  const resetUrl = input.resetUrl || `${CLIENT_URL || "http://localhost:5173"}/reset-password`;
+
+  await transporter.sendMail({
+    from: SMTP_FROM || `THADS Barber <${SMTP_USER}>`,
+    to: input.to,
+    subject: "Đặt lại mật khẩu - THADS Barber",
+    html: `
+      <div style="max-width:640px;margin:auto;padding:24px;font-family:Arial,sans-serif;color:#222;line-height:1.6;border:1px solid #ddd">
+        <h2 style="margin-top:0;color:#9b7635">THADS BARBER</h2>
+        <h3>Yêu cầu đặt lại mật khẩu</h3>
+        <p>Xin chào <strong>${escapeHtml(input.customerName)}</strong>,</p>
+        <p>Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+        <p>Nhấn vào nút bên dưới để đặt lại mật khẩu:</p>
+        <div style="text-align:center;margin:24px 0">
+          <a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:#9b7635;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold">Đặt lại mật khẩu</a>
+        </div>
+        <p>Liên kết này sẽ hết hạn sau <strong>1 giờ</strong>.</p>
+        <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này. Tài khoản của bạn vẫn an toàn.</p>
+        <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+        <p style="color:#666;font-size:12px">THADS Barber - Hệ thống quản lý salon</p>
+      </div>
+    `,
+  });
+};
+
 export const sendBookingConfirmationEmail = async (
   input: BookingEmailInput
 ): Promise<void> => {

@@ -1,12 +1,14 @@
 import { Router } from "express";
 
 import {
+  forgot,
   loginAdmin,
   loginBarber,
   loginClient,
   loginReceptionist,
   me,
   register,
+  reset,
 } from "../controllers/auth.controller";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
@@ -18,6 +20,8 @@ router.post("/client/login", loginClient);
 router.post("/barber/login", loginBarber);
 router.post("/receptionist/login", loginReceptionist);
 router.post("/admin/login", loginAdmin);
+router.post("/forgot-password", forgot);
+router.post("/reset-password", reset);
 router.get("/me", authenticate, me);
 
 router.get(
