@@ -1,333 +1,761 @@
-import React from 'react'
+import { Link, useNavigate } from "react-router-dom";
+
+import { useAuth } from "../../contexts/AuthContext";
 
 function Services() {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = (): void => {
+    logout();
+    navigate("/", { replace: true });
+  };
+
   return (
     <div>
-      
-      
-      {/* Progress scroll totop */}
+      {/* Progress scroll to top */}
       <div className="progress-wrap cursor-pointer">
-        <svg className="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
+        <svg
+          className="progress-circle svg-content"
+          width="100%"
+          height="100%"
+          viewBox="-1 -1 102 102"
+        >
           <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" />
         </svg>
       </div>
-      
+
       {/* Navbar */}
       <nav className="navbar navbar-expand-lg">
         <div className="container">
           <div className="logo-wrapper">
-            <a className="logo" href="index.html"> <img src="img/logo.png" className="logo-img" alt="" /> </a>
+            <Link className="logo" to="/">
+              <img
+                src="/img/logo.png"
+                className="logo-img"
+                alt="THADS Barber"
+              />
+            </Link>
           </div>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation"> 
-            <span className="navbar-toggler-icon"><i className="ti-menu"></i></span> 
+
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbar"
+            aria-controls="navbar"
+            aria-expanded="false"
+            aria-label="Mở menu"
+          >
+            <span className="navbar-toggler-icon">
+              <i className="ti-menu" />
+            </span>
           </button>
-          
+
           <div className="collapse navbar-collapse" id="navbar">
             <ul className="navbar-nav ms-auto">
-              <li className="nav-item"><a className="nav-link" href="index.html">Home</a></li>
-              <li className="nav-item"><a className="nav-link" href="about.html">About</a></li>
-              <li className="nav-item"><a className="nav-link active" href="services.html">Services</a></li>
-              <li className="nav-item"><a className="nav-link" href="pricing.html">Pricing</a></li>
-              <li className="nav-item dropdown"> 
-                <span className="nav-link" data-bs-toggle="dropdown" aria-expanded="false"> Pages <i className="ti-angle-down"></i></span>
-                <ul className="dropdown-menu last">
-                  <li className="dropdown-item"><a href="portfolio.html">Portfolio</a></li>
-                  <li className="dropdown-item"><a href="team.html">Team</a></li>
-                  <li className="dropdown-item"><a href="faq.html">Faq</a></li>
-                  <li className="dropdown-item"><a href="services-page.html">Services Page</a></li>
-                  <li className="dropdown-item"><a href="team-details.html">Team Details</a></li>
-                  <li className="dropdown-item"><a href="post.html">Post Single</a></li>
-                  <li className="dropdown-item"><a href="404.html">404</a></li>
-                  <li className="dropdown-item"><a href="coming-soon.html">Coming Soon</a></li>
-                  <li className="dropdown-submenu dropdown"> 
-                    <a className="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" href="#0"><span>Sub Menu <i className="ti-angle-right"></i></span></a>
-                    <ul className="dropdown-menu">
-                      <li><a href="#0" className="dropdown-item"><span>Dropdown</span></a></li>
-                      <li><a href="#0" className="dropdown-item"><span>Dropdown</span></a></li>
-                    </ul>
+              <li className="nav-item">
+                <Link className="nav-link" to="/">
+                  Trang chủ
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/about.html">
+                  Giới thiệu
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link
+                  className="nav-link active"
+                  to="/services.html"
+                >
+                  Dịch vụ
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/pricing.html">
+                  Bảng giá
+                </Link>
+              </li>
+
+              <li className="nav-item dropdown">
+                <button
+                  className="nav-link dropdown-toggle navbar-dropdown-button"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  data-bs-auto-close="outside"
+                  aria-expanded="false"
+                >
+                  Khám phá <i className="ti-angle-down" />
+                </button>
+
+                <ul className="dropdown-menu">
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/portfolio.html"
+                    >
+                      <span>Thư viện kiểu tóc</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/team.html"
+                    >
+                      <span>Đội ngũ Barber</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/faq.html"
+                    >
+                      <span>Câu hỏi thường gặp</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/services-page.html"
+                    >
+                      <span>Chi tiết dịch vụ</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/team-details.html"
+                    >
+                      <span>Thông tin Barber</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/blog.html"
+                    >
+                      <span>Tin tức và bài viết</span>
+                    </Link>
                   </li>
                 </ul>
               </li>
-              <li className="nav-item dropdown"> 
-                <span className="nav-link" data-bs-toggle="dropdown" aria-expanded="false"> Blog <i className="ti-angle-down"></i></span>
-                <ul className="dropdown-menu last">
-                  <li className="dropdown-item"><a href="blog.html">Blog 01</a></li>
-                  <li className="dropdown-item"><a href="blog2.html">Blog 02</a></li>
-                  <li className="dropdown-item"><a href="blog3.html">Blog 03</a></li>
-                </ul>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/contact.html">
+                  Liên hệ
+                </Link>
               </li>
-              <li className="nav-item"><a className="nav-link" href="contact.html">Contact</a></li>
+
+              {isAuthenticated && user ? (
+                <li className="nav-item dropdown">
+                  <button
+                    className="nav-link dropdown-toggle auth-user-button"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside"
+                    aria-expanded="false"
+                  >
+                    <i className="ti-user" />{" "}
+                    {user.fullName}{" "}
+                    <i className="ti-angle-down" />
+                  </button>
+
+                  <ul className="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/profile"
+                      >
+                        <span>Hồ sơ cá nhân</span>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/booking-history"
+                      >
+                        <span>Lịch sử đặt lịch</span>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <button
+                        type="button"
+                        className="dropdown-item logout-menu-button"
+                        onClick={handleLogout}
+                      >
+                        <span>Đăng xuất</span>
+                      </button>
+                    </li>
+                  </ul>
+                </li>
+              ) : (
+                <>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/login">
+                      Đăng nhập
+                    </Link>
+                  </li>
+
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/register">
+                      Đăng ký
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         </div>
       </nav>
-      
+
       {/* Header Banner */}
-      <div className="banner-header valign bg-img bg-fixed" data-overlay-dark="4" data-background="img/slider/4.jpg">
+      <div
+        className="banner-header valign bg-img bg-fixed"
+        data-overlay-dark={4}
+        data-background="img/slider/4.jpg"
+      >
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center caption mt-60">
-              <h5>What We Do</h5>
-              <h1>Our Services</h1>
+              <h5>THADS Barber mang đến</h5>
+              <h1>Dịch vụ của chúng tôi</h1>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Services */}
       <section className="services-1 section-padding">
         <div className="container">
           <div className="row">
             <div className="col-md-4">
               <div className="item">
-                <a href="services-page.html"> <span className="icon icon-icon-1-1"></span>
-                  <h5>Moustache Trim</h5>
-                  <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                  <div className="shape"> <span className="icon icon-icon-1-1"></span> </div>
-                </a>
+                <Link to="/services-page.html">
+                  <span className="icon icon-icon-1-1" />
+
+                  <h5>Tỉa ria mép</h5>
+
+                  <p>
+                    Tạo đường nét gọn gàng, cân đối và phù
+                    hợp với phong cách khuôn mặt của khách
+                    hàng.
+                  </p>
+
+                  <div className="shape">
+                    <span className="icon icon-icon-1-1" />
+                  </div>
+                </Link>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="item">
-                <a href="services-page.html"> <span className="icon icon-icon-1-9"></span>
-                  <h5>Face Shave</h5>
-                  <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                  <div className="shape"> <span className="icon icon-icon-1-9"></span> </div>
-                </a>
+                <Link to="/services-page.html">
+                  <span className="icon icon-icon-1-9" />
+
+                  <h5>Cạo mặt</h5>
+
+                  <p>
+                    Dịch vụ cạo mặt chuyên nghiệp giúp làn da
+                    sạch sẽ, thư giãn và mang lại diện mạo
+                    chỉn chu.
+                  </p>
+
+                  <div className="shape">
+                    <span className="icon icon-icon-1-9" />
+                  </div>
+                </Link>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="item">
-                <a href="services-page.html"> <span className="icon icon-icon-1-3"></span>
-                  <h5>Beard Trim</h5>
-                  <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                  <div className="shape"> <span className="icon icon-icon-1-3"></span> </div>
-                </a>
+                <Link to="/services-page.html">
+                  <span className="icon icon-icon-1-3" />
+
+                  <h5>Tỉa và tạo kiểu râu</h5>
+
+                  <p>
+                    Tư vấn và tạo hình bộ râu phù hợp với
+                    khuôn mặt, cá tính và phong cách riêng.
+                  </p>
+
+                  <div className="shape">
+                    <span className="icon icon-icon-1-3" />
+                  </div>
+                </Link>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="item">
-                <a href="services-page.html"> <span className="icon icon-icon-1-2"></span>
-                  <h5>Haircut</h5>
-                  <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                  <div className="shape"> <span className="icon icon-icon-1-2"></span> </div>
-                </a>
+                <Link to="/services-page.html">
+                  <span className="icon icon-icon-1-2" />
+
+                  <h5>Cắt tóc nam</h5>
+
+                  <p>
+                    Cắt và tạo kiểu theo xu hướng, phù hợp với
+                    khuôn mặt, công việc và sở thích của từng
+                    khách hàng.
+                  </p>
+
+                  <div className="shape">
+                    <span className="icon icon-icon-1-2" />
+                  </div>
+                </Link>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="item">
-                <a href="services-page.html"> <span className="icon icon-icon-1-6"></span>
-                  <h5>Clipper Cut</h5>
-                  <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                  <div className="shape"> <span className="icon icon-icon-1-6"></span> </div>
-                </a>
+                <Link to="/services-page.html">
+                  <span className="icon icon-icon-1-6" />
+
+                  <h5>Cắt Fade chuyên nghiệp</h5>
+
+                  <p>
+                    Kỹ thuật Fade sắc nét với đường chuyển
+                    mượt mà, mang đến phong cách trẻ trung và
+                    hiện đại.
+                  </p>
+
+                  <div className="shape">
+                    <span className="icon icon-icon-1-6" />
+                  </div>
+                </Link>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="item">
-                <a href="services-page.html"> <span className="icon icon-icon-1-8"></span>
-                  <h5>Facial & Massage</h5>
-                  <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                  <div className="shape"> <span className="icon icon-icon-1-8"></span> </div>
-                </a>
+                <Link to="/services-page.html">
+                  <span className="icon icon-icon-1-8" />
+
+                  <h5>Chăm sóc da và massage</h5>
+
+                  <p>
+                    Làm sạch da mặt kết hợp massage thư giãn,
+                    giúp giảm căng thẳng và chăm sóc làn da.
+                  </p>
+
+                  <div className="shape">
+                    <span className="icon icon-icon-1-8" />
+                  </div>
+                </Link>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="item">
-                <a href="services-page.html"> <span className="icon icon-icon-1-4"></span>
-                  <h5>Hair Washing</h5>
-                  <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                  <div className="shape"> <span className="icon icon-icon-1-4"></span> </div>
-                </a>
+                <Link to="/services-page.html">
+                  <span className="icon icon-icon-1-4" />
+
+                  <h5>Gội đầu thư giãn</h5>
+
+                  <p>
+                    Làm sạch tóc và da đầu kết hợp massage,
+                    mang lại cảm giác thư giãn và dễ chịu.
+                  </p>
+
+                  <div className="shape">
+                    <span className="icon icon-icon-1-4" />
+                  </div>
+                </Link>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="item">
-                <a href="services-page.html"> <span className="icon icon-icon-1-18"></span>
-                  <h5>Hair Dryer</h5>
-                  <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                  <div className="shape"> <span className="icon icon-icon-1-18"></span> </div>
-                </a>
+                <Link to="/services-page.html">
+                  <span className="icon icon-icon-1-18" />
+
+                  <h5>Sấy và tạo kiểu</h5>
+
+                  <p>
+                    Sấy phồng, vuốt tạo kiểu và hoàn thiện mái
+                    tóc theo phong cách khách hàng lựa chọn.
+                  </p>
+
+                  <div className="shape">
+                    <span className="icon icon-icon-1-18" />
+                  </div>
+                </Link>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="item">
-                <a href="services-page.html"> <span className="icon icon-icon-1-10"></span>
-                  <h5>Coloring</h5>
-                  <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                  <div className="shape"> <span className="icon icon-icon-1-10"></span> </div>
-                </a>
+                <Link to="/services-page.html">
+                  <span className="icon icon-icon-1-10" />
+
+                  <h5>Nhuộm tóc</h5>
+
+                  <p>
+                    Tư vấn màu tóc phù hợp, sử dụng sản phẩm
+                    chất lượng và kỹ thuật nhuộm chuyên
+                    nghiệp.
+                  </p>
+
+                  <div className="shape">
+                    <span className="icon icon-icon-1-10" />
+                  </div>
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
-      
+
       {/* First Class Services */}
-      <div className="first-class-services section-padding">
+      <section className="first-class-services section-padding">
         <div className="container">
           <div className="row">
             <div className="col-md-12">
               <div className="section-head text-center">
-                <div className="section-subtitle">Firs-Class</div>
-                <div className="section-title white">Our Features</div>
+                <div className="section-subtitle">
+                  Dịch vụ nổi bật
+                </div>
+
+                <div className="section-title white">
+                  Trải nghiệm tại THADS Barber
+                </div>
               </div>
             </div>
           </div>
+
           <div className="row">
             <div className="col-md-4">
               <div className="square-flip">
-                <div className="square bg-img" data-background="img/barber.jpg">
+                <div
+                  className="square bg-img"
+                  data-background="img/barber.jpg"
+                >
                   <div className="square-container d-flex align-items-end justify-content-end">
                     <div className="box-title">
-                      <h4>Groom's Shave</h4>
+                      <h4>Cạo mặt chuyên nghiệp</h4>
                     </div>
                   </div>
-                  <div className="flip-overlay"></div>
+
+                  <div className="flip-overlay" />
                 </div>
+
                 <div className="square2">
                   <div className="square-container2">
-                    <h4>Groom's Shave</h4>
-                    <p><i>Lorem nisl miss nestibulum nec odio duru the aucan ula orci varius natoque enatau manis dis arturient monte miss morbine.</i></p> <a href="#0" className="button-2 mt-15">Appointment<span></span></a>
+                    <h4>Cạo mặt chuyên nghiệp</h4>
+
+                    <p>
+                      <i>
+                        Quy trình cạo mặt an toàn, sạch sẽ và
+                        thư giãn, giúp khách hàng có diện mạo
+                        gọn gàng và lịch lãm.
+                      </i>
+                    </p>
+
+                    <Link
+                      to="/booking"
+                      className="button-2 mt-15"
+                    >
+                      Đặt lịch
+                      <span />
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="square-flip">
-                <div className="square bg-img" data-background="img/kids.jpg">
+                <div
+                  className="square bg-img"
+                  data-background="img/kids.jpg"
+                >
                   <div className="square-container d-flex align-items-end justify-content-end">
                     <div className="box-title">
-                      <h4>Kids Cuts</h4>
+                      <h4>Cắt tóc trẻ em</h4>
                     </div>
                   </div>
-                  <div className="flip-overlay"></div>
+
+                  <div className="flip-overlay" />
                 </div>
+
                 <div className="square2">
                   <div className="square-container2">
-                    <h4>Kids Cuts</h4>
-                    <p><i>Lorem nisl miss nestibulum nec odio duru the aucan ula orci varius natoque enatau manis dis arturient monte miss morbine.</i></p> <a href="#0" className="button-2 mt-15">Appointment<span></span></a>
+                    <h4>Cắt tóc trẻ em</h4>
+
+                    <p>
+                      <i>
+                        Không gian thân thiện cùng Barber kiên
+                        nhẫn, giúp trẻ nhỏ thoải mái trong quá
+                        trình cắt tóc.
+                      </i>
+                    </p>
+
+                    <Link
+                      to="/booking"
+                      className="button-2 mt-15"
+                    >
+                      Đặt lịch
+                      <span />
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="square-flip">
-                <div className="square bg-img" data-background="img/team/b3.jpg">
+                <div
+                  className="square bg-img"
+                  data-background="img/team/b3.jpg"
+                >
                   <div className="square-container d-flex align-items-end justify-content-end">
                     <div className="box-title">
-                      <h4>Creative Barbers</h4>
+                      <h4>Barber sáng tạo</h4>
                     </div>
                   </div>
-                  <div className="flip-overlay"></div>
+
+                  <div className="flip-overlay" />
                 </div>
+
                 <div className="square2">
                   <div className="square-container2">
-                    <h4>Creative Barbers</h4>
-                    <p><i>Lorem nisl miss nestibulum nec odio duru the aucan ula orci varius natoque enatau manis dis arturient monte miss morbine.</i></p> <a href="#0" className="button-2 mt-15">Our Team<span></span></a>
+                    <h4>Barber sáng tạo</h4>
+
+                    <p>
+                      <i>
+                        Đội ngũ Barber chuyên nghiệp, thường
+                        xuyên cập nhật xu hướng và tư vấn kiểu
+                        tóc phù hợp.
+                      </i>
+                    </p>
+
+                    <Link
+                      to="/team.html"
+                      className="button-2 mt-15"
+                    >
+                      Xem đội ngũ
+                      <span />
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* Appointment Form */}
+      </section>
+
+      {/* Appointment */}
       <section className="testimonials">
-        <div className="background bg-img bg-fixed section-padding pb-0" data-background="img/slider/20.jpg" data-overlay-dark="6">
+        <div
+          className="background bg-img bg-fixed section-padding pb-0"
+          data-background="img/slider/20.jpg"
+          data-overlay-dark={6}
+        >
           <div className="container">
             <div className="row">
               <div className="col-md-5 mb-30 mt-60">
-                <p className="mb-0"><i className="star-rating"></i><i className="star-rating"></i><i className="star-rating"></i><i className="star-rating"></i><i className="star-rating"></i></p>
-                <h5>We Are Best Barbers & Hair Cutting Salon at NYC.</h5>
+                <p className="mb-0">
+                  <i className="star-rating" />
+                  <i className="star-rating" />
+                  <i className="star-rating" />
+                  <i className="star-rating" />
+                  <i className="star-rating" />
+                </p>
+
+                <h5>
+                  THADS Barber mang đến trải nghiệm cắt tóc
+                  chuyên nghiệp, hiện đại và tận tâm.
+                </h5>
+
                 <div className="reservations mb-10">
-                  <div className="icon color-1"><span className="icon-icon-1-1"></span></div>
+                  <div className="icon color-1">
+                    <span className="icon-icon-1-1" />
+                  </div>
+
                   <div className="text">
-                    <p className="color-1">Appointment</p> <a className="color-1" href="tel:855-100-4444">855 100 4444</a>
+                    <p className="color-1">Liên hệ đặt lịch</p>
+
+                    <a
+                      className="color-1"
+                      href="tel:0987654321"
+                    >
+                      0987 654 321
+                    </a>
                   </div>
                 </div>
               </div>
+
               <div className="col-md-5 offset-md-2">
                 <div className="booking-box">
                   <div className="head-box text-center">
-                    <h4>Make An Appointment</h4>
+                    <h4>Đặt lịch cắt tóc</h4>
                   </div>
+
                   <div className="booking-inner clearfix">
-                    <form className="form1 clearfix" onSubmit={(e) => e.preventDefault()}>
+                    <form
+                      className="form1 clearfix"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        navigate("/booking");
+                      }}
+                    >
                       <div className="row">
                         <div className="col-md-6">
                           <div className="input1_wrapper">
-                            <label>Name</label>
+                            <label>Họ và tên</label>
+
                             <div className="input2_inner">
-                              <input type="text" className="form-control input" placeholder="Name" required />
+                              <input
+                                type="text"
+                                className="form-control input"
+                                placeholder="Nhập họ và tên"
+                                defaultValue={user?.fullName ?? ""}
+                                required
+                              />
                             </div>
                           </div>
                         </div>
+
                         <div className="col-md-6">
                           <div className="input1_wrapper">
-                            <label>Phone</label>
+                            <label>Số điện thoại</label>
+
                             <div className="input2_inner">
-                              <input type="text" className="form-control input" placeholder="Phone" required />
+                              <input
+                                type="tel"
+                                className="form-control input"
+                                placeholder="Nhập số điện thoại"
+                                defaultValue={user?.phone ?? ""}
+                                required
+                              />
                             </div>
                           </div>
                         </div>
+
                         <div className="col-md-6">
                           <div className="input1_wrapper">
-                            <label>Date</label>
+                            <label>Ngày đặt lịch</label>
+
                             <div className="input1_inner">
-                              <input type="text" className="form-control input datepicker" placeholder="Date" required />
+                              <input
+                                type="date"
+                                className="form-control input"
+                                required
+                              />
                             </div>
                           </div>
                         </div>
+
                         <div className="col-md-6">
                           <div className="select1_wrapper">
-                            <label>Time</label>
+                            <label>Khung giờ</label>
+
                             <div className="select1_inner">
-                              <select className="select2 select" style={{ width: "100%" }}>
-                                <option value="0">Time</option>
-                                <option value="1">10:00 am</option>
-                                <option value="2">11:00 am</option>
-                                <option value="3">12:00 pm</option>
-                                <option value="4">14:00 pm</option>
-                                <option value="5">16:00 pm</option>
-                                <option value="6">18:00 pm</option>
-                                <option value="7">20:00 pm</option>
+                              <select
+                                className="select2 select"
+                                style={{ width: "100%" }}
+                                defaultValue=""
+                                required
+                              >
+                                <option value="" disabled>
+                                  Chọn giờ
+                                </option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="17:00">17:00</option>
+                                <option value="19:00">19:00</option>
                               </select>
                             </div>
                           </div>
                         </div>
+
                         <div className="col-md-6">
                           <div className="select1_wrapper">
-                            <label>Services</label>
+                            <label>Dịch vụ</label>
+
                             <div className="select1_inner">
-                              <select className="select2 select" style={{ width: "100%" }}>
-                                <option value="0">Services</option>
-                                <option value="hair-styling">Hair Styling</option>
-                                <option value="1">Face Mask</option>
-                                <option value="2">Shaving</option>
-                                <option value="3">Beard Triming</option>
-                                <option value="4">Hair Wash</option>
+                              <select
+                                className="select2 select"
+                                style={{ width: "100%" }}
+                                defaultValue=""
+                                required
+                              >
+                                <option value="" disabled>
+                                  Chọn dịch vụ
+                                </option>
+                                <option value="haircut">
+                                  Cắt tóc nam
+                                </option>
+                                <option value="fade">
+                                  Cắt Fade
+                                </option>
+                                <option value="shaving">
+                                  Cạo mặt
+                                </option>
+                                <option value="beard">
+                                  Tỉa râu
+                                </option>
+                                <option value="hair-wash">
+                                  Gội đầu
+                                </option>
                               </select>
                             </div>
                           </div>
                         </div>
+
                         <div className="col-md-6">
                           <div className="select1_wrapper">
-                            <label>Choose Barber</label>
+                            <label>Chọn Barber</label>
+
                             <div className="select1_inner">
-                              <select className="select2 select" style={{ width: "100%" }}>
-                                <option value="0">Choose Barber</option>
-                                <option value="barber-philip">Philip</option>
-                                <option value="1">Stephen</option>
-                                <option value="2">Dennis</option>
-                                <option value="3">Helen</option>
+                              <select
+                                className="select2 select"
+                                style={{ width: "100%" }}
+                                defaultValue=""
+                                required
+                              >
+                                <option value="" disabled>
+                                  Chọn Barber
+                                </option>
+                                <option value="barber-1">
+                                  Nguyễn Minh
+                                </option>
+                                <option value="barber-2">
+                                  Đức Anh
+                                </option>
+                                <option value="barber-3">
+                                  Thành Nam
+                                </option>
+                                <option value="barber-4">
+                                  Hoàng Sơn
+                                </option>
                               </select>
                             </div>
                           </div>
                         </div>
+
                         <div className="col-md-12">
-                          <button type="submit" className="btn-form1-submit mt-15">Make Appointment</button>
+                          <button
+                            type="submit"
+                            className="btn-form1-submit mt-15"
+                          >
+                            Tiếp tục đặt lịch
+                          </button>
                         </div>
                       </div>
                     </form>
@@ -338,34 +766,30 @@ function Services() {
           </div>
         </div>
       </section>
-      
+
       {/* Clients */}
       <section className="clients">
         <div className="container">
           <div className="row">
             <div className="col-md-7">
               <div className="owl-carousel owl-theme">
-                <div className="clients-logo">
-                  <a href="#0"><img src="img/clients/2.png" alt="" /></a>
-                </div>
-                <div className="clients-logo">
-                  <a href="#0"><img src="img/clients/3.png" alt="" /></a>
-                </div>
-                <div className="clients-logo">
-                  <a href="#0"><img src="img/clients/4.png" alt="" /></a>
-                </div>
-                <div className="clients-logo">
-                  <a href="#0"><img src="img/clients/5.png" alt="" /></a>
-                </div>
-                <div className="clients-logo">
-                  <a href="#0"><img src="img/clients/6.png" alt="" /></a>
-                </div>
+                {[2, 3, 4, 5, 6].map((number) => (
+                  <div
+                    className="clients-logo"
+                    key={number}
+                  >
+                    <img
+                      src={`/img/clients/${number}.png`}
+                      alt={`Đối tác ${number}`}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </section>
-      
+
       {/* Footer */}
       <footer className="footer">
         <div className="footer-top">
@@ -373,63 +797,114 @@ function Services() {
             <div className="row">
               <div className="col-md-3">
                 <div className="footer-column footer-contact">
-                  <h3 className="footer-title">Contact</h3>
-                  <p className="footer-contact-text">0665 Broadway NY, New York 10001
-                    <br />United States of America
+                  <h3 className="footer-title">Liên hệ</h3>
+
+                  <p className="footer-contact-text">
+                    THADS Barber
+                    <br />
+                    Hà Nội, Việt Nam
                   </p>
+
                   <div className="footer-contact-info">
-                    <p className="footer-contact-phone">855 100 4444</p>
-                    <p className="footer-contact-mail">info@barber.com</p>
+                    <p className="footer-contact-phone">
+                      0987 654 321
+                    </p>
+
+                    <p className="footer-contact-mail">
+                      contact@thadsbarber.com
+                    </p>
                   </div>
-                  <div className="footer-about-social-list"> 
-                    <a href="#0"><i className="ti-instagram"></i></a> 
-                    <a href="#0"><i className="ti-twitter"></i></a> 
-                    <a href="#0"><i className="ti-youtube"></i></a> 
-                    <a href="#0"><i className="ti-facebook"></i></a> 
-                    <a href="#0"><i className="ti-pinterest"></i></a> 
+
+                  <div className="footer-about-social-list">
+                    <a href="#instagram">
+                      <i className="ti-instagram" />
+                    </a>
+
+                    <a href="#youtube">
+                      <i className="ti-youtube" />
+                    </a>
+
+                    <a href="#facebook">
+                      <i className="ti-facebook" />
+                    </a>
                   </div>
                 </div>
               </div>
+
               <div className="col-md-3 offset-md-1">
                 <div className="item opening">
-                  <h3 className="footer-title">Work Time</h3>
+                  <h3 className="footer-title">
+                    Giờ làm việc
+                  </h3>
+
                   <ul>
                     <li>
-                      <div className="tit">Monday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Hai</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Tuesday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Ba</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Thursday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Tư</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Friday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Năm</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Saturday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Sáu</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Weekend</div>
-                      <div className="dots"></div> <span>Closed</span>
+                      <div className="tit">Cuối tuần</div>
+                      <div className="dots" />
+                      <span>08:00 - 22:00</span>
                     </li>
                   </ul>
                 </div>
               </div>
+
               <div className="col-md-4 offset-md-1">
                 <div className="footer-column footer-explore clearfix">
-                  <h3 className="footer-title">Subscribe</h3>
+                  <h3 className="footer-title">
+                    Nhận thông tin ưu đãi
+                  </h3>
+
                   <div className="row subscribe">
                     <div className="col-md-12">
-                      <p>Subscribe to take advantage of our campaigns and gift certificates.</p>
-                      <form onSubmit={(e) => e.preventDefault()}>
-                        <input type="text" name="search" placeholder="Your email" required />
-                        <button type="submit">Subscribe</button>
+                      <p>
+                        Đăng ký email để nhận thông tin về
+                        dịch vụ, chương trình và ưu đãi mới.
+                      </p>
+
+                      <form
+                        onSubmit={(event) =>
+                          event.preventDefault()
+                        }
+                      >
+                        <input
+                          type="email"
+                          name="email"
+                          placeholder="Email của bạn"
+                          required
+                        />
+
+                        <button type="submit">
+                          Đăng ký
+                        </button>
                       </form>
                     </div>
                   </div>
@@ -438,12 +913,15 @@ function Services() {
             </div>
           </div>
         </div>
+
         <div className="footer-bottom">
           <div className="container">
             <div className="row">
               <div className="col-md-12">
                 <div className="footer-bottom-inner">
-                  <p className="footer-bottom-copy-right">&copy; All Rights Reserved <a href="https://1.envato.market/DuruThemes" target="_blank" rel="noopener noreferrer">DuruThemes</a></p>
+                  <p className="footer-bottom-copy-right">
+                    © 2026 THADS Barber. Bảo lưu mọi quyền.
+                  </p>
                 </div>
               </div>
             </div>
@@ -451,7 +929,7 @@ function Services() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
-export default Services
+export default Services;

@@ -35,22 +35,22 @@ function App() {
         <Route path="/" element={<Index />} />
 
         {/* Các Route phụ khớp với link href trong template gốc */}
-        <Route path="/index.html" element={<Index />} />
-        <Route path="/about.html" element={<About />} />
-        <Route path="/services.html" element={<Services />} />
-        <Route path="/pricing.html" element={<Pricing />} />
-        <Route path="/contact.html" element={<Contact />} />
-        <Route path="/services-page.html" element={<ServicesPage />} />
-        <Route path="/team.html" element={<Team />} />
-        <Route path="/team-details.html" element={<TeamDetails />} />
-        <Route path="/portfolio.html" element={<Portfolio />} />
-        <Route path="/faq.html" element={<Faq />} />
-        <Route path="/404.html" element={<NotFound />} />
-        <Route path="/post.html" element={<Post />} />
-        <Route path="/blog2.html" element={<Blog2 />} />
-        <Route path="/blog3.html" element={<Blog3 />} />
-        <Route path="/blog.html" element={<Blog />} />
-        <Route path="/services-page.html" element={<ServicesPage />} />
+        <Route path="/index" element={<Index />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/services-page" element={<ServicesPage />} />
+        <Route path="/team" element={<Team />} />
+        <Route path="/team-details" element={<TeamDetails />} />
+        <Route path="/portfolio" element={<Portfolio />} />
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/404" element={<NotFound />} />
+        <Route path="/post" element={<Post />} />
+        <Route path="/blog2" element={<Blog2 />} />
+        <Route path="/blog3" element={<Blog3 />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/services-page" element={<ServicesPage />} />
         <Route path="/booking" element={<Booking />} />
         <Route path="/booking-history" element={<BookingHistory />} />
        <Route path="/barber/dashboard" element={<Dashboard />} />
