@@ -56,9 +56,61 @@
   gap: 13px;
   align-items: center;
   padding: 5px 8px 22px;
-  border-bottom: 1px solid var(--admin-border);
   color: inherit;
   text-decoration: none;
+}
+
+.admin-header-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-header-section .admin-shell-brand {
+  padding: 0;
+  border: none;
+}
+
+.admin-header-section .notification-bell-container {
+  position: relative;
+}
+
+.admin-header-section .notification-bell-button {
+  width: 36px;
+  height: 36px;
+  background-color: transparent;
+  border: 1px solid var(--admin-border);
+}
+
+.admin-header-section .notification-bell-button:hover {
+  background-color: #22211e;
+  border-color: var(--admin-gold);
+}
+
+.admin-header-section .notification-bell-icon {
+  font-size: 16px;
+}
+
+.admin-header-section .notification-bell-badge {
+  background-color: #e74c3c;
+  min-width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.admin-header-section .notification-bell-dropdown {
+  right: 0;
+  width: 360px;
+}
+
+.admin-header-section .notification-bell-item.unread {
+  background-color: rgba(198, 161, 91, 0.1);
+}
+
+.admin-header-section .notification-bell-item.unread:hover {
+  background-color: rgba(198, 161, 91, 0.15);
 }
 
 .admin-shell-logo {

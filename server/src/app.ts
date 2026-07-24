@@ -29,6 +29,7 @@ import adminHairstyleGalleryRoutes from "./routes/adminHairstyleGallery.routes";
 import adminReviewRoutes from "./routes/adminReview.routes";
 import hairstyleGalleryRoutes from "./routes/hairstyleGallery.routes";
 import reviewRoutes from "./routes/review.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.use("/api/admin/hairstyle-gallery", adminHairstyleGalleryRoutes);
 app.use("/api/admin/reviews", adminReviewRoutes);
 app.use("/api/admin", adminContentRoutes);
 app.use("/api/receptionist", receptionistRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 
 

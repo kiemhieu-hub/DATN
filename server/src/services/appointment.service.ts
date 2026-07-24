@@ -30,6 +30,13 @@ import {
   recordAppointmentActivity,
   recordSystemActivities,
 } from "./appointmentActivity.service";
+import {
+  createNotification,
+  sendBookingNotifications,
+  sendBookingConfirmedNotification,
+  sendBookingCancelledNotification,
+  sendBookingCompletedNotification,
+} from "./notification.service";
 
 interface LifecycleEmailAppointment {
   appointmentCode: string;
@@ -967,6 +974,17 @@ export const createAppointment =
       endTime,
     }).catch((error) => console.error("Không thể gửi email xác nhận:", error));
 
+    const barberUser = await User.findById(primaryBarberId).select("fullName");
+    await sendBookingNotifications({
+      bookingId: String(appointment._id),
+      customerName: customer.fullName,
+      barberId: primaryBarberId,
+      barberName: barberUser?.fullName || "Barber",
+      date: appointmentDate,
+      time: startTime,
+      serviceName: normalizedServices.map(s => s.nameSnapshot).join(", "),
+    });
+
     return populateAppointment(String(appointment._id));
   };
 
@@ -1112,6 +1130,16 @@ export const cancelMyAppointment =
       "CANCELLED",
       `Bạn đã hủy lịch hẹn. Lý do: ${reason.trim()}`
     );
+
+    const barberUser = await User.findById(appointment.barber).select("fullName");
+    await sendBookingCancelledNotification({
+      bookingId: String(appointment._id),
+      customerId: userId,
+      barberId: String(appointment.barber),
+      barberName: barberUser?.fullName || "Barber",
+      date: appointment.appointmentDate,
+      time: appointment.startTime,
+    });
 
     return populateAppointment(
       String(appointment._id)
@@ -1312,6 +1340,28 @@ export const updateAppointmentStatus =
         reason: reason?.trim() || undefined,
       },
     });
+
+    if (status === "CONFIRMED") {
+      const barberUser = await User.findById(appointment.barber).select("fullName");
+      await sendBookingConfirmedNotification({
+        bookingId: String(appointment._id),
+        customerId: String(appointment.client),
+        barberName: barberUser?.fullName || "Barber",
+        date: appointment.appointmentDate,
+        time: appointment.startTime,
+      });
+    }
+
+    if (status === "COMPLETED") {
+      const serviceNames = appointment.services.map((s) => s.nameSnapshot).join(", ");
+      const barberUser = await User.findById(appointment.barber).select("fullName");
+      await sendBookingCompletedNotification({
+        bookingId: String(appointment._id),
+        customerId: String(appointment.client),
+        barberName: barberUser?.fullName || "Barber",
+        serviceName: serviceNames,
+      });
+    }
 
     return populateAppointment(
       String(appointment._id)

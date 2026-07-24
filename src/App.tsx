@@ -5,6 +5,9 @@ import {
   Routes,
 } from "react-router-dom";
 
+import { AuthProvider } from "./contexts/AuthContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
+
 import Index from './pages/Client/Index';
 import About from './pages/Client/About';
 import Services from './pages/Client/Services';
@@ -39,6 +42,7 @@ import ReceptionistLogin from "./pages/Auth/ReceptionistLogin";
 import ReceptionistDashboard from "./pages/Receptionist/Dashboard";
 import ReceptionistBarberSchedules from "./pages/Receptionist/BarberSchedules";
 import AdminLayout from "./layouts/AdminLayout";
+import BarberLayout from "./layouts/BarberLayout";
 import ReceptionistLayout from "./layouts/ReceptionistLayout";
 
 //Admin
@@ -57,7 +61,9 @@ import AdminReviews from "./pages/Admin/Reviews";
 function App() {
   return (
     <Router>
-      <Routes>
+      <AuthProvider>
+        <NotificationProvider>
+          <Routes>
         {/* ================= ADMIN ================= */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminLayout />}>
@@ -114,10 +120,13 @@ function App() {
 
         {/* ================= BARBER ================= */}
         <Route path="/barber/login" element={<BarberLogin />} />
-        <Route path="/barber/schedule"element={<Schedule />}/>
-        <Route path="/barber/working-schedule"element={<WorkingSchedule />}/>
-        <Route path="/barber/dashboard" element={<Dashboard />}/>
-        <Route path="/barber/profile"element={<Profile />}/>
+        <Route path="/barber" element={<BarberLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />}/>
+          <Route path="schedule" element={<Schedule />}/>
+          <Route path="working-schedule" element={<WorkingSchedule />}/>
+          <Route path="profile" element={<Profile />}/>
+        </Route>
 
 
         <Route path="*"element={
@@ -132,7 +141,9 @@ function App() {
             </div>
           }
         />
-      </Routes>
+        </Routes>
+        </NotificationProvider>
+      </AuthProvider>
     </Router>
   );
 }

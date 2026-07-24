@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
+import NotificationBell from "../../components/NotificationBell/NotificationBell";
 
 function Index() {
   const navigate = useNavigate();
@@ -187,7 +188,11 @@ function Index() {
               {/* ================= AUTH MENU ================= */}
 
               {isAuthenticated && user ? (
-                <li className="nav-item dropdown">
+                <>
+                  <li className="nav-item">
+                    <NotificationBell />
+                  </li>
+                  <li className="nav-item dropdown">
                   <button
                     className="nav-link dropdown-toggle auth-user-button"
                     type="button"

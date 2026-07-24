@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../contexts/AuthContext";
+import NotificationBell from "../components/NotificationBell/NotificationBell";
 
 import "./AdminLayout.css";
 
@@ -113,18 +114,22 @@ function AdminLayout() {
   return (
     <div className={`admin-shell ${isCollapsed ? "sidebar-collapsed" : ""}`}>
       <aside className="admin-shell-sidebar">
-        <NavLink
-          to="/admin/dashboard"
-          className="admin-shell-brand"
-          title="Quay về Dashboard"
-        >
-          <div className="admin-shell-logo">T</div>
+        <div className="admin-header-section">
+          <NavLink
+            to="/admin/dashboard"
+            className="admin-shell-brand"
+            title="Quay về Dashboard"
+          >
+            <div className="admin-shell-logo">T</div>
 
-          <div className="admin-shell-brand-text">
-            <h2>THADS</h2>
-            <span>ADMIN CENTER</span>
-          </div>
-        </NavLink>
+            <div className="admin-shell-brand-text">
+              <h2>THADS</h2>
+              <span>ADMIN CENTER</span>
+            </div>
+          </NavLink>
+
+          <NotificationBell />
+        </div>
 
         <button
           type="button"
