@@ -16,6 +16,7 @@ import {
   sendAppointmentLifecycleEmail,
   type AppointmentEmailEvent,
 } from "./email.service";
+import { createStaffNotification } from "./staffNotification.service";
 
 type StaffRole = "ADMIN" | "RECEPTIONIST";
 
@@ -265,6 +266,39 @@ export const changeAdminAppointmentStatus = async (
     );
   }
 
+  if (
+    [
+      "CONFIRMED",
+      "CANCELLED",
+      "NO_SHOW",
+      "COMPLETED",
+    ].includes(status)
+  ) {
+    void createStaffNotification({
+      title:
+        status === "COMPLETED"
+          ? "Lịch chờ thanh toán"
+          : "Trạng thái lịch đã thay đổi",
+      message: `Lịch ${appointment.appointmentCode} đã chuyển sang ${status}.`,
+      kind:
+        status === "NO_SHOW"
+          ? "NO_SHOW"
+          : status === "COMPLETED"
+            ? "WAITING_PAYMENT"
+            : "APPOINTMENT_CHANGED",
+      appointmentId,
+      dedupeKey:
+        status === "COMPLETED"
+          ? `WAITING_PAYMENT:${appointmentId}`
+          : undefined,
+    }).catch((error: unknown) => {
+      console.error(
+        "Không thể tạo thông báo trạng thái:",
+        error
+      );
+    });
+  }
+
   return appointment;
 };
 
@@ -311,6 +345,17 @@ export const reassignAppointmentBarber = async (
     `Barber phụ trách đã đổi từ ${previousBarber?.fullName ?? "không xác định"} sang ${nextBarber?.fullName ?? "không xác định"}.`,
     nextBarber?.fullName
   );
+  void createStaffNotification({
+    title: "Đã đổi Barber",
+    message: `Lịch ${detail.appointmentCode} đã đổi Barber sang ${nextBarber?.fullName ?? "không xác định"}.`,
+    kind: "APPOINTMENT_CHANGED",
+    appointmentId,
+  }).catch((error: unknown) => {
+    console.error(
+      "Không thể tạo thông báo đổi Barber:",
+      error
+    );
+  });
   return detail;
 };
 
@@ -362,6 +407,17 @@ export const rescheduleAppointment = async (
     "RESCHEDULED",
     `Thời gian cũ: ${previousSchedule.appointmentDate} ${previousSchedule.startTime}–${previousSchedule.endTime}. Thời gian mới được hiển thị bên dưới.`
   );
+  void createStaffNotification({
+    title: "Đã đổi lịch hẹn",
+    message: `Lịch ${detail.appointmentCode} được chuyển sang ${appointmentDate} lúc ${startTime}.`,
+    kind: "APPOINTMENT_CHANGED",
+    appointmentId,
+  }).catch((error: unknown) => {
+    console.error(
+      "Không thể tạo thông báo đổi lịch:",
+      error
+    );
+  });
   return detail;
 };
 
@@ -466,6 +522,17 @@ export const reopenNoShowAppointment = async (
       : "Lịch vắng mặt đã được bật lại với ngày giờ mới.",
     barberName
   );
+  void createStaffNotification({
+    title: "Đã bật lại lịch vắng mặt",
+    message: `Lịch ${detail.appointmentCode} đã được bật lại.`,
+    kind: "APPOINTMENT_CHANGED",
+    appointmentId,
+  }).catch((error: unknown) => {
+    console.error(
+      "Không thể tạo thông báo bật lại:",
+      error
+    );
+  });
   return detail;
 };
 

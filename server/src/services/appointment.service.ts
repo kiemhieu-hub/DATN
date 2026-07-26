@@ -30,6 +30,7 @@ import {
   recordAppointmentActivity,
   recordSystemActivities,
 } from "./appointmentActivity.service";
+import { createStaffNotification } from "./staffNotification.service";
 
 interface LifecycleEmailAppointment {
   appointmentCode: string;
@@ -957,6 +958,19 @@ export const createAppointment =
       },
     });
 
+    void createStaffNotification({
+      title: "Có lịch hẹn mới",
+      message: `${appointment.customer.fullName} vừa đặt lịch ${appointment.appointmentCode} vào ${appointmentDate} lúc ${startTime}.`,
+      kind: "NEW_APPOINTMENT",
+      appointmentId: appointment._id,
+      dedupeKey: `NEW_APPOINTMENT:${appointment._id}`,
+    }).catch((error: unknown) => {
+      console.error(
+        "Không thể tạo thông báo lịch mới:",
+        error
+      );
+    });
+
     void sendBookingConfirmationEmail({
       to: appointment.customer.email,
       customerName: appointment.customer.fullName,
@@ -1112,6 +1126,18 @@ export const cancelMyAppointment =
       "CANCELLED",
       `Bạn đã hủy lịch hẹn. Lý do: ${reason.trim()}`
     );
+
+    void createStaffNotification({
+      title: "Khách hàng đã hủy lịch",
+      message: `${appointment.customer.fullName} đã hủy lịch ${appointment.appointmentCode}.`,
+      kind: "APPOINTMENT_CHANGED",
+      appointmentId: appointment._id,
+    }).catch((error: unknown) => {
+      console.error(
+        "Không thể tạo thông báo hủy lịch:",
+        error
+      );
+    });
 
     return populateAppointment(
       String(appointment._id)
@@ -1628,6 +1654,25 @@ export const processAutomaticAppointmentStatuses = async () => {
           ? "Khách hàng chưa check-in sau giờ hẹn 15 phút nên lịch đã được ghi nhận vắng mặt."
           : "Khung giờ dịch vụ đã kết thúc và lịch hẹn được hệ thống chuyển sang hoàn thành."
       );
+
+      void createStaffNotification({
+        title: wasNoShow
+          ? "Khách hàng vắng mặt"
+          : "Lịch chờ thanh toán",
+        message: wasNoShow
+          ? `${appointment.customer.fullName} chưa check-in cho lịch ${appointment.appointmentCode}.`
+          : `Lịch ${appointment.appointmentCode} đã hoàn thành và cần kiểm tra thanh toán.`,
+        kind: wasNoShow
+          ? "NO_SHOW"
+          : "WAITING_PAYMENT",
+        appointmentId: appointment._id,
+        dedupeKey: `${wasNoShow ? "NO_SHOW" : "WAITING_PAYMENT"}:${appointment._id}`,
+      }).catch((error: unknown) => {
+        console.error(
+          "Không thể tạo thông báo tự động:",
+          error
+        );
+      });
     }
   );
 

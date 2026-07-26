@@ -123,6 +123,7 @@
 }
 
 .admin-nav-link {
+  position: relative;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -135,6 +136,20 @@
   border: 1px solid transparent;
   border-radius: 4px;
   transition: 160ms ease;
+}
+
+.admin-nav-badge {
+  min-width: 22px;
+  height: 22px;
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: #b83b3b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 22px;
+  text-align: center;
 }
 
 .admin-nav-link:hover {
@@ -254,6 +269,16 @@
 .admin-shell.sidebar-collapsed .admin-nav-icon {
   flex-basis: 36px;
   width: 36px;
+}
+
+.admin-shell.sidebar-collapsed .admin-nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  line-height: 18px;
 }
 
 .admin-shell.sidebar-collapsed .admin-shell-user {

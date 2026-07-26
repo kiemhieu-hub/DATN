@@ -27,7 +27,14 @@
 
 .admin-dashboard-header h1 { margin: 7px 0; font-size: 42px; }
 .admin-dashboard-header p { margin: 0; color: #999; }
-.admin-dashboard-header button {
+.admin-dashboard-header-actions {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-dashboard-refresh {
   padding: 11px 16px;
   color: #111;
   font: inherit;
@@ -35,6 +42,186 @@
   cursor: pointer;
   background: #c6a15b;
   border: 1px solid #c6a15b;
+}
+
+.admin-dashboard-notification {
+  position: relative;
+}
+
+.admin-notification-bell {
+  position: relative;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  color: #c6a15b;
+  cursor: pointer;
+  background: #1a1a19;
+  border: 1px solid #454138;
+  border-radius: 50%;
+  place-items: center;
+  transition: border-color .2s ease, background .2s ease;
+}
+
+.admin-notification-bell:hover,
+.admin-notification-bell[aria-expanded="true"] {
+  background: #24221d;
+  border-color: #c6a15b;
+}
+
+.admin-notification-bell svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.admin-notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  background: #d44646;
+  border: 2px solid #10100f;
+  border-radius: 999px;
+  place-items: center;
+}
+
+.admin-notification-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 100;
+  width: min(420px, calc(100vw - 40px));
+  overflow: hidden;
+  background: #191918;
+  border: 1px solid #454138;
+  box-shadow: 0 24px 60px #000a;
+}
+
+.admin-notification-panel::before {
+  position: absolute;
+  top: -7px;
+  right: 17px;
+  width: 12px;
+  height: 12px;
+  content: "";
+  background: #20201e;
+  border-top: 1px solid #454138;
+  border-left: 1px solid #454138;
+  transform: rotate(45deg);
+}
+
+.admin-notification-panel-header {
+  position: relative;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  background: #20201e;
+  border-bottom: 1px solid #34322d;
+}
+
+.admin-notification-panel-header span {
+  color: #c6a15b;
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+.admin-notification-panel-header h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.admin-notification-panel-header button {
+  flex: 0 0 auto;
+  padding: 7px 9px;
+  color: #c6a15b;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #514b3e;
+}
+
+.admin-notification-list {
+  max-height: 430px;
+  overflow-y: auto;
+}
+
+.admin-notification-item {
+  display: block;
+  width: 100%;
+  padding: 15px 18px;
+  color: #eee;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: #191918;
+  border: 0;
+  border-bottom: 1px solid #302f2b;
+}
+
+.admin-notification-item:hover {
+  background: #24231f;
+}
+
+.admin-notification-item.unread {
+  background: #211f19;
+  box-shadow: inset 3px 0 #c6a15b;
+}
+
+.admin-notification-item-title,
+.admin-notification-item-message,
+.admin-notification-item time {
+  display: block;
+}
+
+.admin-notification-item-title {
+  margin-bottom: 5px;
+  color: #f0cb82;
+  font-weight: 700;
+}
+
+.admin-notification-item-message {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #c8c6c0;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.admin-notification-item:hover .admin-notification-item-message,
+.admin-notification-item:focus-visible .admin-notification-item-message {
+  display: block;
+  overflow: visible;
+  white-space: normal;
+}
+
+.admin-notification-item time {
+  margin-top: 6px;
+  color: #777;
+  font-size: 11px;
+}
+
+.admin-notification-empty {
+  padding: 42px 20px;
+  margin: 0;
+  color: #888;
+  text-align: center;
 }
 
 .admin-dashboard-error { padding: 14px; margin-bottom: 18px; color: #ffd3d3; background: #4a2020; }
@@ -92,7 +279,16 @@
 }
 
 @media (max-width: 650px) {
-  .admin-dashboard-header { align-items: flex-start; flex-direction: column; }
+  .admin-dashboard-header { align-items: stretch; flex-direction: column; }
+  .admin-dashboard-header-actions { justify-content: space-between; }
+  .admin-dashboard-refresh { flex: 1; }
+  .admin-notification-panel {
+    position: fixed;
+    top: 82px;
+    right: 18px;
+    left: 18px;
+    width: auto;
+  }
   .admin-dashboard-overview,
   .admin-dashboard-status-grid { grid-template-columns: 1fr; }
   .admin-dashboard-header h1 { font-size: 32px; }

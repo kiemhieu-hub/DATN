@@ -1,14 +1,26 @@
 import axios from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { getAdminDashboard } from "../../services/adminDashboard.service";
+import {
+  getStaffNotifications,
+  markAllStaffNotificationsRead,
+  markStaffNotificationRead,
+} from "../../services/staffNotification.service";
 
 import type {
   AdminDashboardAppointment,
   AdminDashboardData,
 } from "../../types/AdminDashboard";
+import type { StaffNotification } from "../../types/StaffNotification";
 
 import "./css/Dashboard.css";
 
@@ -36,10 +48,15 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 function Dashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth("ADMIN");
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notifications, setNotifications] = useState<StaffNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -57,6 +74,93 @@ function Dashboard() {
   useEffect(() => {
     void loadDashboard();
   }, [loadDashboard]);
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      const response = await getStaffNotifications();
+      setNotifications(response.items);
+      setUnreadCount(response.unreadCount);
+    } catch {
+      // Thông báo không làm gián đoạn dữ liệu chính của Dashboard.
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadNotifications();
+
+    const timer = window.setInterval(() => {
+      void loadNotifications();
+    }, 30_000);
+
+    return () => window.clearInterval(timer);
+  }, [loadNotifications]);
+
+  useEffect(() => {
+    const closeWhenClickOutside = (event: MouseEvent) => {
+      if (
+        notificationRef.current
+        && !notificationRef.current.contains(event.target as Node)
+      ) {
+        setIsNotificationOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeWhenClickOutside);
+    return () => document.removeEventListener("mousedown", closeWhenClickOutside);
+  }, []);
+
+  const openNotification = async (
+    notification: StaffNotification
+  ): Promise<void> => {
+    if (!notification.isRead) {
+      try {
+        await markStaffNotificationRead(notification._id);
+        setNotifications((current) =>
+          current.map((item) =>
+            item._id === notification._id
+              ? { ...item, isRead: true }
+              : item
+          )
+        );
+        setUnreadCount((current) => Math.max(0, current - 1));
+      } catch {
+        // Vẫn cho phép Admin mở lịch hẹn khi API đánh dấu đã đọc bị lỗi.
+      }
+    }
+
+    setIsNotificationOpen(false);
+
+    const appointmentId =
+      typeof notification.appointment === "string"
+        ? notification.appointment
+        : notification.appointment?._id;
+
+    navigate(
+      appointmentId
+        ? `/admin/appointments?appointmentId=${encodeURIComponent(appointmentId)}`
+        : "/admin/appointments"
+    );
+  };
+
+  const markAllNotificationsRead = async (): Promise<void> => {
+    try {
+      await markAllStaffNotificationsRead();
+      setNotifications((current) =>
+        current.map((item) => ({ ...item, isRead: true }))
+      );
+      setUnreadCount(0);
+    } catch {
+      setError("Không thể đánh dấu tất cả thông báo đã đọc.");
+    }
+  };
+
+  const formatNotificationTime = (value: string): string =>
+    new Intl.DateTimeFormat("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
 
   const activeAppointments = useMemo(() => {
     if (!data) return 0;
@@ -79,9 +183,90 @@ function Dashboard() {
             <p>Xin chào {user?.fullName}. Đây là tổng quan vận hành hệ thống hôm nay.</p>
           </div>
 
-          <button type="button" onClick={() => void loadDashboard()}>
-            Làm mới dữ liệu
-          </button>
+          <div className="admin-dashboard-header-actions">
+            <button
+              type="button"
+              className="admin-dashboard-refresh"
+              onClick={() => void loadDashboard()}
+            >
+              Làm mới dữ liệu
+            </button>
+
+            <div className="admin-dashboard-notification" ref={notificationRef}>
+              <button
+                type="button"
+                className="admin-notification-bell"
+                aria-label="Mở thông báo"
+                aria-expanded={isNotificationOpen}
+                onClick={() => setIsNotificationOpen((current) => !current)}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+                </svg>
+
+                {unreadCount > 0 && (
+                  <span className="admin-notification-badge">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {isNotificationOpen && (
+                <section className="admin-notification-panel">
+                  <div className="admin-notification-panel-header">
+                    <div>
+                      <span>THÔNG BÁO</span>
+                      <h2>Công việc cần xử lý</h2>
+                    </div>
+
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => void markAllNotificationsRead()}
+                      >
+                        Đọc tất cả
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="admin-notification-list">
+                    {notifications.length === 0 ? (
+                      <p className="admin-notification-empty">
+                        Chưa có thông báo.
+                      </p>
+                    ) : (
+                      notifications.slice(0, 8).map((notification) => (
+                        <button
+                          type="button"
+                          key={notification._id}
+                          title={notification.message}
+                          className={
+                            notification.isRead
+                              ? "admin-notification-item"
+                              : "admin-notification-item unread"
+                          }
+                          onClick={() => void openNotification(notification)}
+                        >
+                          <span className="admin-notification-item-title">
+                            {notification.title}
+                          </span>
+                          <span className="admin-notification-item-message">
+                            {notification.message}
+                          </span>
+                          <time>
+                            {formatNotificationTime(notification.createdAt)}
+                          </time>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </section>
+              )}
+            </div>
+          </div>
         </header>
 
         {error && <div className="admin-dashboard-error">{error}</div>}

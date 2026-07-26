@@ -39,6 +39,7 @@ import ReceptionistBarberSchedules from "./pages/Receptionist/BarberSchedules";
 import AdminLayout from "./layouts/AdminLayout";
 import ReceptionistLayout from "./layouts/ReceptionistLayout";
 
+
 //Admin
 import AdminDashboard from "./pages/Admin/Dashboard";
 import AdminRevenue from "./pages/Admin/Revenue";
@@ -51,6 +52,7 @@ import AdminVouchers from "./pages/Admin/Vouchers";
 import AdminServiceCategories from "./pages/Admin/ServiceCategories";
 import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
 import AdminReviews from "./pages/Admin/Reviews";
+import StaffNotifications from "./pages/Admin/StaffNotifications";
 
 function App() {
   return (
@@ -74,6 +76,7 @@ function App() {
           <Route path="users" element={<AdminUsers />}/>
           <Route path="hairstyle-gallery" element={<AdminHairstyleGallery />}/>
           <Route path="reviews" element={<AdminReviews />}/>
+          <Route path="notifications" element={<StaffNotifications />}/>
         </Route>
 
         {/* ================= AUTH ================= */}

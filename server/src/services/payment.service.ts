@@ -6,6 +6,7 @@ import AppError from "../utils/AppError";
 import User from "../models/User";
 import { recordAppointmentActivity } from "./appointmentActivity.service";
 import { sendAppointmentLifecycleEmail } from "./email.service";
+import { createStaffNotification } from "./staffNotification.service";
 
 interface GetPaymentsInput {
   keyword?: string;
@@ -199,6 +200,19 @@ export const confirmCashPayment = async (
       }).catch((error: unknown) => {
         console.error(
           "Không thể gửi email thanh toán:",
+          error
+        );
+      });
+
+      void createStaffNotification({
+        title: "Thanh toán thành công",
+        message: `Lịch ${appointment.appointmentCode} đã thanh toán ${appointment.totalPrice.toLocaleString("vi-VN")}đ bằng ${method === "CASH" ? "tiền mặt" : "chuyển khoản"}.`,
+        kind: "PAYMENT",
+        appointmentId,
+        dedupeKey: `PAYMENT:${appointmentId}:${createdPaymentId}`,
+      }).catch((error: unknown) => {
+        console.error(
+          "Không thể tạo thông báo thanh toán:",
           error
         );
       });

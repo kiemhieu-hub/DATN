@@ -306,6 +306,53 @@ function Appointments() {
     return () => window.clearInterval(refreshTimer);
   }, [authRole, isAuthenticated, loadAppointments, user]);
 
+  useEffect(() => {
+    if (!isAuthenticated || !user || user.role !== authRole) {
+      return;
+    }
+
+    const appointmentId = new URLSearchParams(location.search).get(
+      "appointmentId"
+    );
+
+    if (!appointmentId) {
+      return;
+    }
+
+    const openAppointmentFromNotification = async (): Promise<void> => {
+      try {
+        setProcessingId(appointmentId);
+        setError("");
+
+        const response = await getAdminAppointment(appointmentId);
+        setSelectedAppointment(response.appointment);
+
+        const currentBarberId =
+          typeof response.appointment.barber === "string"
+            ? response.appointment.barber
+            : response.appointment.barber._id;
+
+        setSelectedBarberId(currentBarberId);
+      } catch (requestError) {
+        setError(
+          getErrorMessage(
+            requestError,
+            "Không thể mở lịch hẹn từ thông báo"
+          )
+        );
+      } finally {
+        setProcessingId(null);
+      }
+    };
+
+    void openAppointmentFromNotification();
+  }, [
+    authRole,
+    isAuthenticated,
+    location.search,
+    user,
+  ]);
+
   const handleSearch = (event: FormEvent): void => {
     event.preventDefault();
     setPage(1);
@@ -339,6 +386,10 @@ function Appointments() {
 
     setSelectedAppointment(null);
     setSelectedBarberId("");
+
+    if (new URLSearchParams(location.search).has("appointmentId")) {
+      navigate(location.pathname, { replace: true });
+    }
   };
 
   const handleChangeStatus = async (
