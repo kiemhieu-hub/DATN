@@ -30,6 +30,12 @@ export interface VoucherCalculation {
   depositAmount: number;
 }
 
+export interface AvailableVoucher extends VoucherCalculation {
+  name: string;
+  description: string;
+  endDate: Date;
+}
+
 const normalizeCode = (code: string): string => {
   if (typeof code !== "string" || !code.trim()) {
     throw new AppError("Vui lòng nhập mã voucher", 400);
@@ -122,7 +128,7 @@ export const evaluateVoucher = async (
   discountAmount = Math.min(discountAmount, subtotal);
 
   const total = Math.max(0, subtotal - discountAmount);
-  const depositRequired = total > 200000;
+  const depositRequired = subtotal > 200000;
 
   return {
     voucherId: String(voucher._id),
@@ -134,7 +140,7 @@ export const evaluateVoucher = async (
     subtotal,
     total,
     depositRequired,
-    depositAmount: depositRequired ? Math.round(total * 0.3) : 0,
+    depositAmount: depositRequired ? Math.round(subtotal * 0.3) : 0,
   };
 };
 
@@ -169,6 +175,45 @@ export const evaluateVoucherFromServiceIds = async (
       group: service.group,
     })),
   });
+};
+
+export const getAvailableVouchersFromServiceIds = async (
+  clientId: string,
+  serviceIds: string[],
+  barberIds: string[]
+): Promise<AvailableVoucher[]> => {
+  if (!Array.isArray(serviceIds) || serviceIds.length === 0) {
+    return [];
+  }
+
+  const vouchers = await Voucher.find({ isActive: true })
+    .sort({ value: -1, endDate: 1 });
+
+  const calculations = await Promise.all(
+    vouchers.map(async (voucher) => {
+      try {
+        const calculation = await evaluateVoucherFromServiceIds(
+          voucher.code,
+          clientId,
+          serviceIds,
+          barberIds
+        );
+
+        return {
+          ...calculation,
+          name: voucher.name,
+          description: voucher.description,
+          endDate: voucher.endDate,
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return calculations.filter(
+    (item): item is AvailableVoucher => item !== null
+  );
 };
 
 export const consumeVoucher = async (voucherId: string): Promise<void> => {

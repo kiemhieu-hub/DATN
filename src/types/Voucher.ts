@@ -57,3 +57,9 @@ export interface VoucherCalculation {
   depositRequired: boolean;
   depositAmount: number;
 }
+
+export interface AvailableVoucher extends VoucherCalculation {
+  name: string;
+  description: string;
+  endDate: string;
+}

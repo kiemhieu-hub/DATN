@@ -651,6 +651,61 @@ const validateAppointmentConflict =
     }
   };
 
+const selectRandomCareBarber = async (
+  serviceIds: mongoose.Types.ObjectId[],
+  appointmentDate: string,
+  startTime: string,
+  endTime: string,
+  excludedBarberId?: string
+): Promise<string> => {
+  const profiles = await BarberProfile.find({
+    isActive: true,
+    staffType: "CARE",
+    specialties: { $all: serviceIds },
+    ...(excludedBarberId
+      ? { user: { $ne: excludedBarberId } }
+      : {}),
+  })
+    .select("user")
+    .lean();
+
+  const shuffledProfiles = [...profiles].sort(() => Math.random() - 0.5);
+
+  for (const profile of shuffledProfiles) {
+    const barberId = String(profile.user);
+    const barber = await User.exists({
+      _id: barberId,
+      role: "BARBER",
+      status: "ACTIVE",
+    });
+
+    if (!barber) continue;
+
+    try {
+      await validateBarberSchedule(
+        barberId,
+        appointmentDate,
+        startTime,
+        endTime
+      );
+      await validateAppointmentConflict(
+        barberId,
+        appointmentDate,
+        startTime,
+        endTime
+      );
+      return barberId;
+    } catch {
+      // Thử nhân viên chăm sóc phù hợp tiếp theo.
+    }
+  }
+
+  throw new AppError(
+    "Không còn nhân viên chăm sóc phù hợp trong khung giờ đã chọn",
+    409
+  );
+};
+
 const populateAppointment = async (
   appointmentId: string
 ) => {
@@ -710,7 +765,6 @@ export const createAppointment =
 
     const {
       barberId,
-      careBarberId,
       serviceIds,
       appointmentDate,
       startTime,
@@ -777,15 +831,59 @@ export const createAppointment =
 
     const hairServices = normalizedServices.filter((service) => service.staffType === "HAIR");
     const careServices = normalizedServices.filter((service) => service.staffType === "CARE");
-    const primaryBarberId = hairServices.length > 0 ? barberId : (careBarberId || barberId);
-
-    await validateBarber(primaryBarberId);
-
-    if (hairServices.length > 0 && careServices.length > 0) {
-      if (!careBarberId) throw new AppError("Vui lòng chọn nhân viên chăm sóc", 400);
-      if (careBarberId === barberId) throw new AppError("Nhân viên làm tóc và chăm sóc phải khác nhau", 400);
-      await validateBarber(careBarberId);
+    if (hairServices.length > 0) {
+      await validateBarber(barberId);
     }
+
+    const durationMinutes = normalizedServices.reduce(
+      (total, service) => total + service.durationSnapshot,
+      0
+    );
+    const startMinutes = timeToMinutes(startTime);
+    const endMinutes = startMinutes + durationMinutes;
+
+    if (endMinutes >= 24 * 60) {
+      throw new AppError(
+        "Thời gian kết thúc lịch hẹn không hợp lệ",
+        400
+      );
+    }
+
+    const endTime = minutesToTime(endMinutes);
+    const hairDuration = hairServices.reduce(
+      (sum, service) => sum + service.durationSnapshot,
+      0
+    );
+    const hairEndTime = minutesToTime(startMinutes + hairDuration);
+    const careStartTime = hairServices.length > 0 ? hairEndTime : startTime;
+
+    if (hairServices.length > 0) {
+      await validateBarberSchedule(
+        barberId,
+        appointmentDate,
+        startTime,
+        hairEndTime
+      );
+      await validateAppointmentConflict(
+        barberId,
+        appointmentDate,
+        startTime,
+        hairEndTime
+      );
+    }
+
+    const assignedCareBarberId = careServices.length > 0
+      ? await selectRandomCareBarber(
+          careServices.map((service) => service.service),
+          appointmentDate,
+          careStartTime,
+          endTime,
+          hairServices.length > 0 ? barberId : undefined
+        )
+      : "";
+
+    const primaryBarberId =
+      hairServices.length > 0 ? barberId : assignedCareBarberId;
 
     const subtotal =
       normalizedServices.reduce(
@@ -804,7 +902,7 @@ export const createAppointment =
       voucherCalculation = await evaluateVoucher({
         code: normalizedVoucher,
         clientId,
-        barberIds: [primaryBarberId, careBarberId].filter(
+        barberIds: [barberId, assignedCareBarberId].filter(
           (id): id is string => typeof id === "string" && Boolean(id)
         ),
         items: normalizedServices.map((service) => ({
@@ -817,55 +915,8 @@ export const createAppointment =
     const discountPercent = voucherCalculation?.discountPercent ?? 0;
     const discountAmount = voucherCalculation?.discountAmount ?? 0;
     const totalPrice = voucherCalculation?.total ?? subtotal;
-    const depositRequired = totalPrice > 200000;
-    const depositAmount = depositRequired ? Math.round(totalPrice * 0.3) : 0;
-
-    const durationMinutes =
-      normalizedServices.reduce(
-        (total, service) =>
-          total +
-          service.durationSnapshot,
-        0
-      );
-
-    const startMinutes =
-      timeToMinutes(startTime);
-
-    const endMinutes =
-      startMinutes +
-      durationMinutes;
-
-    if (endMinutes >= 24 * 60) {
-      throw new AppError(
-        "Thời gian kết thúc lịch hẹn không hợp lệ",
-        400
-      );
-    }
-
-    const endTime =
-      minutesToTime(endMinutes);
-
-    await validateBarberSchedule(
-      primaryBarberId,
-      appointmentDate,
-      startTime,
-      endTime
-    );
-
-    await validateAppointmentConflict(
-      primaryBarberId,
-      appointmentDate,
-      startTime,
-      endTime
-    );
-
-    if (hairServices.length > 0 && careServices.length > 0 && careBarberId) {
-      const careStart = minutesToTime(
-        startMinutes + hairServices.reduce((sum, service) => sum + service.durationSnapshot, 0)
-      );
-      await validateBarberSchedule(careBarberId, appointmentDate, careStart, endTime);
-      await validateAppointmentConflict(careBarberId, appointmentDate, careStart, endTime);
-    }
+    const depositRequired = subtotal > 200000;
+    const depositAmount = depositRequired ? Math.round(subtotal * 0.3) : 0;
 
     const appointment =
       await Appointment.create({
@@ -883,13 +934,13 @@ export const createAppointment =
             staffType: "HAIR" as const,
             serviceIds: hairServices.map((service) => service.service),
             startTime,
-            endTime: minutesToTime(startMinutes + hairServices.reduce((sum, service) => sum + service.durationSnapshot, 0)),
+            endTime: hairEndTime,
           }] : []),
           ...(careServices.length ? [{
-            barber: careBarberId || barberId,
+            barber: assignedCareBarberId,
             staffType: "CARE" as const,
             serviceIds: careServices.map((service) => service.service),
-            startTime: minutesToTime(startMinutes + hairServices.reduce((sum, service) => sum + service.durationSnapshot, 0)),
+            startTime: careStartTime,
             endTime,
           }] : []),
         ],

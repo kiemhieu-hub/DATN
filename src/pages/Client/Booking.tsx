@@ -19,8 +19,11 @@ import type {
   ServiceGroup,
   ServiceStaffType,
 } from "../../types/Catalog";
-import { validateVoucher } from "../../services/voucher.service";
-import type { VoucherCalculation } from "../../types/Voucher";
+import { getAvailableVouchers } from "../../services/voucher.service";
+import type {
+  AvailableVoucher,
+  VoucherCalculation,
+} from "../../types/Voucher";
 import "./css/Booking.css";
 import "./css/BookingDeposit.css";
 
@@ -62,10 +65,9 @@ function Booking() {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [voucherInput, setVoucherInput] = useState("");
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherCalculation, setVoucherCalculation] = useState<VoucherCalculation | null>(null);
-  const [voucherApplying, setVoucherApplying] = useState(false);
+  const [availableVouchers, setAvailableVouchers] = useState<AvailableVoucher[]>([]);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -100,7 +102,10 @@ function Booking() {
   }, []);
 
   const selectedServices = useMemo(
-    () => services.filter((service) => serviceIds.includes(service.id)),
+    () =>
+      serviceIds
+        .map((id) => services.find((service) => service.id === id))
+        .filter((service): service is CatalogService => Boolean(service)),
     [services, serviceIds]
   );
 
@@ -115,8 +120,21 @@ function Booking() {
 
   const hairBarbers = barbers.filter((barber) => barberSupports(barber, "HAIR"));
   const careBarbers = barbers.filter((barber) => barberSupports(barber, "CARE"));
+  const careBarberKey = careBarbers.map((barber) => barber.id).join(",");
 
   const slotBarberId = needsHair ? hairBarberId : careBarberId;
+
+  useEffect(() => {
+    if (!needsCare || careBarbers.length === 0) {
+      setCareBarberId("");
+      return;
+    }
+
+    if (!careBarbers.some((barber) => barber.id === careBarberId)) {
+      const randomIndex = Math.floor(Math.random() * careBarbers.length);
+      setCareBarberId(careBarbers[randomIndex].id);
+    }
+  }, [careBarberId, careBarberKey, needsCare]);
 
   useEffect(() => {
     setStartTime("");
@@ -135,11 +153,32 @@ function Booking() {
   }, [slotBarberId, appointmentDate, serviceIds]);
 
   const subtotal = selectedServices.reduce((sum, service) => sum + service.price, 0);
+  const hairDuration = selectedServices
+    .filter((service) => service.staffType === "HAIR")
+    .reduce((sum, service) => sum + service.durationMinutes, 0);
+  const careDuration = selectedServices
+    .filter((service) => service.staffType === "CARE")
+    .reduce((sum, service) => sum + service.durationMinutes, 0);
+  const totalDuration = hairDuration + careDuration;
   const discountPercent = voucherCalculation?.discountPercent ?? 0;
   const discountAmount = voucherCalculation?.discountAmount ?? 0;
   const total = voucherCalculation?.total ?? subtotal;
-  const depositRequired = total > 200000;
-  const depositAmount = depositRequired ? Math.round(total * 0.3) : 0;
+  const depositRequired = subtotal > 200000;
+  const depositAmount = depositRequired ? Math.round(subtotal * 0.3) : 0;
+
+  const formatDuration = (minutes: number): string => {
+    if (minutes < 60) return `${minutes}p`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes ? `${hours}h${remainingMinutes}p` : `${hours}h`;
+  };
+
+  const addMinutes = (time: string, minutes: number): string => {
+    if (!time) return "";
+    const [hours, minute] = time.split(":").map(Number);
+    const totalMinutes = hours * 60 + minute + minutes;
+    return `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
+  };
 
   const toggleService = (service: CatalogService) => {
     setError("");
@@ -162,34 +201,34 @@ function Booking() {
     });
   };
 
-  const applyVoucher = async () => {
-    const code = voucherInput.trim().toUpperCase();
-    if (!code) {
-      setVoucherCode("");
-      setVoucherCalculation(null);
-      setVoucherMessage("Vui lòng nhập mã voucher.");
-      return;
-    }
+  useEffect(() => {
     if (!serviceIds.length) {
-      setVoucherMessage("Vui lòng chọn dịch vụ trước khi áp dụng voucher.");
+      setAvailableVouchers([]);
       return;
     }
 
-    try {
-      setVoucherApplying(true);
-      setVoucherMessage("");
-      const barberIds = [hairBarberId, careBarberId].filter(Boolean);
-      const response = await validateVoucher(code, serviceIds, barberIds);
-      setVoucherCode(response.calculation.code);
-      setVoucherCalculation(response.calculation);
-      setVoucherMessage(`${response.message}. Bạn được giảm ${money(response.calculation.discountAmount)}đ.`);
-    } catch (requestError) {
-      setVoucherCode("");
-      setVoucherCalculation(null);
-      setVoucherMessage(getError(requestError));
-    } finally {
-      setVoucherApplying(false);
-    }
+    const timer = window.setTimeout(() => {
+      getAvailableVouchers(
+        serviceIds,
+        [hairBarberId, careBarberId].filter(Boolean)
+      )
+        .then((response) => setAvailableVouchers(response.vouchers))
+        .catch(() => setAvailableVouchers([]));
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [careBarberId, hairBarberId, serviceIds]);
+
+  const chooseVoucher = (voucher: AvailableVoucher): void => {
+    setVoucherCode(voucher.code);
+    setVoucherCalculation(voucher);
+    setVoucherMessage(`Đã áp dụng ${voucher.code}, giảm ${money(voucher.discountAmount)}đ.`);
+  };
+
+  const clearVoucher = (): void => {
+    setVoucherCode("");
+    setVoucherCalculation(null);
+    setVoucherMessage("");
   };
 
   const changeBarber = (
@@ -208,8 +247,7 @@ function Booking() {
     if (!isAuthenticated || !user) return navigate("/login");
     if (!serviceIds.length) return setError("Vui lòng chọn ít nhất một dịch vụ.");
     if (needsHair && !hairBarberId) return setError("Vui lòng chọn nhân viên làm tóc.");
-    if (needsCare && !careBarberId) return setError("Vui lòng chọn nhân viên chăm sóc.");
-    if (needsHair && needsCare && hairBarberId === careBarberId) return setError("Hai nhóm dịch vụ phải do hai nhân viên khác nhau thực hiện.");
+    if (needsCare && !careBarberId) return setError("Hiện chưa có nhân viên chăm sóc phù hợp.");
     if (!appointmentDate || !startTime) return setError("Vui lòng chọn ngày và khung giờ.");
     if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim()) return setError("Vui lòng nhập đầy đủ thông tin người sử dụng dịch vụ.");
 
@@ -292,9 +330,9 @@ function Booking() {
           </section>
 
           {serviceIds.length > 0 && <section className="booking-panel">
-            <div className="booking-panel-title"><b>02</b><div><h2>Chọn nhân viên</h2><p>Dịch vụ làm tóc và chăm sóc được phân cho nhân viên khác nhau.</p></div></div>
+            <div className="booking-panel-title"><b>02</b><div><h2>Chọn Barber</h2><p>Bạn chỉ cần chọn Barber làm tóc. Nhân viên chăm sóc được hệ thống phân công ngẫu nhiên theo chuyên môn và lịch trống.</p></div></div>
             {needsHair && <BarberPicker title="Nhân viên làm tóc" items={hairBarbers} value={hairBarberId} onChange={(id) => changeBarber(setHairBarberId, id)} />}
-            {needsCare && <BarberPicker title="Nhân viên gội đầu & chăm sóc" items={careBarbers} value={careBarberId} onChange={(id) => changeBarber(setCareBarberId, id)} />}
+            {!needsHair && needsCare && <div className="booking-auto-care"><b>Nhân viên chăm sóc tự động</b><span>Hệ thống sẽ chọn ngẫu nhiên một nhân viên phù hợp còn lịch trống.</span></div>}
           </section>}
 
           <section className="booking-panel">
@@ -311,13 +349,62 @@ function Booking() {
         </main>
 
         <aside className="booking-summary">
-          <span>ĐƠN ĐẶT LỊCH</span><h2>Dịch vụ đã chọn</h2>
-          {!selectedServices.length ? <p className="booking-summary-empty">Chưa chọn dịch vụ.</p> : <ul>{selectedServices.map((service) => <li key={service.id}><div><b>{service.name}</b><small>{service.durationMinutes} phút</small></div><strong>{money(service.price)}đ</strong></li>)}</ul>}
-          <div className="booking-voucher"><label>Mã voucher</label><div><input value={voucherInput} onChange={(e) => setVoucherInput(e.target.value.toUpperCase())} placeholder="Nhập mã voucher" /><button type="button" disabled={voucherApplying} onClick={() => void applyVoucher()}>{voucherApplying ? "Đang kiểm tra..." : "Áp dụng"}</button></div>{voucherMessage && <small>{voucherMessage}</small>}</div>
-          <div className="booking-totals"><p><span>Tạm tính</span><b>{money(subtotal)}đ</b></p>{discountAmount > 0 && <p className="discount"><span>{discountPercent > 0 ? `Giảm ${discountPercent}%` : `Voucher ${voucherCode}`}</span><b>-{money(discountAmount)}đ</b></p>}<p className="grand-total"><span>Tổng cộng</span><b>{money(total)}đ</b></p></div>
-          <div className={`booking-deposit ${depositRequired ? "required" : "free"}`}>{depositRequired ? <><b>Cần đặt cọc 30%</b><strong>{money(depositAmount)}đ</strong><p>Thanh toán tiền cọc để giữ lịch.</p></> : <><b>Không cần đặt cọc</b><p>Giá trị sau giảm không vượt quá 200.000đ.</p></>}</div>
-          <button className="booking-submit" disabled={submitting}>{submitting ? "Đang đặt lịch..." : "Xác nhận đặt lịch"}</button>
-          <Link className="booking-history-link" to="/booking-history">Xem lịch đã đặt</Link>
+          <div className="booking-summary-header">
+            <div><span>ĐƠN ĐẶT LỊCH</span><h2>Dịch vụ đã chọn</h2></div>
+            <strong>{formatDuration(totalDuration)}</strong>
+          </div>
+
+          <div className="booking-summary-services">
+            {!selectedServices.length ? (
+              <p className="booking-summary-empty">Chưa chọn dịch vụ.</p>
+            ) : (
+              <ul>
+                {selectedServices.map((service, index) => (
+                  <li key={service.id}>
+                    <span className="booking-summary-number">{String(index + 1).padStart(2, "0")}</span>
+                    <div>
+                      <b>{service.name}</b>
+                      <small>{formatDuration(service.durationMinutes)} · {money(service.price)}đ</small>
+                    </div>
+                    <button type="button" title={`Bỏ ${service.name}`} onClick={() => toggleService(service)}>✓</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="booking-summary-tools">
+            <div className="booking-times">
+              <div><span>Time 1 · Barber</span><b>{hairDuration ? (startTime ? `${startTime}–${addMinutes(startTime, hairDuration)}` : formatDuration(hairDuration)) : "—"}</b></div>
+              <div><span>Time 2 · Chăm sóc</span><b>{careDuration ? (startTime ? `${addMinutes(startTime, hairDuration)}–${addMinutes(startTime, totalDuration)}` : formatDuration(careDuration)) : "—"}</b></div>
+            </div>
+
+            <div className="booking-voucher-picker">
+              <button type="button" className="booking-voucher-trigger">
+                <span>Voucher</span><b>{voucherCode || "Chọn mã"}</b><i>⌄</i>
+              </button>
+              <div className="booking-voucher-menu">
+                {voucherCode && <button type="button" onClick={clearVoucher}><b>Không dùng voucher</b><small>Bỏ mã đang chọn</small></button>}
+                {availableVouchers.length ? availableVouchers.map((voucher) => (
+                  <button type="button" key={voucher.code} className={voucher.code === voucherCode ? "selected" : ""} onClick={() => chooseVoucher(voucher)}>
+                    <b>{voucher.code} · {voucher.type === "PERCENT" ? `-${voucher.value}%` : `-${money(voucher.value)}đ`}</b>
+                    <small>{voucher.name} · giảm {money(voucher.discountAmount)}đ</small>
+                  </button>
+                )) : <p>Không có voucher phù hợp.</p>}
+              </div>
+            </div>
+          </div>
+
+          {voucherMessage && <small className="booking-voucher-message">{voucherMessage}</small>}
+          <div className="booking-totals">
+            {discountAmount > 0 && <p className="discount"><span>Giảm giá</span><b>-{money(discountAmount)}đ</b></p>}
+            <p className="grand-total"><span>Tổng tiền</span><b>{money(total)}đ</b></p>
+            {depositRequired && <small>Đặt cọc 30% tổng đơn ban đầu: <b>{money(depositAmount)}đ</b></small>}
+          </div>
+          <div className="booking-summary-footer">
+            <button className="booking-submit" disabled={submitting}>{submitting ? "Đang đặt lịch..." : "Xác nhận đặt lịch"}</button>
+            <Link className="booking-history-link" to="/booking-history">Xem lịch đã đặt</Link>
+          </div>
         </aside>
       </form>
       {depositAppointment && (
