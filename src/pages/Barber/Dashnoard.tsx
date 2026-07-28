@@ -78,8 +78,10 @@ const statusLabels: Record<
 > = {
   PENDING: "Chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
+  CHECKED_IN: "Đã check-in",
   IN_PROGRESS: "Đang thực hiện",
   COMPLETED: "Đã hoàn thành",
+  NO_SHOW: "Vắng mặt",
   CANCELLED: "Đã hủy",
 };
 
@@ -91,7 +93,7 @@ function Dashboard() {
     isAuthenticated,
     isLoading: authLoading,
     logout,
-  } = useAuth();
+  } = useAuth("BARBER");
 
   const [dashboard, setDashboard] =
     useState<BarberDashboardData | null>(null);
@@ -128,7 +130,7 @@ function Dashboard() {
     if (authLoading) return;
 
     if (!isAuthenticated || !user) {
-      navigate("/login", {
+      navigate("/barber/login", {
         replace: true,
         state: {
           message:
@@ -139,7 +141,7 @@ function Dashboard() {
     }
 
     if (user.role !== "BARBER") {
-      navigate("/", { replace: true });
+      navigate("/barber/login", { replace: true });
       return;
     }
 
@@ -165,7 +167,7 @@ function Dashboard() {
 
   const handleLogout = (): void => {
     logout();
-    navigate("/login", { replace: true });
+    navigate("/barber/login", { replace: true });
   };
 
   if (authLoading || loading) {

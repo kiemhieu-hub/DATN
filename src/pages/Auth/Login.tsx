@@ -1,5 +1,9 @@
 import axios from "axios";
-import { useState, type FormEvent } from "react";
+import {
+  useState,
+  type FormEvent,
+} from "react";
+
 import {
   Link,
   useLocation,
@@ -7,28 +11,56 @@ import {
 } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
+import type { UserRole } from "../../types/Auth";
+
 import "./Login.css";
+
+interface LoginProps {
+  role?: UserRole;
+  title?: string;
+  subtitle?: string;
+  redirectTo?: string;
+  showRegister?: boolean;
+}
 
 interface LocationState {
   message?: string;
 }
 
-function Login() {
+function Login({
+  role = "CLIENT",
+  title = "Đăng nhập khách hàng",
+  subtitle = "Đăng nhập để đặt lịch tại THADS Barber",
+  redirectTo = "/",
+  showRegister = true,
+}: LoginProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+
+  /*
+   * role sẽ quyết định phiên đăng nhập:
+   * CLIENT, BARBER hoặc ADMIN.
+   */
+  const { login } = useAuth(role);
 
   const registerMessage = (
     location.state as LocationState | null
   )?.message;
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
+
   const [showPassword, setShowPassword] =
     useState(false);
 
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error, setError] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
@@ -38,45 +70,48 @@ function Login() {
     setError("");
 
     if (!email.trim() || !password) {
-      setError("Vui lòng nhập đầy đủ email và mật khẩu");
+      setError(
+        "Vui lòng nhập đầy đủ email và mật khẩu"
+      );
+
       return;
     }
 
     try {
       setLoading(true);
 
-      const user = await login({
-        email: email.trim().toLowerCase(),
+      await login({
+        email: email
+          .trim()
+          .toLowerCase(),
         password,
       });
 
-      if (user.role === "ADMIN") {
-        navigate("/admin/dashboard", {
-          replace: true,
-        });
-        return;
-      }
-
-      if (user.role === "BARBER") {
-        navigate("/barber/schedule", {
-          replace: true,
-        });
-        return;
-      }
-
-      navigate("/", {
+      /*
+       * Client sẽ về "/".
+       * Admin sẽ về "/admin/dashboard".
+       * Barber sẽ về "/barber/dashboard".
+       */
+      navigate(redirectTo, {
         replace: true,
       });
     } catch (err) {
-      console.error("Lỗi đăng nhập:", err);
+      console.error(
+        "Lỗi đăng nhập:",
+        err
+      );
 
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message ||
             "Email hoặc mật khẩu không chính xác"
         );
+      } else if (err instanceof Error) {
+        setError(err.message);
       } else {
-        setError("Không thể kết nối đến máy chủ");
+        setError(
+          "Không thể kết nối đến máy chủ"
+        );
       }
     } finally {
       setLoading(false);
@@ -87,28 +122,17 @@ function Login() {
     <div className="login-page">
       <div className="login-card">
         <h1 className="login-title">
-          Đăng nhập
+          {title}
         </h1>
 
         <p className="login-subtitle">
-          Chào mừng bạn quay lại THADS Barber
+          {subtitle}
         </p>
 
         {registerMessage && (
-          <p
-            style={{
-              margin: "0 0 20px",
-              padding: "11px 13px",
-              color: "#e4c28e",
-              background:
-                "rgba(183, 138, 71, 0.14)",
-              borderLeft:
-                "3px solid #b78a47",
-              fontSize: "13px",
-            }}
-          >
+          <div className="login-success-message">
             {registerMessage}
-          </p>
+          </div>
         )}
 
         <form
@@ -116,19 +140,21 @@ function Login() {
           onSubmit={handleSubmit}
         >
           <div className="login-field">
-            <label htmlFor="email">
+            <label htmlFor={`${role}-email`}>
               Email
             </label>
 
             <div className="login-input-wrap">
               <input
-                id="email"
+                id={`${role}-email`}
                 className="login-input"
                 type="email"
                 placeholder="Nhập email"
                 value={email}
                 onChange={(event) =>
-                  setEmail(event.target.value)
+                  setEmail(
+                    event.target.value
+                  )
                 }
                 autoComplete="email"
                 required
@@ -137,13 +163,13 @@ function Login() {
           </div>
 
           <div className="login-field">
-            <label htmlFor="password">
+            <label htmlFor={`${role}-password`}>
               Mật khẩu
             </label>
 
             <div className="login-input-wrap">
               <input
-                id="password"
+                id={`${role}-password`}
                 className="login-input"
                 type={
                   showPassword
@@ -153,7 +179,9 @@ function Login() {
                 placeholder="Nhập mật khẩu"
                 value={password}
                 onChange={(event) =>
-                  setPassword(event.target.value)
+                  setPassword(
+                    event.target.value
+                  )
                 }
                 autoComplete="current-password"
                 required
@@ -172,13 +200,10 @@ function Login() {
                     ? "Ẩn mật khẩu"
                     : "Hiện mật khẩu"
                 }
-                title={
-                  showPassword
-                    ? "Ẩn mật khẩu"
-                    : "Hiện mật khẩu"
-                }
               >
-                {showPassword ? "🙈" : "👁"}
+                {showPassword
+                  ? "Ẩn"
+                  : "Hiện"}
               </button>
             </div>
           </div>
@@ -200,15 +225,18 @@ function Login() {
           </button>
         </form>
 
-        <p className="login-register-text">
-          Chưa có tài khoản?{" "}
-          <Link
-            className="login-register-link"
-            to="/register"
-          >
-            Đăng ký
-          </Link>
-        </p>
+        {showRegister && (
+          <p className="login-register-text">
+            Chưa có tài khoản?{" "}
+
+            <Link
+              className="login-register-link"
+              to="/register"
+            >
+              Đăng ký
+            </Link>
+          </p>
+        )}
 
         <Link
           className="login-back-home"

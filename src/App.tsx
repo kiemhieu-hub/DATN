@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Index from './pages/Client/Index';
 import About from './pages/Client/About';
 import Services from './pages/Client/Services';
@@ -23,12 +23,50 @@ import Dashboard from './pages/Barber/Dashnoard';
 import Profile from './pages/Barber/Profile';
 import Schedule from './pages/Barber/Schedule';
 import WorkingSchedule from './pages/Barber/WorkingSchedule';
+import ReceptionistDashboard from "./pages/Receptionist/Dashboard";
+
+import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminRevenue from "./pages/Admin/Revenue";
+import Barbers from "./pages/Admin/Barbers";
+import AdminServices from "./pages/Admin/Services";
+import AdminAppointments from "./pages/Admin/Appointments";
+import AdminPayments from "./pages/Admin/Payments";
+import AdminUsers from "./pages/Admin/Users";
+import AdminVouchers from "./pages/Admin/Vouchers";
+import AdminServiceCategories from "./pages/Admin/ServiceCategories";
+import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
+import AdminReviews from "./pages/Admin/Reviews";
+import StaffNotifications from "./pages/Admin/StaffNotifications";
+import AdminLogin from './pages/Auth/AdminLogin';
+import ReceptionistLogin from './pages/Auth/ReceptionistLogin';
 // Tạo tạm các component ảo để tránh lỗi nếu bạn chưa tạo file cho các trang khác
 
 function App() {
   return (
     <Router>
       <Routes>
+      <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="revenue" element={<AdminRevenue />} />
+          <Route path="invoices" element={<AdminPayments />}/>
+          <Route path="vouchers" element={<AdminVouchers />}/>
+          <Route path="service-categories" element={<AdminServiceCategories />}/>
+          <Route path="barbers" element={<Barbers />}/>
+          <Route path="barber-schedules" element={<ReceptionistLogin />}/>
+          <Route path="services" element={<AdminServices />}/>
+          <Route path="appointments" element={<AdminAppointments />}/>
+          <Route path="operations" element={<ReceptionistDashboard />}/>
+          <Route path="payments" element={<AdminPayments />}/>
+          <Route path="users" element={<AdminUsers />}/>
+          <Route path="hairstyle-gallery" element={<AdminHairstyleGallery />}/>
+          <Route path="reviews" element={<AdminReviews />}/>
+          <Route path="notifications" element={<StaffNotifications />}/>
+        </Route>
+
+
+
         <Route path="/login" element={<Login/>}/>
         <Route path="/register" element={<Register/>}/>
         {/* Route cho trang chủ - trỏ vào file index.tsx của bạn */}

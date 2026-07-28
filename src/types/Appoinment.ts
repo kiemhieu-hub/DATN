@@ -1,20 +1,6 @@
-export type AppointmentStatus =
-  | "PENDING"
-  | "CONFIRMED"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "CANCELLED";
-
-export type PaymentStatus =
-  | "UNPAID"
-  | "PENDING"
-  | "PAID"
-  | "REFUNDED";
-
-export type UserRole =
-  | "CLIENT"
-  | "BARBER"
-  | "ADMIN";
+export type AppointmentStatus =| "PENDING"| "CONFIRMED"| "CHECKED_IN"| "IN_PROGRESS"| "COMPLETED"| "NO_SHOW"| "CANCELLED";
+export type PaymentStatus =| "UNPAID"| "PENDING"| "PAID"| "REFUNDED";
+export type UserRole =| "CLIENT"| "BARBER"| "RECEPTIONIST"| "ADMIN";
 
 export interface AppointmentUser {
   _id: string;
@@ -51,14 +37,38 @@ export interface AppointmentCancellation {
   cancelledByRole?:
     | "CLIENT"
     | "BARBER"
+    | "RECEPTIONIST"
     | "ADMIN";
 
   reason: string;
   cancelledAt?: string;
 }
 
+export interface AppointmentActivityActor {
+  _id: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface AppointmentActivity {
+  _id: string;
+  action: string;
+  description: string;
+  actor?: string | AppointmentActivityActor;
+  actorRole: UserRole | "SYSTEM";
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface Appointment {
   _id: string;
+  appointmentCode: string;
+  customer: {
+    fullName: string;
+    email: string;
+    phone: string;
+  };
 
   client:
     | string
@@ -71,6 +81,13 @@ export interface Appointment {
   services: AppointmentService[];
 
   totalPrice: number;
+  subtotal: number;
+  voucherCode: string;
+  discountPercent: number;
+  discountAmount: number;
+  depositRequired: boolean;
+  depositAmount: number;
+  depositPaid: boolean;
   durationMinutes: number;
 
   appointmentDate: string;
@@ -87,6 +104,10 @@ export interface Appointment {
   confirmedAt?: string;
   startedAt?: string;
   completedAt?: string;
+  checkedInAt?: string;
+  noShowAt?: string;
+  rescheduleConsent?: boolean;
+  activities?: AppointmentActivity[];
 
   createdAt: string;
 
