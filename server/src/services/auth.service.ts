@@ -17,6 +17,8 @@ interface LoginInput {
   password: string;
 }
 
+type UserRole = "CLIENT" | "BARBER" | "RECEPTIONIST" | "ADMIN";
+
 export const registerClient = async (input: RegisterInput) => {
   const {
     fullName,
@@ -63,7 +65,10 @@ export const registerClient = async (input: RegisterInput) => {
   };
 };
 
-export const loginUser = async (input: LoginInput) => {
+export const loginUser = async (
+  input: LoginInput,
+  expectedRole: UserRole
+) => {
   const { email, password } = input;
 
   const user = await User.findOne({
@@ -74,6 +79,17 @@ export const loginUser = async (input: LoginInput) => {
     throw new AppError("Email hoặc mật khẩu không chính xác", 401);
   }
 
+  if (user.role !== expectedRole) {
+    throw new AppError(
+      `Tài khoản này không thuộc quyền ${expectedRole}`,
+      403
+    );
+  }
+
+  if (user.status !== "ACTIVE") {
+    throw new AppError("Tài khoản hiện không hoạt động", 403);
+  }
+
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
@@ -82,7 +98,7 @@ export const loginUser = async (input: LoginInput) => {
 
   const accessToken = generateToken({
     userId: user._id.toString(),
-    role: user.role,
+    role: user.role ,
   });
 
   return {

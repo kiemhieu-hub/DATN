@@ -10,6 +10,7 @@ import {
   loginUser,
   registerClient,
 } from "../services/auth.service";
+import type { UserRole } from "../models/User";
 
 export const register = async (
   req: Request,
@@ -29,13 +30,13 @@ export const register = async (
   }
 };
 
-export const login = async (
+const loginByRole = (expectedRole: UserRole) => async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const result = await loginUser(req.body);
+    const result = await loginUser(req.body, expectedRole);
 
     res.status(200).json({
       success: true,
@@ -46,6 +47,11 @@ export const login = async (
     next(error);
   }
 };
+
+export const loginClient = loginByRole("CLIENT");
+export const loginBarber = loginByRole("BARBER");
+export const loginReceptionist = loginByRole("RECEPTIONIST");
+export const loginAdmin = loginByRole("ADMIN");
 
 export const me = async (
   req: AuthenticatedRequest,

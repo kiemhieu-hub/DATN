@@ -5,11 +5,25 @@ import mongoose, {
   type Types,
 } from "mongoose";
 
-export type AppointmentStatus =| "PENDING"| "CONFIRMED"| "IN_PROGRESS"| "COMPLETED"| "CANCELLED";
+export type AppointmentStatus =| "PENDING"| "CONFIRMED"| "CHECKED_IN"| "IN_PROGRESS"| "COMPLETED"| "NO_SHOW"| "CANCELLED";
 
 export type AppointmentPaymentStatus =| "UNPAID"| "PENDING"| "PAID"| "REFUNDED";
 
-export type CancellationRole =| "CLIENT"| "BARBER"| "ADMIN";
+export type CancellationRole =| "CLIENT"| "RECEPTIONIST"| "ADMIN";
+
+export interface IAppointmentCustomer {
+  fullName: string;
+  email: string;
+  phone: string;
+}
+
+export interface IStaffAssignment {
+  barber: Types.ObjectId;
+  staffType: "HAIR" | "CARE";
+  serviceIds: Types.ObjectId[];
+  startTime: string;
+  endTime: string;
+}
 
 export interface IAppointmentService {
   service: Types.ObjectId;
@@ -30,10 +44,20 @@ export interface IAppointmentCancellation {
 export interface IAppointment extends Document {
   client: Types.ObjectId;
   barber: Types.ObjectId;
+  appointmentCode: string;
+  customer: IAppointmentCustomer;
+  staffAssignments: IStaffAssignment[];
 
   services: IAppointmentService[];
 
   totalPrice: number;
+  subtotal: number;
+  voucherCode: string;
+  discountPercent: number;
+  discountAmount: number;
+  depositRequired: boolean;
+  depositAmount: number;
+  depositPaid: boolean;
   durationMinutes: number;
 
   appointmentDate: string;
@@ -46,6 +70,10 @@ export interface IAppointment extends Document {
   note: string;
 
   cancellation?: IAppointmentCancellation;
+  checkedInAt?: Date;
+  noShowAt?: Date;
+  reopenedAt?: Date;
+  rescheduleConsent: boolean;
 
   confirmedAt?: Date;
   startedAt?: Date;
@@ -128,7 +156,7 @@ const cancellationSchema =
         type: String,
         enum: [
           "CLIENT",
-          "BARBER",
+          "RECEPTIONIST",
           "ADMIN",
         ],
         default: null,
@@ -180,6 +208,30 @@ const appointmentSchema =
         index: true,
       },
 
+      appointmentCode: {
+        type: String,
+        default: () => `THADS-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
+        unique: true,
+        index: true,
+      },
+
+      customer: {
+        fullName: { type: String, trim: true, default: "" },
+        email: { type: String, trim: true, lowercase: true, default: "" },
+        phone: { type: String, trim: true, default: "" },
+      },
+
+      staffAssignments: {
+        type: [{
+          barber: { type: Schema.Types.ObjectId, ref: "User", required: true },
+          staffType: { type: String, enum: ["HAIR", "CARE"], required: true },
+          serviceIds: [{ type: Schema.Types.ObjectId, ref: "Service" }],
+          startTime: { type: String, required: true },
+          endTime: { type: String, required: true },
+        }],
+        default: [],
+      },
+
       services: {
         type: [appointmentServiceSchema],
         required: [
@@ -209,6 +261,14 @@ const appointmentSchema =
           "Tổng tiền không hợp lệ",
         ],
       },
+
+      subtotal: { type: Number, default: 0, min: 0 },
+      voucherCode: { type: String, trim: true, uppercase: true, default: "" },
+      discountPercent: { type: Number, min: 0, max: 100, default: 0 },
+      discountAmount: { type: Number, min: 0, default: 0 },
+      depositRequired: { type: Boolean, default: false },
+      depositAmount: { type: Number, min: 0, default: 0 },
+      depositPaid: { type: Boolean, default: false },
 
       durationMinutes: {
         type: Number,
@@ -264,8 +324,10 @@ const appointmentSchema =
         enum: [
           "PENDING",
           "CONFIRMED",
+          "CHECKED_IN",
           "IN_PROGRESS",
           "COMPLETED",
+          "NO_SHOW",
           "CANCELLED",
         ],
         default: "PENDING",
@@ -298,6 +360,11 @@ const appointmentSchema =
         type: cancellationSchema,
         default: undefined,
       },
+
+      checkedInAt: { type: Date, default: null },
+      noShowAt: { type: Date, default: null },
+      reopenedAt: { type: Date, default: null },
+      rescheduleConsent: { type: Boolean, default: false },
 
       confirmedAt: {
         type: Date,

@@ -1,7 +1,10 @@
 import { Router } from "express";
 
 import {
-  login,
+  loginAdmin,
+  loginBarber,
+  loginClient,
+  loginReceptionist,
   me,
   register,
 } from "../controllers/auth.controller";
@@ -11,7 +14,10 @@ import { authorize } from "../middleware/authorize";
 const router = Router();
 
 router.post("/register", register);
-router.post("/login", login);
+router.post("/client/login", loginClient);
+router.post("/barber/login", loginBarber);
+router.post("/receptionist/login", loginReceptionist);
+router.post("/admin/login", loginAdmin);
 router.get("/me", authenticate, me);
 
 router.get(

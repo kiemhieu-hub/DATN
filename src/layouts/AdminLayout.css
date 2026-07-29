@@ -1,0 +1,393 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --admin-sidebar-width: 292px;
+  --admin-sidebar-collapsed-width: 86px;
+  --admin-gold: #c6a15b;
+  --admin-background: #10100f;
+  --admin-panel: #191918;
+  --admin-border: #34322d;
+  --admin-text: #f2f0eb;
+  --admin-muted: #8d8a83;
+}
+
+.admin-shell,
+.admin-shell * {
+  box-sizing: border-box;
+  font-family: "Be Vietnam Pro", sans-serif;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  color: var(--admin-text);
+  background: var(--admin-background);
+}
+
+.admin-shell-loading {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  color: #c6a15b;
+  font-family: "Be Vietnam Pro", sans-serif;
+  background: #10100f;
+}
+
+.admin-shell-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  width: var(--admin-sidebar-width);
+  min-height: 100vh;
+  padding: 24px 18px 20px;
+  overflow-y: auto;
+  color: var(--admin-text);
+  background:
+    radial-gradient(circle at 0 0, rgb(198 161 91 / 10%), transparent 32%),
+    var(--admin-panel);
+  border-right: 1px solid var(--admin-border);
+  box-shadow: 14px 0 40px rgb(0 0 0 / 18%);
+  transition: width 220ms ease, padding 220ms ease;
+}
+
+.admin-shell-brand {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 5px 8px 22px;
+  border-bottom: 1px solid var(--admin-border);
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-shell-logo {
+  display: grid;
+  place-items: center;
+  width: 45px;
+  height: 45px;
+  color: #111;
+  font-size: 23px;
+  font-weight: 800;
+  background: var(--admin-gold);
+  border-radius: 4px;
+}
+
+.admin-shell-brand h2 {
+  margin: 0 0 2px;
+  color: var(--admin-gold);
+  font-size: 25px;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.admin-shell-brand span {
+  color: #77736b;
+  font-size: 10px;
+  letter-spacing: 2.6px;
+}
+
+.admin-shell-brand-text,
+.admin-nav-label,
+.admin-user-label,
+.admin-user-name,
+.admin-user-email,
+.admin-logout-full {
+  transition: opacity 120ms ease, width 180ms ease;
+}
+
+.admin-sidebar-toggle {
+  position: absolute;
+  top: 75px;
+  right: -15px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: #111;
+  font: inherit;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+  background: var(--admin-gold);
+  border: 2px solid #10100f;
+  border-radius: 50%;
+}
+
+.admin-shell-navigation {
+  display: grid;
+  gap: 5px;
+  padding: 20px 0;
+}
+
+.admin-nav-link {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  padding: 9px 12px;
+  color: #bcb9b2;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: 160ms ease;
+}
+
+.admin-nav-badge {
+  min-width: 22px;
+  height: 22px;
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: #b83b3b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 22px;
+  text-align: center;
+}
+
+.admin-nav-link:hover {
+  color: #fff;
+  background: #22211e;
+  border-color: #39362f;
+  transform: translateX(2px);
+}
+
+.admin-nav-link.active {
+  color: #fff;
+  background: linear-gradient(90deg, rgb(198 161 91 / 19%), #24221e);
+  border-color: rgb(198 161 91 / 45%);
+  box-shadow: inset 3px 0 var(--admin-gold);
+}
+
+.admin-nav-icon {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 30px;
+  color: var(--admin-gold);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  background: #121211;
+  border: 1px solid #3e3a32;
+  border-radius: 3px;
+}
+
+.admin-shell-user {
+  display: grid;
+  gap: 5px;
+  padding: 18px 8px 0;
+  margin-top: auto;
+  border-top: 1px solid var(--admin-border);
+}
+
+.admin-shell-user > span {
+  color: var(--admin-muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.admin-shell-user b {
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.admin-shell-user small {
+  overflow: hidden;
+  color: var(--admin-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+}
+
+.admin-shell-user button {
+  padding: 10px;
+  margin-top: 9px;
+  color: #ddd9d1;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #4b4840;
+}
+
+.admin-shell-user button:hover {
+  color: #111;
+  background: var(--admin-gold);
+  border-color: var(--admin-gold);
+}
+
+.admin-shell-content {
+  min-width: 0;
+  min-height: 100vh;
+  margin-left: var(--admin-sidebar-width);
+  transition: margin-left 220ms ease;
+}
+
+.admin-logout-short {
+  display: none;
+  font-size: 18px;
+}
+
+.admin-shell.sidebar-collapsed .admin-shell-sidebar {
+  width: var(--admin-sidebar-collapsed-width);
+  padding-right: 13px;
+  padding-left: 13px;
+}
+
+.admin-shell.sidebar-collapsed .admin-shell-brand {
+  justify-content: center;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.admin-shell.sidebar-collapsed .admin-shell-brand-text,
+.admin-shell.sidebar-collapsed .admin-nav-label,
+.admin-shell.sidebar-collapsed .admin-user-label,
+.admin-shell.sidebar-collapsed .admin-user-name,
+.admin-shell.sidebar-collapsed .admin-user-email,
+.admin-shell.sidebar-collapsed .admin-logout-full {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.admin-shell.sidebar-collapsed .admin-nav-link {
+  justify-content: center;
+  padding-right: 8px;
+  padding-left: 8px;
+}
+
+.admin-shell.sidebar-collapsed .admin-nav-icon {
+  flex-basis: 36px;
+  width: 36px;
+}
+
+.admin-shell.sidebar-collapsed .admin-nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  line-height: 18px;
+}
+
+.admin-shell.sidebar-collapsed .admin-shell-user {
+  justify-items: center;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.admin-shell.sidebar-collapsed .admin-shell-user button {
+  width: 46px;
+}
+
+.admin-shell.sidebar-collapsed .admin-logout-short {
+  display: inline;
+}
+
+.admin-shell.sidebar-collapsed .admin-shell-content {
+  margin-left: var(--admin-sidebar-collapsed-width);
+}
+
+.admin-shell .row-actions .danger,
+.admin-shell .appointment-action-delete,
+.admin-shell .payments-delete-button {
+  color: #ffd3d3;
+  cursor: pointer;
+  background: #4a2020;
+  border: 1px solid #7d3535;
+}
+
+.admin-shell .payments-delete-button,
+.admin-shell .payments-detail-button {
+  padding: 8px 10px;
+  margin: 2px;
+}
+
+.admin-shell .payments-success {
+  padding: 13px 16px;
+  margin-bottom: 14px;
+  color: #c9f5dc;
+  background: #193d2b;
+}
+
+.admin-shell-content .admin-dashboard-page,
+.admin-shell-content .admin-appointments-page,
+.admin-shell-content .admin-barbers-page,
+.admin-shell-content .admin-services-page,
+.admin-shell-content .admin-payments-page,
+.admin-shell-content .admin-users-page,
+.admin-shell-content .admin-module-page {
+  padding-right: 24px;
+  padding-left: 24px;
+}
+
+@media (max-width: 900px) {
+  .admin-shell-sidebar {
+    position: static;
+    width: 100%;
+    min-height: auto;
+  }
+
+  .admin-sidebar-toggle {
+    display: none;
+  }
+
+  .admin-shell-navigation {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-shell-user {
+    margin-top: 10px;
+  }
+
+  .admin-shell-content {
+    margin-left: 0;
+  }
+
+  .admin-shell.sidebar-collapsed .admin-shell-sidebar {
+    width: 100%;
+  }
+
+  .admin-shell.sidebar-collapsed .admin-shell-brand-text,
+  .admin-shell.sidebar-collapsed .admin-nav-label,
+  .admin-shell.sidebar-collapsed .admin-user-label,
+  .admin-shell.sidebar-collapsed .admin-user-name,
+  .admin-shell.sidebar-collapsed .admin-user-email,
+  .admin-shell.sidebar-collapsed .admin-logout-full {
+    width: auto;
+    overflow: visible;
+    opacity: 1;
+  }
+
+  .admin-shell.sidebar-collapsed .admin-shell-content {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-shell-navigation {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-shell-content .admin-dashboard-page,
+  .admin-shell-content .admin-appointments-page,
+  .admin-shell-content .admin-barbers-page,
+  .admin-shell-content .admin-services-page,
+  .admin-shell-content .admin-payments-page,
+  .admin-shell-content .admin-users-page,
+  .admin-shell-content .admin-module-page {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+}

@@ -14,6 +14,7 @@ export interface IBarberProfile extends Document {
   experienceYears: number;
 
   specialties: Types.ObjectId[];
+  staffType: "HAIR" | "CARE";
 
   averageRating: number;
   reviewCount: number;
@@ -65,6 +66,13 @@ const barberProfileSchema =
           ref: "Service",
         },
       ],
+
+      staffType: {
+        type: String,
+        enum: ["HAIR", "CARE"],
+        default: "HAIR",
+        index: true,
+      },
 
       averageRating: {
         type: Number,

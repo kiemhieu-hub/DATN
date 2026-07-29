@@ -1,15 +1,24 @@
 import BarberProfile from "../models/BarberProfile";
 
 import Service from "../models/Service";
+import ServiceCategory from "../models/ServiceCategory";
 
 import User from "../models/User";
 
 
 export const getActiveServices = async () => {
 
+  const activeCategoryIds = await ServiceCategory.find({ isActive: true }).distinct("_id");
+
   const services = await Service.find({
 
     isActive: true,
+
+    $or: [
+      { category: null },
+      { category: { $exists: false } },
+      { category: { $in: activeCategoryIds } },
+    ],
 
   })
 
@@ -31,13 +40,19 @@ export const getActiveServices = async () => {
 
         "isExclusiveInGroup",
 
+        "staffType",
+
         "image",
 
         "isActive",
 
+        "category",
+
       ].join(" ")
 
     )
+
+    .populate("category", "name slug sortOrder isActive")
 
     .sort({
 
@@ -85,11 +100,22 @@ export const getActiveServices = async () => {
 
       service.isExclusiveInGroup,
 
+    staffType: service.staffType ?? (service.group === "CARE" ? "CARE" : "HAIR"),
+
 
 
     image: service.image,
 
     isActive: service.isActive,
+
+    category: service.category && typeof service.category === "object" && "name" in service.category
+      ? {
+          id: String(service.category._id),
+          name: String(service.category.name),
+          slug: String((service.category as unknown as { slug: string }).slug),
+          sortOrder: Number((service.category as unknown as { sortOrder: number }).sortOrder),
+        }
+      : null,
 
   }));
 
@@ -263,6 +289,8 @@ export const getActiveBarbers = async () => {
 
             profile.specialties,
 
+          staffType: profile.staffType ?? "HAIR",
+
         },
 
       };
@@ -414,6 +442,8 @@ export const getActiveBarberById =
         specialties:
 
           profile.specialties,
+
+        staffType: profile.staffType ?? "HAIR",
 
       },
 

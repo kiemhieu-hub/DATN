@@ -11,6 +11,8 @@ export type ServiceGroup =
   | "CARE"
   | "OTHER";
 
+export type ServiceStaffType = "HAIR" | "CARE";
+
 export interface IService extends Document {
   name: string;
   description: string;
@@ -19,9 +21,11 @@ export interface IService extends Document {
   priceFrom: boolean;
 
   durationMinutes: number;
+  category?: mongoose.Types.ObjectId;
 
   group: ServiceGroup;
   isExclusiveInGroup: boolean;
+  staffType: ServiceStaffType;
 
   image: string;
   isActive: boolean;
@@ -85,6 +89,13 @@ const serviceSchema = new Schema<IService>(
       ],
     },
 
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "ServiceCategory",
+      default: null,
+      index: true,
+    },
+
     group: {
       type: String,
       enum: [
@@ -103,6 +114,13 @@ const serviceSchema = new Schema<IService>(
     isExclusiveInGroup: {
       type: Boolean,
       default: false,
+    },
+
+    staffType: {
+      type: String,
+      enum: ["HAIR", "CARE"],
+      default: "HAIR",
+      index: true,
     },
 
     image: {

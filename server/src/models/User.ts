@@ -7,6 +7,7 @@ import mongoose, {
 export type UserRole =
   | "CLIENT"
   | "BARBER"
+  | "RECEPTIONIST"
   | "ADMIN";
 
 export type UserStatus =
@@ -107,6 +108,7 @@ const userSchema = new Schema<IUser>(
       enum: [
         "CLIENT",
         "BARBER",
+        "RECEPTIONIST",
         "ADMIN",
       ],
       default: "CLIENT",
