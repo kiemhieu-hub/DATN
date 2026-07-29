@@ -121,7 +121,7 @@ function Index() {
                 <ul className="dropdown-menu">
                   <li>
                     <Link
-                      to="/portfolio"
+                      to="/portfolio.html"
                       className="dropdown-item"
                     >
                       <span>Thư viện kiểu tóc</span>
@@ -130,7 +130,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/team"
+                      to="/team.html"
                       className="dropdown-item"
                     >
                       <span>Đội ngũ Barber</span>
@@ -139,7 +139,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/faq"
+                      to="/faq.html"
                       className="dropdown-item"
                     >
                       <span>Câu hỏi thường gặp</span>
@@ -157,7 +157,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/team-details"
+                      to="/team-details.html"
                       className="dropdown-item"
                     >
                       <span>Thông tin Barber</span>
@@ -166,7 +166,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/blog"
+                      to="/blog.html"
                       className="dropdown-item"
                     >
                       <span>Tin tức & bài viết</span>
@@ -178,7 +178,7 @@ function Index() {
               <li className="nav-item">
                 <Link
                   className="nav-link"
-                  to="/contact"
+                  to="/contact.html"
                 >
                   Liên hệ
                 </Link>
