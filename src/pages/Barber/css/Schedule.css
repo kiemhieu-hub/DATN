@@ -1,0 +1,333 @@
+/* Schedule.css - Luxury Barber Workspace Theme */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;1,500&display=swap');
+
+.barber-view-page {
+  min-height: 100vh;
+  background-color: #f6f0ea; /* Nền kem ấm cao cấp */
+  color: #2c2724;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  padding: 40px 32px;
+}
+
+.barber-schedule-container {
+  max-width: 1400px; /* Khung rộng mở tràn màn hình */
+  margin: 0 auto;
+}
+
+/* Loading & Error */
+.barber-view-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f6f0ea;
+  color: #a3722a;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.barber-view-error {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 14px 20px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Header & Nav Tabs */
+.barber-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #e5dbd0;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.brand-tag {
+  color: #a3722a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Fix cứng font tiêu đề không bị vỡ nét hay lệch dấu */
+.header-title {
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
+  font-size: 1.85rem !important;
+  font-weight: 800 !important;
+  color: #1a1615 !important;
+  margin: 0 0 6px 0 !important;
+  letter-spacing: -0.2px !important;
+  line-height: 1.25 !important;
+  text-transform: uppercase !important;
+}
+
+.header-desc {
+  color: #736860;
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+/* Navigation dạng Tab hiện đại */
+.header-nav-tabs {
+  display: flex;
+  background-color: #e8ded4;
+  padding: 4px;
+  border-radius: 10px;
+  gap: 4px;
+}
+
+.nav-tab {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #5c524a;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.nav-tab:hover {
+  color: #1a1615;
+}
+
+.nav-tab.active {
+  background-color: #1a1615;
+  color: #e5b974; /* Màu vàng đồng nổi bật */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Thống Kê Nhanh (Stat Cards) */
+.barber-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background-color: #ffffff;
+  border: 1px solid #e8ded4;
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.stat-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #807368;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1a1615;
+}
+
+.highlight-green {
+  color: #16a34a;
+}
+
+.highlight-gold {
+  color: #a3722a;
+}
+
+/* Thanh Filter */
+.barber-filter-bar {
+  background-color: #ffffff;
+  border: 1px solid #e8ded4;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.filter-group label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a1615;
+}
+
+.filter-date-input {
+  background-color: #faf6f0;
+  border: 1px solid #dcd0c4;
+  color: #1a1615;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.filter-date-input:focus {
+  border-color: #a3722a;
+  box-shadow: 0 0 0 3px rgba(163, 114, 42, 0.15);
+}
+
+.clear-filter-btn {
+  background: #f2e8de;
+  border: none;
+  color: #5c524a;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-btn:hover {
+  background-color: #e5d8cb;
+  color: #1a1615;
+}
+
+/* Table Wrapper & Table */
+.barber-view-table-wrapper {
+  background-color: #ffffff;
+  border: 1px solid #e8ded4;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+.barber-schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.barber-schedule-table thead {
+  background-color: #1a1615; /* Header Đen nhung */
+}
+
+.barber-schedule-table th {
+  padding: 18px 24px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #e5b974; /* Vàng kim */
+  letter-spacing: 1px;
+}
+
+.barber-schedule-table tbody tr {
+  border-bottom: 1px solid #f2e8de;
+  transition: background-color 0.15s ease;
+}
+
+.barber-schedule-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.barber-schedule-table tbody tr:hover {
+  background-color: #fcf8f3;
+}
+
+.barber-schedule-table td {
+  padding: 20px 24px;
+  font-size: 0.95rem;
+  color: #38312c;
+  vertical-align: middle;
+}
+
+/* Elements Inside Cells */
+.code-cell {
+  font-family: monospace;
+  font-weight: 800;
+  color: #807368;
+}
+
+.customer-name {
+  font-weight: 700;
+  color: #1a1615;
+  font-size: 0.98rem;
+}
+
+.customer-phone {
+  font-size: 0.82rem;
+  color: #8a7e74;
+  margin-top: 3px;
+}
+
+.time-date {
+  font-weight: 700;
+  color: #1a1615;
+}
+
+.time-range {
+  font-size: 0.85rem;
+  color: #a3722a;
+  margin-top: 3px;
+  font-weight: 800;
+}
+
+.services-cell {
+  max-width: 320px;
+  line-height: 1.5;
+  color: #4a413a;
+  font-weight: 600;
+}
+
+.price-cell {
+  font-weight: 800;
+  color: #1a1615;
+  font-size: 1.05rem;
+}
+
+.empty-table-cell {
+  text-align: center;
+  padding: 60px 20px !important;
+  color: #8a7e74;
+  font-weight: 600;
+}
+
+/* Badges Trạng Thái */
+.status-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.status-pending { background-color: #fef9c3; color: #854d0e; }
+.status-confirmed { background-color: #dbeafe; color: #1e40af; }
+.status-checkedin { background-color: #f3e8ff; color: #6b21a8; }
+.status-inprogress { background-color: #ffedd5; color: #9a3412; }
+.status-completed { background-color: #dcfce7; color: #166534; }
+.status-noshow { background-color: #fee2e2; color: #991b1b; }
+.status-cancelled { background-color: #f3f4f6; color: #374151; }
+
+@media (max-width: 900px) {
+  .barber-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .barber-view-table-wrapper {
+    overflow-x: auto;
+  }
+}

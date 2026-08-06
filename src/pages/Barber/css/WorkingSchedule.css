@@ -1,0 +1,129 @@
+/* WorkingSchedule.css - Luxury Barber Schedule Workspace */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+/* Style Lưới Ca Làm Việc Trong Tuần */
+.barber-week-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.schedule-day-card {
+  background-color: #ffffff;
+  border: 1px solid #e8ded4;
+  border-radius: 14px;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  min-height: 180px;
+}
+
+.schedule-day-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+  border-color: #d1c3b4;
+}
+
+/* Thẻ Ngày Hôm Nay */
+.schedule-day-card.today {
+  border: 2px solid #a3722a;
+  background-color: #fdfaf6;
+}
+
+.today-badge {
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  background-color: #a3722a;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+}
+
+/* Tiêu đề Ngày trong tuần */
+.day-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1a1615;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #e8ded4;
+}
+
+/* Trạng thái Ca làm */
+.day-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.working-badge {
+  display: inline-block;
+  align-self: flex-start;
+  background-color: #dcfce7;
+  color: #166534;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.off-badge {
+  display: inline-block;
+  align-self: flex-start;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.schedule-day-card .time-range {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #a3722a;
+  margin-top: 6px;
+}
+
+.schedule-day-card .time-range.off-text {
+  color: #9ca3af;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.shift-note {
+  font-size: 0.8rem;
+  color: #8a7e74;
+  font-weight: 500;
+}
+
+/* Thẻ ngày nghỉ */
+.schedule-day-card.off {
+  background-color: #faf6f2;
+  opacity: 0.85;
+}
+
+.schedule-day-card.off .day-name {
+  color: #736860;
+}
+
+@media (max-width: 768px) {
+  .barber-week-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .barber-week-grid {
+    grid-template-columns: 1fr;
+  }
+}

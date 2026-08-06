@@ -1,13 +1,152 @@
-import React from 'react';
+import { Link, useNavigate } from "react-router-dom";
+
+import { useAuth } from "../../contexts/AuthContext";
+
+interface ServiceItem {
+  id: number;
+  name: string;
+  price: string;
+  icon: string;
+  description: string;
+}
+
+const serviceItems: ServiceItem[] = [
+  {
+    id: 1,
+    name: "Cắt tóc cơ bản",
+    price: "100.000đ",
+    icon: "icon-icon-1-2",
+    description:
+      "Tư vấn kiểu tóc, cắt tạo kiểu và hoàn thiện bằng sản phẩm tạo kiểu phù hợp.",
+  },
+  {
+    id: 2,
+    name: "Cắt tóc và gội đầu",
+    price: "140.000đ",
+    icon: "icon-icon-1-4",
+    description:
+      "Cắt tóc kết hợp gội sạch, massage da đầu và tạo kiểu hoàn thiện.",
+  },
+  {
+    id: 3,
+    name: "Cắt Fade chuyên nghiệp",
+    price: "130.000đ",
+    icon: "icon-icon-1-6",
+    description:
+      "Kỹ thuật Fade với đường chuyển sắc mượt, phù hợp phong cách hiện đại.",
+  },
+  {
+    id: 4,
+    name: "Cắt tóc trẻ em",
+    price: "80.000đ",
+    icon: "icon-icon-1-2",
+    description:
+      "Dịch vụ cắt tóc dành cho trẻ nhỏ trong không gian thân thiện và thoải mái.",
+  },
+  {
+    id: 5,
+    name: "Gội đầu và tạo kiểu",
+    price: "70.000đ",
+    icon: "icon-icon-1-18",
+    description:
+      "Gội sạch tóc, massage nhẹ và sấy tạo kiểu theo nhu cầu của khách hàng.",
+  },
+];
+
+const otherServices = [
+  {
+    id: 1,
+    name: "Tỉa ria mép",
+    icon: "icon-icon-1-1",
+    description:
+      "Tỉa gọn và tạo đường nét ria mép cân đối với khuôn mặt.",
+  },
+  {
+    id: 2,
+    name: "Cạo mặt khăn nóng",
+    icon: "icon-icon-1-9",
+    description:
+      "Cạo mặt kết hợp khăn nóng giúp thư giãn và làm sạch làn da.",
+  },
+  {
+    id: 3,
+    name: "Tỉa và tạo kiểu râu",
+    icon: "icon-icon-1-3",
+    description:
+      "Tạo hình bộ râu phù hợp với khuôn mặt và phong cách cá nhân.",
+  },
+  {
+    id: 4,
+    name: "Cắt tóc nam",
+    icon: "icon-icon-1-2",
+    description:
+      "Cắt tóc và tạo kiểu phù hợp với công việc, khuôn mặt và sở thích.",
+  },
+  {
+    id: 5,
+    name: "Cắt Fade",
+    icon: "icon-icon-1-6",
+    description:
+      "Tạo đường chuyển sắc mượt mà, sắc nét và hiện đại.",
+  },
+  {
+    id: 6,
+    name: "Chăm sóc da và massage",
+    icon: "icon-icon-1-8",
+    description:
+      "Làm sạch da mặt kết hợp massage giúp thư giãn và giảm căng thẳng.",
+  },
+  {
+    id: 7,
+    name: "Gội đầu thư giãn",
+    icon: "icon-icon-1-4",
+    description:
+      "Làm sạch tóc, da đầu và massage vùng đầu, cổ, vai.",
+  },
+  {
+    id: 8,
+    name: "Sấy và tạo kiểu",
+    icon: "icon-icon-1-18",
+    description:
+      "Sấy phồng và tạo kiểu tóc theo phong cách khách hàng lựa chọn.",
+  },
+  {
+    id: 9,
+    name: "Nhuộm tóc",
+    icon: "icon-icon-1-10",
+    description:
+      "Tư vấn màu tóc phù hợp và thực hiện bằng sản phẩm chất lượng.",
+  },
+];
 
 function ServicesPage() {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = (): void => {
+    logout();
+    navigate("/", { replace: true });
+  };
+
+  const handleBooking = (): void => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    navigate("/booking");
+  };
+
   return (
     <div>
-      
-
-      {/* Progress scroll totop */}
+      {/* Progress scroll to top */}
       <div className="progress-wrap cursor-pointer">
-        <svg className="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
+        <svg
+          className="progress-circle svg-content"
+          width="100%"
+          height="100%"
+          viewBox="-1 -1 102 102"
+        >
           <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" />
         </svg>
       </div>
@@ -15,181 +154,302 @@ function ServicesPage() {
       {/* Navbar */}
       <nav className="navbar navbar-expand-lg">
         <div className="container">
-          {/* Logo */}
           <div className="logo-wrapper">
-            <a className="logo" href="index.html"> 
-              <img src="img/logo.png" className="logo-img" alt="" /> 
-            </a>
+            <Link className="logo" to="/">
+              <img
+                src="/img/logo.png"
+                className="logo-img"
+                alt="THADS Barber"
+              />
+            </Link>
           </div>
-          
-          {/* Button */}
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation"> 
-            <span className="navbar-toggler-icon"><i className="ti-menu"></i></span> 
+
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbar"
+            aria-controls="navbar"
+            aria-expanded="false"
+            aria-label="Mở menu"
+          >
+            <span className="navbar-toggler-icon">
+              <i className="ti-menu" />
+            </span>
           </button>
-          
-          {/* Menu */}
+
           <div className="collapse navbar-collapse" id="navbar">
             <ul className="navbar-nav ms-auto">
-              <li className="nav-item"><a className="nav-link" href="index.html">Home</a></li>
-              <li className="nav-item"><a className="nav-link" href="about.html">About</a></li>
-              <li className="nav-item"><a className="nav-link" href="services.html">Services</a></li>
-              <li className="nav-item"><a className="nav-link" href="pricing.html">Pricing</a></li>
-              <li className="nav-item dropdown"> 
-                <a className="nav-link active dropdown-toggle" href="#0" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                  Pages <i className="ti-angle-down"></i>
-                </a>
+              <li className="nav-item">
+                <Link className="nav-link" to="/">
+                  Trang chủ
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/about.html">
+                  Giới thiệu
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/services.html">
+                  Dịch vụ
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/pricing.html">
+                  Bảng giá
+                </Link>
+              </li>
+
+              <li className="nav-item dropdown">
+                <button
+                  className="nav-link active dropdown-toggle navbar-dropdown-button"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  data-bs-auto-close="outside"
+                  aria-expanded="false"
+                >
+                  Khám phá <i className="ti-angle-down" />
+                </button>
+
                 <ul className="dropdown-menu">
-                  <li><a href="portfolio.html" className="dropdown-item"><span>Portfolio</span></a></li>
-                  <li><a href="team.html" className="dropdown-item"><span>Team</span></a></li>
-                  <li><a href="faq.html" className="dropdown-item"><span>Faq</span></a></li>
-                  <li><a href="services-page.html" className="dropdown-item active"><span>Services Page</span></a></li>
-                  <li><a href="team-details.html" className="dropdown-item"><span>Team Details</span></a></li>
-                  <li><a href="post.html" className="dropdown-item"><span>Post Single</span></a></li>
-                  <li><a href="404.html" className="dropdown-item"><span>404</span></a></li>
-                 
-                  <li className="dropdown-submenu dropdown"> 
-                    <a className="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" href="#0">
-                      <span>Sub Menu <i className="ti-angle-right"></i></span>
-                    </a>
-                    <ul className="dropdown-menu">
-                      <li><a href="#0" className="dropdown-item"><span>Dropdown</span></a></li>
-                      <li><a href="#0" className="dropdown-item"><span>Dropdown</span></a></li>
-                    </ul>
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/portfolio.html"
+                    >
+                      <span>Thư viện kiểu tóc</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/team.html"
+                    >
+                      <span>Đội ngũ Barber</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/faq.html"
+                    >
+                      <span>Câu hỏi thường gặp</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item active"
+                      to="/services-page.html"
+                    >
+                      <span>Chi tiết dịch vụ</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/team-details.html"
+                    >
+                      <span>Thông tin Barber</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      className="dropdown-item"
+                      to="/blog.html"
+                    >
+                      <span>Tin tức và bài viết</span>
+                    </Link>
                   </li>
                 </ul>
               </li>
-              <li className="nav-item dropdown"> 
-                <a className="nav-link dropdown-toggle" href="#0" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                  Blog <i className="ti-angle-down"></i>
-                </a>
-                <ul className="dropdown-menu">
-                  <li><a href="blog.html" className="dropdown-item"><span>Blog 01</span></a></li>
-                  <li><a href="blog2.html" className="dropdown-item"><span>Blog 02</span></a></li>
-                  <li><a href="blog3.html" className="dropdown-item"><span>Blog 03</span></a></li>
-                </ul>
+
+              <li className="nav-item">
+                <Link className="nav-link" to="/contact.html">
+                  Liên hệ
+                </Link>
               </li>
-              <li className="nav-item"><a className="nav-link" href="contact.html">Contact</a></li>
+
+              {isAuthenticated && user ? (
+                <li className="nav-item dropdown">
+                  <button
+                    className="nav-link dropdown-toggle auth-user-button"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside"
+                    aria-expanded="false"
+                  >
+                    <i className="ti-user" /> {user.fullName}{" "}
+                    <i className="ti-angle-down" />
+                  </button>
+
+                  <ul className="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/profile"
+                      >
+                        <span>Hồ sơ cá nhân</span>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/booking-history"
+                      >
+                        <span>Lịch sử đặt lịch</span>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <button
+                        type="button"
+                        className="dropdown-item logout-menu-button"
+                        onClick={handleLogout}
+                      >
+                        <span>Đăng xuất</span>
+                      </button>
+                    </li>
+                  </ul>
+                </li>
+              ) : (
+                <>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/login">
+                      Đăng nhập
+                    </Link>
+                  </li>
+
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/register">
+                      Đăng ký
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         </div>
       </nav>
 
       {/* Header Banner */}
-      <div className="banner-header valign bg-img bg-fixed" data-overlay-dark="5" data-background="img/slider/2.jpg">
+      <div
+        className="banner-header valign bg-img bg-fixed"
+        data-overlay-dark={5}
+        data-background="img/slider/2.jpg"
+      >
         <div className="container">
           <div className="row">
             <div className="col-md-12 text-center caption mt-60">
-              <h5>Services Page</h5>
-              <h1>Haircut</h1>
+              <h5>Dịch vụ tại THADS Barber</h5>
+              <h1>Cắt tóc nam chuyên nghiệp</h1>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Services Page Content */}
+      {/* Service details */}
       <section className="barber-pricing section-padding">
         <div className="container">
           <div className="row">
-            {/* Content */}
             <div className="col-md-7 mb-30">
               <div className="section-head mb-15">
-                <div className="section-subtitle">Services</div>
-                <div className="section-title">Haircut</div>
-              </div>
-              <p>Haircut drana lorem ipsum amet navida haretra nuam enim mi in the obortis esetena silver enes accumsan miss alisuame amet auctor orci donec vitae vehicula risus duise nun sapien accumsan in the mauris speain rutrum asiquam on the miss.</p>
-              <p className="mb-45">Barber enim mi obortis eset uctus enec accumsan eu usto alisuame amet auctor orci golden vitae ehica risus duise nun sapien accumsan id mauris rutrum nie spaien.</p>
-              
-              {/* Pricing List */}
-              <div className="menu-list mb-10">
-                <div className="item">
-                  <div className="flex">
-                    <div className="title">Haircut</div>
-                    <div className="dots"></div>
-                    <div className="price">$20</div>
-                  </div>
+                <div className="section-subtitle">
+                  Dịch vụ nổi bật
                 </div>
-              </div>
-              <div className="menu-list mb-10">
-                <div className="item">
-                  <div className="flex">
-                    <div className="title">Wash and Cut</div>
-                    <div className="dots"></div>
-                    <div className="price">$30</div>
-                  </div>
-                </div>
-              </div>
-              <div className="menu-list mb-10">
-                <div className="item">
-                  <div className="flex">
-                    <div className="title">Long Hair</div>
-                    <div className="dots"></div>
-                    <div className="price">$25</div>
-                  </div>
-                </div>
-              </div>
-              <div className="menu-list mb-10">
-                <div className="item">
-                  <div className="flex">
-                    <div className="title">Children Wash &amp; Cut</div>
-                    <div className="dots"></div>
-                    <div className="price">$25</div>
-                  </div>
-                </div>
-              </div>
-              <div className="menu-list mb-45">
-                <div className="item">
-                  <div className="flex">
-                    <div className="title">Wash and Style</div>
-                    <div className="dots"></div>
-                    <div className="price">$10</div>
-                  </div>
+
+                <div className="section-title">
+                  Cắt tóc nam
                 </div>
               </div>
 
+              <p>
+                Dịch vụ cắt tóc nam tại THADS Barber được thực
+                hiện bởi đội ngũ Barber chuyên nghiệp. Khách
+                hàng sẽ được tư vấn kiểu tóc phù hợp với khuôn
+                mặt, chất tóc, công việc và phong cách cá nhân.
+              </p>
+
+              <p className="mb-45">
+                Quy trình dịch vụ chú trọng từ khâu tư vấn,
+                tạo form tóc, hoàn thiện đường viền cho đến
+                sấy và tạo kiểu. THADS Barber luôn hướng đến
+                trải nghiệm thoải mái, chỉn chu và tiết kiệm
+                thời gian cho khách hàng.
+              </p>
+
+              {/* Pricing List */}
+              {serviceItems.map((service, index) => (
+                <div
+                  className={`menu-list ${
+                    index === serviceItems.length - 1
+                      ? "mb-45"
+                      : "mb-10"
+                  }`}
+                  key={service.id}
+                >
+                  <div className="item">
+                    <div className="flex">
+                      <div className="title">
+                        {service.name}
+                      </div>
+
+                      <div className="dots" />
+
+                      <div className="price">
+                        {service.price}
+                      </div>
+                    </div>
+
+                    <p>
+                      <i>{service.description}</i>
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="button-1 mb-45"
+                onClick={handleBooking}
+              >
+                Đặt lịch dịch vụ
+                <span />
+              </button>
+
               {/* Image Gallery */}
               <div className="row">
-                <div className="col-md-4 gallery-item">
-                  <a href="img/slider/1.jpg" title="" className="img-zoom">
-                    <div className="gallery-box">
-                      <div className="gallery-img"> <img src="img/slider/1.jpg" className="img-fluid mx-auto d-block" alt="work-img" /> </div>
-                    </div>
-                  </a>
-                </div>
-                <div className="col-md-4 gallery-item">
-                  <a href="img/slider/2.jpg" title="" className="img-zoom">
-                    <div className="gallery-box">
-                      <div className="gallery-img"> <img src="img/slider/2.jpg" className="img-fluid mx-auto d-block" alt="work-img" /> </div>
-                    </div>
-                  </a>
-                </div>
-                <div className="col-md-4 gallery-item">
-                  <a href="img/slider/3.jpg" title="" className="img-zoom">
-                    <div className="gallery-box">
-                      <div className="gallery-img"> <img src="img/slider/3.jpg" className="img-fluid mx-auto d-block" alt="work-img" /> </div>
-                    </div>
-                  </a>
-                </div>
-                <div className="col-md-4 gallery-item">
-                  <a href="img/slider/4.jpg" title="" className="img-zoom">
-                    <div className="gallery-box">
-                      <div className="gallery-img"> <img src="img/slider/4.jpg" className="img-fluid mx-auto d-block" alt="work-img" /> </div>
-                    </div>
-                  </a>
-                </div>
-                <div className="col-md-4 gallery-item">
-                  <a href="img/slider/5.jpg" title="" className="img-zoom">
-                    <div className="gallery-box">
-                      <div className="gallery-img"> <img src="img/slider/5.jpg" className="img-fluid mx-auto d-block" alt="work-img" /> </div>
-                    </div>
-                  </a>
-                </div>
-                <div className="col-md-4 gallery-item">
-                  <a href="img/slider/6.jpg" title="" className="img-zoom">
-                    <div className="gallery-box">
-                      <div className="gallery-img"> <img src="img/slider/6.jpg" className="img-fluid mx-auto d-block" alt="work-img" /> </div>
-                    </div>
-                  </a>
-                </div>
+                {[1, 2, 3, 4, 5, 6].map((number) => (
+                  <div
+                    className="col-md-4 gallery-item"
+                    key={number}
+                  >
+                    <a
+                      href={`/img/slider/${number}.jpg`}
+                      title={`Dịch vụ THADS Barber ${number}`}
+                      className="img-zoom"
+                    >
+                      <div className="gallery-box">
+                        <div className="gallery-img">
+                          <img
+                            src={`/img/slider/${number}.jpg`}
+                            className="img-fluid mx-auto d-block"
+                            alt={`Dịch vụ cắt tóc THADS Barber ${number}`}
+                          />
+                        </div>
+                      </div>
+                    </a>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -199,18 +459,94 @@ function ServicesPage() {
                 <div className="sidebar-widget services">
                   <div className="widget-inner">
                     <div className="sidebar-title">
-                      <h4>All Services</h4>
+                      <h4>Tất cả dịch vụ</h4>
                     </div>
+
                     <ul>
-                      <li className="active"><a href="services-page.html">Haircut</a></li>
-                      <li><a href="services-page.html">Moustache Trim</a></li>
-                      <li><a href="services-page.html">Face Shave</a></li>
-                      <li><a href="services-page.html">Beard Trim</a></li>
-                      <li><a href="services-page.html">Clipper Cut</a></li>
-                      <li><a href="services-page.html">Facial &amp; Massage</a></li>
-                      <li><a href="services-page.html">Hair Washing</a></li>
-                      <li><a href="services-page.html">Hair Dryer</a></li>
-                      <li><a href="services-page.html">Coloring</a></li>
+                      <li className="active">
+                        <Link to="/services-page.html">
+                          Cắt tóc nam
+                        </Link>
+                      </li>
+
+                      <li>
+                        <Link to="/services-page.html">
+                          Tỉa ria mép
+                        </Link>
+                      </li>
+
+                      <li>
+                        <Link to="/services-page.html">
+                          Cạo mặt khăn nóng
+                        </Link>
+                      </li>
+
+                      <li>
+                        <Link to="/services-page.html">
+                          Tỉa và tạo kiểu râu
+                        </Link>
+                      </li>
+
+                      <li>
+                        <Link to="/services-page.html">
+                          Cắt Fade
+                        </Link>
+                      </li>
+
+                      <li>
+                        <Link to="/services-page.html">
+                          Chăm sóc da và massage
+                        </Link>
+                      </li>
+
+                      <li>
+                        <Link to="/services-page.html">
+                          Gội đầu thư giãn
+                        </Link>
+                      </li>
+
+                      <li>
+                        <Link to="/services-page.html">
+                          Sấy và tạo kiểu
+                        </Link>
+                      </li>
+
+                      <li>
+                        <Link to="/services-page.html">
+                          Uốn và nhuộm tóc
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div
+                  className="sidebar-widget"
+                  style={{ marginTop: "30px" }}
+                >
+                  <div className="widget-inner">
+                    <div className="sidebar-title">
+                      <h4>Thông tin dịch vụ</h4>
+                    </div>
+
+                    <ul>
+                      <li>
+                        <strong>Thời gian:</strong> 30 - 60 phút
+                      </li>
+
+                      <li>
+                        <strong>Giá từ:</strong> 100.000đ
+                      </li>
+
+                      <li>
+                        <strong>Phù hợp:</strong> Nam giới và
+                        trẻ em
+                      </li>
+
+                      <li>
+                        <strong>Đặt lịch:</strong> Trực tuyến
+                        hoặc tại salon
+                      </li>
                     </ul>
                   </div>
                 </div>
@@ -226,78 +562,50 @@ function ServicesPage() {
           <div className="row">
             <div className="col-md-12">
               <div className="section-head">
-                <div className="section-subtitle">Our Services</div>
-                <div className="section-title">Other Services</div>
+                <div className="section-subtitle">
+                  THADS Barber
+                </div>
+
+                <div className="section-title">
+                  Các dịch vụ khác
+                </div>
               </div>
             </div>
           </div>
+
           <div className="row">
-            <div className="col-md-12">
-              <div className="owl-carousel owl-theme">
-                <div className="item mb-0">
-                  <a href="services-page.html"> <span className="icon icon-icon-1-1"></span>
-                    <h5>Moustache Trim</h5>
-                    <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                    <div className="shape"> <span className="icon icon-icon-1-1"></span> </div>
-                  </a>
-                </div>
-                <div className="item mb-0">
-                  <a href="services-page.html"> <span className="icon icon-icon-1-9"></span>
-                    <h5>Face Shave</h5>
-                    <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                    <div className="shape"> <span className="icon icon-icon-1-9"></span> </div>
-                  </a>
-                </div>
-                <div className="item mb-0">
-                  <a href="services-page.html"> <span className="icon icon-icon-1-3"></span>
-                    <h5>Beard Trim</h5>
-                    <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                    <div className="shape"> <span className="icon icon-icon-1-3"></span> </div>
-                  </a>
-                </div>
-                <div className="item mb-0">
-                  <a href="services-page.html"> <span className="icon icon-icon-1-2"></span>
-                    <h5>Haircut</h5>
-                    <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                    <div className="shape"> <span className="icon icon-icon-1-2"></span> </div>
-                  </a>
-                </div>
-                <div className="item mb-0">
-                  <a href="services-page.html"> <span className="icon icon-icon-1-6"></span>
-                    <h5>Clipper Cut</h5>
-                    <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                    <div className="shape"> <span className="icon icon-icon-1-6"></span> </div>
-                  </a>
-                </div>
-                <div className="item mb-0">
-                  <a href="services-page.html"> <span className="icon icon-icon-1-8"></span>
-                    <h5>Facial &amp; Massage</h5>
-                    <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                    <div className="shape"> <span className="icon icon-icon-1-8"></span> </div>
-                  </a>
-                </div>
-                <div className="item mb-0">
-                  <a href="services-page.html"> <span className="icon icon-icon-1-4"></span>
-                    <h5>Hair Washing</h5>
-                    <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                    <div className="shape"> <span className="icon icon-icon-1-4"></span> </div>
-                  </a>
-                </div>
-                <div className="item mb-0">
-                  <a href="services-page.html"> <span className="icon icon-icon-1-18"></span>
-                    <h5>Hair Dryer</h5>
-                    <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                    <div className="shape"> <span className="icon icon-icon-1-18"></span> </div>
-                  </a>
-                </div>
-                <div className="item mb-0">
-                  <a href="services-page.html"> <span className="icon icon-icon-1-10"></span>
-                    <h5>Coloring</h5>
-                    <p>Lorem vulputate massa ons amet ravida haretra nuam the drana miss uctus enec accumsan aliquam sit sapien.</p>
-                    <div className="shape"> <span className="icon icon-icon-1-10"></span> </div>
-                  </a>
+            {otherServices.map((service) => (
+              <div className="col-md-4" key={service.id}>
+                <div className="item mb-30">
+                  <Link to="/services-page.html">
+                    <span
+                      className={`icon ${service.icon}`}
+                    />
+
+                    <h5>{service.name}</h5>
+
+                    <p>{service.description}</p>
+
+                    <div className="shape">
+                      <span
+                        className={`icon ${service.icon}`}
+                      />
+                    </div>
+                  </Link>
                 </div>
               </div>
+            ))}
+          </div>
+
+          <div className="row">
+            <div className="col-md-12 text-center mt-20">
+              <Link
+                to="/pricing.html"
+                className="button-1"
+              >
+                Xem toàn bộ bảng giá
+                <span />
+              </Link>
             </div>
           </div>
         </div>
@@ -310,63 +618,126 @@ function ServicesPage() {
             <div className="row">
               <div className="col-md-3">
                 <div className="footer-column footer-contact">
-                  <h3 className="footer-title">Contact</h3>
-                  <p className="footer-contact-text">0665 Broadway NY, New York 10001
-                    <br />United States of America
+                  <h3 className="footer-title">
+                    Liên hệ
+                  </h3>
+
+                  <p className="footer-contact-text">
+                    THADS Barber
+                    <br />
+                    Hà Nội, Việt Nam
                   </p>
+
                   <div className="footer-contact-info">
-                    <p className="footer-contact-phone">855 100 4444</p>
-                    <p className="footer-contact-mail">info@barber.com</p>
+                    <p className="footer-contact-phone">
+                      0987 654 321
+                    </p>
+
+                    <p className="footer-contact-mail">
+                      contact@thadsbarber.com
+                    </p>
                   </div>
-                  <div className="footer-about-social-list"> 
-                    <a href="#0"><i className="ti-instagram"></i></a> 
-                    <a href="#0"><i className="ti-twitter"></i></a> 
-                    <a href="#0"><i className="ti-youtube"></i></a> 
-                    <a href="#0"><i className="ti-facebook"></i></a> 
-                    <a href="#0"><i className="ti-pinterest"></i></a> 
+
+                  <div className="footer-about-social-list">
+                    <a
+                      href="#instagram"
+                      aria-label="Instagram THADS Barber"
+                    >
+                      <i className="ti-instagram" />
+                    </a>
+
+                    <a
+                      href="#youtube"
+                      aria-label="YouTube THADS Barber"
+                    >
+                      <i className="ti-youtube" />
+                    </a>
+
+                    <a
+                      href="#facebook"
+                      aria-label="Facebook THADS Barber"
+                    >
+                      <i className="ti-facebook" />
+                    </a>
                   </div>
                 </div>
               </div>
+
               <div className="col-md-3 offset-md-1">
                 <div className="item opening">
-                  <h3 className="footer-title">Work Time</h3>
+                  <h3 className="footer-title">
+                    Giờ làm việc
+                  </h3>
+
                   <ul>
                     <li>
-                      <div className="tit">Monday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Hai</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Tuesday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Ba</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Thursday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Tư</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Friday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Năm</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Saturday</div>
-                      <div className="dots"></div> <span>10:00 - 20:00</span>
+                      <div className="tit">Thứ Sáu</div>
+                      <div className="dots" />
+                      <span>09:00 - 21:00</span>
                     </li>
+
                     <li>
-                      <div className="tit">Weekend</div>
-                      <div className="dots"></div> <span>Closed</span>
+                      <div className="tit">Cuối tuần</div>
+                      <div className="dots" />
+                      <span>08:00 - 22:00</span>
                     </li>
                   </ul>
                 </div>
               </div>
+
               <div className="col-md-4 offset-md-1">
                 <div className="footer-column footer-explore clearfix">
-                  <h3 className="footer-title">Subscribe</h3>
+                  <h3 className="footer-title">
+                    Nhận thông tin ưu đãi
+                  </h3>
+
                   <div className="row subscribe">
                     <div className="col-md-12">
-                      <p>Subscribe to take advantage of our campaigns and gift certificates.</p>
-                      <form onSubmit={(e) => e.preventDefault()}>
-                        <input type="text" name="search" placeholder="Your email" required />
-                        <button type="submit">Subscribe</button>
+                      <p>
+                        Đăng ký email để nhận thông tin về
+                        dịch vụ, bảng giá và chương trình mới
+                        nhất.
+                      </p>
+
+                      <form
+                        onSubmit={(event) =>
+                          event.preventDefault()
+                        }
+                      >
+                        <input
+                          type="email"
+                          name="email"
+                          placeholder="Email của bạn"
+                          required
+                        />
+
+                        <button type="submit">
+                          Đăng ký
+                        </button>
                       </form>
                     </div>
                   </div>
@@ -375,12 +746,16 @@ function ServicesPage() {
             </div>
           </div>
         </div>
+
         <div className="footer-bottom">
           <div className="container">
             <div className="row">
               <div className="col-md-12">
                 <div className="footer-bottom-inner">
-                  <p className="footer-bottom-copy-right">&copy; {new Date().getFullYear()} All Rights Reserved <a href="https://1.envato.market/DuruThemes" target="_blank" rel="noopener noreferrer">DuruThemes</a></p>
+                  <p className="footer-bottom-copy-right">
+                    © {new Date().getFullYear()} THADS Barber.
+                    Bảo lưu mọi quyền.
+                  </p>
                 </div>
               </div>
             </div>
