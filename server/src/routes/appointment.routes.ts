@@ -5,7 +5,6 @@ import {
   create,
   getSlots,
   getMine,
-  getAll //booking
 } from "../controllers/appointment.controller";
 
 
@@ -43,5 +42,4 @@ router.patch(
   cancelMine
 );
 
-router.get("/", getAll);
 export default router;

@@ -1,28 +1,13 @@
-import mongoose, {
-  Schema,
-  type Document,
-  type Model,
-  type Types,
-} from "mongoose";
-
-export type PaymentMethod =
-  | "CASH"
-  | "VNPAY"
-  | "MOMO"
-  | "BANK_TRANSFER";
-
-export type PaymentStatus =
-  | "PENDING"
-  | "PAID"
-  | "FAILED"
-  | "CANCELLED"
-  | "REFUNDED";
-
+import mongoose, {Schema,type Document,type Model,type Types,} from "mongoose";
+export type PaymentMethod = "CASH"| "VNPAY"| "MOMO"| "BANK_TRANSFER";
+export type PaymentStatus =| "PENDING"| "PAID"| "FAILED"| "CANCELLED"| "REFUNDED";
+export type PaymentPurpose = "DEPOSIT" | "BALANCE" | "FULL";
 export interface IPayment extends Document {
   appointment: Types.ObjectId;
   client: Types.ObjectId;
 
   amount: number;
+  purpose: PaymentPurpose;
 
   method: PaymentMethod;
   status: PaymentStatus;
@@ -55,7 +40,6 @@ const paymentSchema = new Schema<IPayment>(
         true,
         "Lịch hẹn là bắt buộc",
       ],
-      index: true,
     },
 
     client: {
@@ -78,6 +62,14 @@ const paymentSchema = new Schema<IPayment>(
         0,
         "Số tiền thanh toán không hợp lệ",
       ],
+    },
+
+    purpose: {
+      type: String,
+      enum: ["DEPOSIT", "BALANCE", "FULL"],
+      default: "FULL",
+      required: true,
+      index: true,
     },
 
     method: {
@@ -178,10 +170,15 @@ const paymentSchema = new Schema<IPayment>(
   }
 );
 
-paymentSchema.index({
-  appointment: 1,
-  createdAt: -1,
-});
+paymentSchema.index(
+  {
+    appointment: 1,
+    purpose: 1,
+  },
+  {
+    unique: true,
+  }
+);
 
 paymentSchema.index({
   client: 1,

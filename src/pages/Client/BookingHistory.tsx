@@ -2,7 +2,10 @@ import axios from "axios";
 import {useCallback,useEffect,useState,} from "react";
 import {Link,useLocation,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import ReviewModal from "../../components/ReviewModal";
 import {cancelAppointment,getMyAppointments,} from "../../services/appointment.service";
+import { getMyReviews } from "../../services/review.service";
+import { createVnpayPayment, type VnpayPurpose } from "../../services/vnpay.service";
 import type {Appointment,AppointmentStatus,PaymentStatus,} from "../../types/Appointment";
 import "./css/BookingHistory.css";
 
@@ -13,8 +16,10 @@ interface LocationState {
 const appointmentStatusLabels: Record<AppointmentStatus,string> = {
   PENDING: "Đang chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
+  CHECKED_IN: "Đã check-in",
   IN_PROGRESS: "Đang thực hiện",
   COMPLETED: "Đã hoàn thành",
+  NO_SHOW: "Vắng mặt",
   CANCELLED: "Đã hủy",
 };
 
@@ -111,6 +116,12 @@ function BookingHistory() {
       locationState?.message ?? ""
     );
 
+  const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<Appointment | null>(null);
+  const [reviewedAppointmentIds, setReviewedAppointmentIds] = useState<Set<string>>(new Set());
+  const [cancelReason, setCancelReason] = useState("");
+  const [payingId, setPayingId] = useState<string | null>(null);
+
   const [
     cancellingId,
     setCancellingId,
@@ -122,11 +133,16 @@ function BookingHistory() {
         setLoading(true);
         setError("");
 
-        const response =
-          await getMyAppointments();
+        const [response, reviewResponse] = await Promise.all([
+          getMyAppointments(),
+          getMyReviews(),
+        ]);
 
         setAppointments(
           response.appointments
+        );
+        setReviewedAppointmentIds(
+          new Set(reviewResponse.reviews.map((review) => String(review.appointment)))
         );
       } catch (requestError) {
         setError(
@@ -167,33 +183,16 @@ function BookingHistory() {
 
   const canCancel = (
     appointment: Appointment
-  ): boolean =>
-    appointment.status === "PENDING" ||
-    appointment.status === "CONFIRMED";
+  ): boolean => {
+    if (!["PENDING", "CONFIRMED"].includes(appointment.status)) return false;
+    const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+    return startsAt.getTime() - Date.now() >= 6 * 60 * 60 * 1000;
+  };
 
   const handleCancel = async (
     appointment: Appointment
   ): Promise<void> => {
-    const reason = window.prompt(
-      "Nhập lý do hủy lịch:",
-      "Tôi có việc đột xuất"
-    );
-
-    if (reason === null) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Bạn có chắc muốn hủy lịch ngày ${formatDate(
-        appointment.appointmentDate
-      )}, từ ${appointment.startTime} đến ${
-        appointment.endTime
-      } không?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
+    if (!cancelReason.trim()) { setError("Vui lòng nhập lý do hủy lịch."); return; }
 
     try {
       setCancellingId(appointment._id);
@@ -204,13 +203,13 @@ function BookingHistory() {
         await cancelAppointment(
           appointment._id,
           {
-            reason:
-              reason.trim() ||
-              "Khách hàng hủy lịch",
+              reason: cancelReason.trim(),
           }
         );
 
       setMessage(response.message);
+      setCancelTarget(null);
+      setCancelReason("");
 
       setAppointments(
         (currentAppointments) => currentAppointments.map((currentAppointment) => currentAppointment._id === response.appointment._id ? response.appointment : currentAppointment
@@ -225,6 +224,21 @@ function BookingHistory() {
       );
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const startVnpayPayment = async (
+    appointment: Appointment,
+    purpose: VnpayPurpose
+  ): Promise<void> => {
+    try {
+      setPayingId(appointment._id);
+      setError("");
+      const result = await createVnpayPayment(appointment._id, purpose);
+      window.location.assign(result.paymentUrl);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể tạo giao dịch VNPay."));
+      setPayingId(null);
     }
   };
 
@@ -323,9 +337,7 @@ function BookingHistory() {
                     <div>
                       <p className="history-code">
                         Mã lịch:{" "}
-                        {appointment._id.slice(
-                          -8
-                        )}
+                        {appointment.appointmentCode || appointment._id.slice(-8)}
                       </p>
 
                       <h2>
@@ -449,6 +461,11 @@ function BookingHistory() {
 
                   <div className="history-details">
                     <div>
+                      <span>Khách sử dụng</span>
+                      <strong>{appointment.customer?.fullName || "Chưa có"}</strong>
+                      <small>{appointment.customer?.phone}</small>
+                    </div>
+                    <div>
                       <span>Barber</span>
 
                       <strong>
@@ -457,6 +474,17 @@ function BookingHistory() {
                         )}
                       </strong>
                     </div>
+                    {appointment.staffAssignments?.map((assignment) => (
+                      <div key={`${assignment.staffType}-${assignment.startTime}`}>
+                        <span>{assignment.staffType === "HAIR" ? "Time 1 · Làm tóc" : "Time 2 · Chăm sóc"}</span>
+                        <strong>
+                          {typeof assignment.barber === "string"
+                            ? "Nhân viên THADS"
+                            : assignment.barber.fullName}
+                        </strong>
+                        <small>{assignment.startTime} – {assignment.endTime}</small>
+                      </div>
+                    ))}
 
                     <div>
                       <span>Tổng tiền</span>
@@ -468,6 +496,8 @@ function BookingHistory() {
                         đ
                       </strong>
                     </div>
+                    {appointment.discountPercent > 0 && <div><span>Voucher</span><strong>{appointment.voucherCode} (-{appointment.discountPercent}%)</strong></div>}
+                    <div><span>Đặt cọc</span><strong>{appointment.depositRequired ? `${formatPrice(appointment.depositAmount)}đ` : "Không yêu cầu"}</strong></div>
 
                     <div>
                       <span>Trạng thái lịch</span>
@@ -551,17 +581,53 @@ function BookingHistory() {
                           cancellingId ===
                           appointment._id
                         }
-                        onClick={() =>
-                          void handleCancel(
-                            appointment
-                          )
-                        }
+                        onClick={() => { setCancelTarget(appointment); setCancelReason(""); }}
                       >
                         {cancellingId ===
                         appointment._id
                           ? "Đang hủy..."
                           : "Hủy lịch"}
                       </button>
+                    )}
+                    {appointment.depositRequired &&
+                      !appointment.depositPaid &&
+                      !["CANCELLED", "COMPLETED", "NO_SHOW"].includes(appointment.status) && (
+                        <button
+                          type="button"
+                          className="history-payment-button"
+                          disabled={payingId === appointment._id}
+                          onClick={() => void startVnpayPayment(appointment, "DEPOSIT")}
+                        >
+                          {payingId === appointment._id
+                            ? "Đang chuyển hướng..."
+                            : `Thanh toán cọc ${formatPrice(appointment.depositAmount)}đ`}
+                        </button>
+                      )}
+                    {appointment.status === "COMPLETED" &&
+                      appointment.paymentStatus !== "PAID" && (
+                        <button
+                          type="button"
+                          className="history-payment-button"
+                          disabled={payingId === appointment._id}
+                          onClick={() => void startVnpayPayment(appointment, "BALANCE")}
+                        >
+                          {payingId === appointment._id
+                            ? "Đang chuyển hướng..."
+                            : "Thanh toán qua VNPay"}
+                        </button>
+                      )}
+                    {appointment.status === "COMPLETED" && (
+                      reviewedAppointmentIds.has(appointment._id) ? (
+                        <span className="history-reviewed-label">✓ Đã gửi đánh giá</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="history-review-button"
+                          onClick={() => setReviewTarget(appointment)}
+                        >
+                          Đánh giá dịch vụ
+                        </button>
+                      )
                     )}
                   </footer>
                 </article>
@@ -570,6 +636,20 @@ function BookingHistory() {
           </div>
         )}
       </main>
+      {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label><small>Chỉ có thể hủy trước giờ hẹn ít nhất 6 tiếng.</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id}>Xác nhận hủy</button></div></form></div>}
+      {reviewTarget && (
+        <ReviewModal
+          appointment={reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          onError={(reviewError) => setError(reviewError)}
+          onSuccess={(appointmentId, successMessage) => {
+            setReviewedAppointmentIds((current) => new Set(current).add(appointmentId));
+            setMessage(successMessage);
+            setError("");
+            setReviewTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }

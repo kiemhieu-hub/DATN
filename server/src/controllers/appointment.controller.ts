@@ -4,10 +4,6 @@ import {
   type Response,
 } from "express";
 
-
-import Booking from "../models/Booking";
-
-
 import type { AuthenticatedRequest } from "../middleware/authenticate";
 
 import {
@@ -62,11 +58,14 @@ export const create = async (
         req.user.userId,
         {
           barberId: req.body.barberId,
+          careBarberId: req.body.careBarberId,
           serviceIds: req.body.serviceIds,
           appointmentDate:
             req.body.appointmentDate,
           startTime: req.body.startTime,
           note: req.body.note,
+          customer: req.body.customer,
+          voucherCode: req.body.voucherCode,
         }
       );
 
@@ -213,51 +212,15 @@ export const getBarberMine = async (
  * PATCH /api/barber/appointments/:id/status
  */
 export const updateBarberStatus = async (
-  req: AuthenticatedRequest,
-  res: Response,
+  _req: AuthenticatedRequest,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    if (!req.user) {
-      throw new AppError(
-        "Bạn chưa đăng nhập",
-        401
-      );
-    }
-
-    const appointmentId =
-      getStringParam(
-        req.params.id,
-        "Mã lịch hẹn không hợp lệ"
-      );
-
-    const status =
-      req.body.status as
-        | AppointmentStatus
-        | undefined;
-
-    if (!status) {
-      throw new AppError(
-        "Trạng thái là bắt buộc",
-        400
-      );
-    }
-
-    const appointment =
-      await updateAppointmentStatus({
-        appointmentId,
-        actorId: req.user.userId,
-        actorRole: "BARBER",
-        status,
-        reason: req.body.reason,
-      });
-
-    res.status(200).json({
-      success: true,
-      message:
-        "Cập nhật trạng thái thành công",
-      appointment,
-    });
+    throw new AppError(
+      "Barber chỉ có quyền xem lịch làm việc",
+      403
+    );
   } catch (error) {
     next(error);
   }
@@ -438,29 +401,3 @@ export const getSlots = async (
     next(error);
   }
 };
-
-
-//bookings////////////////
-export const getAll = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const bookings = await Booking.find().sort({
-      created_at: -1,
-    });
-
-    console.log(bookings);
-
-    res.status(200).json({
-      success: true,
-      data: bookings,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-
