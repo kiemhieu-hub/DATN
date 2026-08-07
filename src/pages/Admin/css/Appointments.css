@@ -1219,6 +1219,43 @@
   font-size: 18px;
 }
 
+.appointment-transfer-qr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  align-items: center;
+  gap: 22px;
+  margin-top: 16px;
+  padding: 18px;
+  border: 1px solid #6f5930;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #242016, #121210);
+}
+
+.appointment-transfer-qr > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.appointment-transfer-qr span,
+.appointment-transfer-qr small {
+  color: #aaa69e;
+}
+
+.appointment-transfer-qr strong {
+  color: #e0b65f;
+  font-size: 25px;
+}
+
+.appointment-transfer-qr img {
+  display: block;
+  width: 190px;
+  height: 190px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #fff;
+}
+
 .appointment-payment-actions {
   display: flex;
   justify-content: flex-end;
@@ -1344,6 +1381,12 @@
 
   .appointment-payment-methods {
     grid-template-columns: 1fr;
+  }
+
+  .appointment-transfer-qr {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
   }
 
   .appointment-service-editor-heading {

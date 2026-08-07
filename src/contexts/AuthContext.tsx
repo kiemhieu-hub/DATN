@@ -26,6 +26,7 @@ interface AuthContextValue {
     data: LoginPayload
   ) => Promise<AuthUser>;
   logout: (role: UserRole) => void;
+  updateSession: (role: UserRole, user: AuthUser) => void;
 }
 
 interface RoleAuthValue {
@@ -34,6 +35,7 @@ interface RoleAuthValue {
   isLoading: boolean;
   login: (data: LoginPayload) => Promise<AuthUser>;
   logout: () => void;
+  updateUser: (user: AuthUser) => void;
 }
 
 const emptySessions: AuthSessions = {
@@ -156,9 +158,14 @@ export function AuthProvider({
     }));
   };
 
+  const updateSession = (role: UserRole, user: AuthUser): void => {
+    localStorage.setItem(userKey(role), JSON.stringify(user));
+    setSessions((current) => ({ ...current, [role]: user }));
+  };
+
   return (
     <AuthContext.Provider
-      value={{ sessions, isLoading, login, logout }}
+      value={{ sessions, isLoading, login, logout, updateSession }}
     >
       {children}
     </AuthContext.Provider>
@@ -182,5 +189,6 @@ export function useAuth(
     isLoading: context.isLoading,
     login: (data) => context.login(role, data),
     logout: () => context.logout(role),
+    updateUser: (nextUser) => context.updateSession(role, nextUser),
   };
 }

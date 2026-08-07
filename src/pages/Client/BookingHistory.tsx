@@ -504,7 +504,18 @@ function BookingHistory() {
                         đ
                       </strong>
                     </div>
-                    {appointment.voucherCode && <div><span>Voucher</span><strong>{appointment.voucherCode} (-{formatPrice(appointment.discountAmount)}đ)</strong></div>}
+                    {appointment.voucherCode && (
+                      <div className="history-voucher-card">
+                        <span>Voucher đã áp dụng</span>
+                        <strong>{appointment.voucherCode}</strong>
+                        <small>
+                          {appointment.discountPercent > 0
+                            ? `Giảm ${appointment.discountPercent}% · `
+                            : "Giảm trực tiếp · "}
+                          -{formatPrice(appointment.discountAmount)}đ
+                        </small>
+                      </div>
+                    )}
                     <div><span>Đặt cọc</span><strong>{appointment.depositRequired ? `${formatPrice(appointment.depositAmount)}đ · ${appointment.depositPaid ? "Đã cọc" : "Chưa cọc"}` : "Không yêu cầu"}</strong></div>
 
                     <div>

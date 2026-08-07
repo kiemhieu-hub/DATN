@@ -127,6 +127,37 @@ const getRemainingPayment = (appointment: Appointment): number => {
   return Math.max(0, appointment.totalPrice - getPaidDeposit(appointment));
 };
 
+const getTransferQrUrl = (appointment: Appointment): string => {
+  const amount = getRemainingPayment(appointment);
+  const description = appointment.appointmentCode;
+  const bankId = import.meta.env.VITE_BANK_ID?.trim();
+  const accountNumber = import.meta.env.VITE_BANK_ACCOUNT_NO?.trim();
+  const accountName = import.meta.env.VITE_BANK_ACCOUNT_NAME?.trim();
+
+  if (bankId && accountNumber) {
+    const params = new URLSearchParams({
+      amount: String(amount),
+      addInfo: description,
+    });
+
+    if (accountName) params.set("accountName", accountName);
+
+    return `https://img.vietqr.io/image/${encodeURIComponent(
+      bankId
+    )}-${encodeURIComponent(accountNumber)}-compact2.png?${params.toString()}`;
+  }
+
+  const fallbackData = JSON.stringify({
+    merchant: "THADS BARBER",
+    appointmentCode: description,
+    amount,
+  });
+
+  return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
+    fallbackData
+  )}`;
+};
+
 const getPaymentLabel = (appointment: Appointment): string => {
   if (appointment.paymentStatus === "PAID") return "Đã thanh toán";
   if (appointment.paymentStatus === "REFUNDED") return "Đã hoàn tiền";
@@ -1348,6 +1379,25 @@ function Appointments() {
                 <b>{paymentDialog.method === "BANK_TRANSFER" ? "✓" : ""}</b>
               </button>
             </div>
+
+            {paymentDialog.method === "BANK_TRANSFER" && (
+              <div className="appointment-transfer-qr">
+                <div>
+                  <span>Quét mã để chuyển khoản</span>
+                  <strong>
+                    {formatMoney(getRemainingPayment(paymentDialog.appointment))}đ
+                  </strong>
+                  <small>
+                    Nội dung: {paymentDialog.appointment.appointmentCode}
+                  </small>
+                </div>
+
+                <img
+                  src={getTransferQrUrl(paymentDialog.appointment)}
+                  alt={`QR thanh toán lịch ${paymentDialog.appointment.appointmentCode}`}
+                />
+              </div>
+            )}
 
             <div className="appointment-payment-actions">
               <button

@@ -31,6 +31,7 @@ import hairstyleGalleryRoutes from "./routes/hairstyleGallery.routes";
 import reviewRoutes from "./routes/review.routes";
 import staffNotificationRoutes from "./routes/staffNotification.routes";
 import vnpayRoutes from "./routes/vnpay.routes";
+import favoriteHairstyleRoutes from "./routes/favoriteHairstyle.routes";
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/hairstyle-gallery", hairstyleGalleryRoutes);
+app.use("/api/favorites", favoriteHairstyleRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/catalog",catalogRoutes);
 app.use("/api/barber", barberRoutes);

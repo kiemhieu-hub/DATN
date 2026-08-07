@@ -13,7 +13,20 @@ export default function ClientHeader() {
         <NavLink to="/booking-history">Lịch đã đặt</NavLink>
       </nav>
       <div className="client-site-account">
-        {user ? <><span>{user.fullName}</span><button type="button" onClick={logout}>Đăng xuất</button></> : <Link to="/login">Đăng nhập</Link>}
+        {user ? (
+          <div className="client-account-menu">
+            <button className="client-account-trigger" type="button">
+              {user.avatar ? <img src={user.avatar} alt="" /> : <i className="ti-user" />}
+              <span>{user.fullName}</span><i className="ti-angle-down" />
+            </button>
+            <div className="client-account-dropdown">
+              <Link to="/profile">Thông tin cá nhân</Link>
+              <Link to="/favorites">Kiểu tóc yêu thích</Link>
+              <Link to="/booking-history">Lịch sử đặt lịch</Link>
+              <button type="button" onClick={logout}>Đăng xuất</button>
+            </div>
+          </div>
+        ) : <Link to="/login">Đăng nhập</Link>}
       </div>
     </header>
   );

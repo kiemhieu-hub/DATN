@@ -1,90 +1,70 @@
-// import mongoose from "mongoose";
+import mongoose from "mongoose";
 
-// import FavoriteHairstyle from "../models/FavoriteHairstyle";
-// import AppError from "../utils/AppError";
+import FavoriteHairstyle from "../models/FavoriteHairstyle";
+import AppError from "../utils/AppError";
 
-// export interface HairstyleData {
-//   imageUrl: string;
-//   title: string;
-// }
+interface HairstyleData {
+  imageUrl: string;
+  title: string;
+  category?: string;
+}
 
-// export const addFavorite = async (
-//   userId: string,
-//   hairstyle: HairstyleData
-// ): Promise<{ message: string }> => {
-//   if (!mongoose.Types.ObjectId.isValid(userId)) {
-//     throw new AppError("Tài khoản không hợp lệ", 400);
-//   }
+const validateUserId = (userId: string): void => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new AppError("Tài khoản không hợp lệ", 400);
+  }
+};
 
-//   if (!hairstyle.imageUrl || !hairstyle.title) {
-//     throw new AppError("Thông tin kiểu tóc không hợp lệ", 400);
-//   }
+export const getMyFavorites = async (userId: string) => {
+  validateUserId(userId);
+  return FavoriteHairstyle.find({ userId })
+    .sort({ createdAt: -1 })
+    .lean();
+};
 
-//   // Kiểm tra đã tồn tại chưa
-//   const existing = await FavoriteHairstyle.findOne({
-//     userId: new mongoose.Types.ObjectId(userId),
-//     imageUrl: hairstyle.imageUrl,
-//   });
+export const addFavorite = async (
+  userId: string,
+  input: HairstyleData
+) => {
+  validateUserId(userId);
+  if (!input.imageUrl?.trim() || !input.title?.trim()) {
+    throw new AppError("Thông tin kiểu tóc không hợp lệ", 400);
+  }
 
-//   if (existing) {
-//     throw new AppError("Kiểu tóc này đã có trong danh sách yêu thích", 400);
-//   }
+  const favorite = await FavoriteHairstyle.findOneAndUpdate(
+    { userId, imageUrl: input.imageUrl.trim() },
+    {
+      $setOnInsert: {
+        userId,
+        imageUrl: input.imageUrl.trim(),
+        title: input.title.trim(),
+        category: input.category?.trim() ?? "",
+      },
+    },
+    { new: true, upsert: true, runValidators: true }
+  ).lean();
 
-//   await FavoriteHairstyle.create({
-//     userId: new mongoose.Types.ObjectId(userId),
-//     imageUrl: hairstyle.imageUrl,
-//     title: hairstyle.title,
-//   });
+  return favorite;
+};
 
-//   return { message: "Đã thêm vào yêu thích" };
-// };
+export const removeFavorite = async (userId: string, favoriteId: string) => {
+  validateUserId(userId);
+  if (!mongoose.Types.ObjectId.isValid(favoriteId)) {
+    throw new AppError("Kiểu tóc yêu thích không hợp lệ", 400);
+  }
 
-// export const removeFavorite = async (
-//   userId: string,
-//   imageUrl: string
-// ): Promise<{ message: string }> => {
-//   if (!mongoose.Types.ObjectId.isValid(userId)) {
-//     throw new AppError("Tài khoản không hợp lệ", 400);
-//   }
+  const deleted = await FavoriteHairstyle.findOneAndDelete({
+    _id: favoriteId,
+    userId,
+  });
 
-//   const result = await FavoriteHairstyle.deleteOne({
-//     userId: new mongoose.Types.ObjectId(userId),
-//     imageUrl,
-//   });
+  if (!deleted) {
+    throw new AppError("Không tìm thấy kiểu tóc yêu thích", 404);
+  }
+};
 
-//   if (result.deletedCount === 0) {
-//     throw new AppError("Không tìm thấy kiểu tóc trong danh sách yêu thích", 404);
-//   }
-
-//   return { message: "Đã xóa khỏi yêu thích" };
-// };
-
-// export const getMyFavorites = async (userId: string) => {
-//   if (!mongoose.Types.ObjectId.isValid(userId)) {
-//     throw new AppError("Tài khoản không hợp lệ", 400);
-//   }
-
-//   const favorites = await FavoriteHairstyle.find({
-//     userId: new mongoose.Types.ObjectId(userId),
-//   })
-//     .sort({ createdAt: -1 })
-//     .lean();
-
-//   return favorites;
-// };
-
-// export const checkFavorite = async (
-//   userId: string,
-//   imageUrl: string
-// ): Promise<boolean> => {
-//   if (!mongoose.Types.ObjectId.isValid(userId)) {
-//     return false;
-//   }
-
-//   const favorite = await FavoriteHairstyle.findOne({
-//     userId: new mongoose.Types.ObjectId(userId),
-//     imageUrl,
-//   });
-
-//   return !!favorite;
-// };
+export const removeFavoriteByImage = async (userId: string, imageUrl: string) => {
+  validateUserId(userId);
+  const deleted = await FavoriteHairstyle.findOneAndDelete({ userId, imageUrl });
+  if (!deleted) throw new AppError("Không tìm thấy kiểu tóc yêu thích", 404);
+};

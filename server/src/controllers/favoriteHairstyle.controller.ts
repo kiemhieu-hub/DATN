@@ -1,51 +1,51 @@
-// import { type Request, type Response } from "express";
+import type { NextFunction, Response } from "express";
 
-// import {
-//   addFavorite,
-//   removeFavorite,
-//   getMyFavorites,
-// } from "../services/favoriteHairstyle.service";
+import type { AuthenticatedRequest } from "../middleware/authenticate";
+import {
+  addFavorite,
+  getMyFavorites,
+  removeFavorite,
+} from "../services/favoriteHairstyle.service";
 
-// export const addFavoriteHairstyle = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const userId = (req as any).user?.userId;
-//   const { imageUrl, title } = req.body;
+export const getMyFavoriteHairstyles = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const items = await getMyFavorites(req.user!.userId);
+    res.json({ success: true, items });
+  } catch (error) {
+    next(error);
+  }
+};
 
-//   const result = await addFavorite(userId, { imageUrl, title });
+export const addFavoriteHairstyle = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const item = await addFavorite(req.user!.userId, req.body);
+    res.status(201).json({
+      success: true,
+      message: "Đã thêm kiểu tóc vào danh sách yêu thích",
+      item,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-//   res.status(201).json({
-//     success: true,
-//     ...result,
-//   });
-// };
-
-// export const removeFavoriteHairstyle = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const userId = (req as any).user?.userId;
-//   const { imageUrl } = req.params;
-
-//   const result = await removeFavorite(userId, decodeURIComponent(imageUrl));
-
-//   res.json({
-//     success: true,
-//     ...result,
-//   });
-// };
-
-// export const getMyFavoriteHairstyles = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const userId = (req as any).user?.userId;
-
-//   const favorites = await getMyFavorites(userId);
-
-//   res.json({
-//     success: true,
-//     data: favorites,
-//   });
-// };
+export const removeFavoriteHairstyle = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    await removeFavorite(req.user!.userId, String(req.params.id));
+    res.json({ success: true, message: "Đã bỏ kiểu tóc khỏi yêu thích" });
+  } catch (error) {
+    next(error);
+  }
+};
