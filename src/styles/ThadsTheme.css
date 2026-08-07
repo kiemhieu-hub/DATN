@@ -59,7 +59,7 @@ body{margin:0;letter-spacing:0;color:var(--thads-ink)}
 .admin-shell{color:var(--thads-ink)!important;background:var(--thads-bg)!important}
 .admin-shell-sidebar{background:linear-gradient(180deg,#211e1a,#171512)!important;border-right-color:#40382f!important}
 .admin-shell-content{background:var(--thads-bg)!important}
-.admin-nav-link{color:#c9c0b6!important;border-radius:0!important}
+.admin-nav-link{color:#c9c0b6!important;border-radius:10px!important}
 .admin-nav-link:hover{color:#fff!important;background:#2b2722!important}
 .admin-nav-link.active{color:#fff!important;background:linear-gradient(90deg,rgb(170 128 77 / 25%),#2a251f)!important;border-color:rgb(170 128 77 / 60%)!important}
 .admin-shell-brand h2,.admin-nav-icon{color:#d4aa72!important}
@@ -247,4 +247,236 @@ body{margin:0;letter-spacing:0;color:var(--thads-ink)}
   .admin-dashboard-page,.admin-revenue-page,.admin-payments-page,.admin-vouchers-page,
   .admin-reviews-page,.admin-users-page,.admin-barbers-page,.service-categories-page,
   .admin-services-page,.admin-appointments-page,.admin-gallery-page{padding-right:14px!important;padding-left:14px!important}
+}
+
+/* =========================================================
+   ADMIN UI POLISH — màu chức năng rõ ràng và bo góc đồng bộ
+========================================================= */
+:root{
+  --ui-primary:#2563eb;
+  --ui-primary-hover:#1d4ed8;
+  --ui-success:#16845b;
+  --ui-success-hover:#106b49;
+  --ui-warning:#d97706;
+  --ui-warning-soft:#fff4dc;
+  --ui-danger:#dc4c4c;
+  --ui-danger-hover:#b93636;
+  --ui-info:#087ea4;
+  --ui-card-radius:16px;
+  --ui-control-radius:10px;
+}
+
+/* Khung nội dung, card và bộ lọc */
+.admin-dashboard-card,.admin-revenue-chart-card,.admin-revenue-summary article,
+.payments-summary article,.review-summary button,.admin-users-summary article,
+.admin-barbers-summary article,.admin-barber-card,.admin-content-card,
+.reception-stats article,.reception-schedule-list>section,
+.barber-dashboard-header,.barber-dashboard-date-banner,.barber-dashboard-statistics article,
+.barber-dashboard-next-card,.barber-dashboard-revenue-card,.barber-dashboard-appointment-card,
+.barber-profile-header,.barber-profile-section,.barber-week-grid article,
+.admin-user-group,.gallery-toolbar,.admin-gallery-grid article{
+  border-radius:var(--ui-card-radius)!important;
+}
+
+.appointment-filters,.service-filters,.review-filters,.admin-users-filters,
+.payments-filters,.admin-revenue-filters,.category-filters,.gallery-filters,
+.voucher-filters,.barber-view-filter,.admin-barbers-toolbar{
+  border-radius:14px!important;
+}
+
+.admin-shell-content input,.admin-shell-content select,.admin-shell-content textarea,
+.reception-page input,.reception-page select,.reception-page textarea,
+.barber-dashboard-page input,.barber-profile-page input,.barber-profile-page select,
+.barber-profile-page textarea,.barber-view-page input{
+  border-radius:var(--ui-control-radius)!important;
+}
+
+/* Bảng: giữ header rõ, bo khung và tăng khoảng thở */
+.appointment-table-wrapper,.service-table-wrap,.review-table-wrap,.voucher-table-wrap,
+.payments-table-wrapper,.admin-users-table-wrapper,.category-table-wrap,
+.admin-dashboard-table-wrap,.reception-table,.barber-view-table{
+  border-radius:14px!important;
+}
+
+.service-table-wrap td strong,.admin-users-table td strong,
+.review-table-wrap td strong,.voucher-table-wrap td strong,
+.payments-table td strong,.category-table-wrap td strong{
+  color:var(--thads-ink)!important;
+}
+
+.service-table-wrap td small,.admin-users-table td small,
+.review-table-wrap td small,.voucher-table-wrap td small,
+.payments-table td small,.category-table-wrap td small{
+  color:var(--thads-muted)!important;
+}
+
+/* Nút mặc định: chữ luôn đủ tương phản */
+.admin-shell-content button,.reception-page button,.barber-dashboard-page button,
+.barber-profile-page button,.barber-view-page button{
+  min-height:38px;
+  border-radius:var(--ui-control-radius)!important;
+}
+
+.admin-shell-content button:not(:disabled):hover,
+.reception-page button:not(:disabled):hover,
+.barber-dashboard-page button:not(:disabled):hover,
+.barber-profile-page button:not(:disabled):hover{
+  transform:translateY(-1px);
+  box-shadow:0 7px 18px rgb(38 30 22 / 14%);
+}
+
+.admin-shell-content button:disabled,.reception-page button:disabled,
+.barber-dashboard-page button:disabled,.barber-profile-page button:disabled{
+  opacity:.48!important;
+  cursor:not-allowed!important;
+}
+
+/* Nút chính */
+.appointment-search-button,.service-filters button,.review-filters button,
+.admin-users-filters button,.payments-filters button,.admin-revenue-filters button,
+.voucher-header button,.admin-services-header button,.category-header button,
+.admin-barbers-header-actions .primary,.admin-barbers-search button,
+.modal-actions .primary,.voucher-modal-actions .primary,.category-modal-actions .primary,
+.gallery-modal-actions .primary,.admin-gallery-header>button,
+.reception-schedule-list>section>button{
+  color:#fff!important;
+  background:var(--ui-primary)!important;
+  border-color:var(--ui-primary)!important;
+  box-shadow:0 7px 16px rgb(37 99 235 / 18%)!important;
+}
+
+.appointment-search-button:hover,.service-filters button:hover,.review-filters button:hover,
+.admin-users-filters button:hover,.payments-filters button:hover,.admin-revenue-filters button:hover,
+.admin-barbers-search button:hover,.admin-gallery-header>button:hover{
+  color:#fff!important;
+  background:var(--ui-primary-hover)!important;
+  border-color:var(--ui-primary-hover)!important;
+}
+
+/* Nút theo nghiệp vụ */
+.admin-user-actions button,.admin-barber-actions button,.row-actions button,
+.admin-gallery-grid footer button,.gallery-modal-actions button,
+.service-pagination button,.admin-users-pagination button,.admin-barbers-pagination button{
+  color:#1f2937!important;
+  background:#fff!important;
+  border:1px solid #b8c0ca!important;
+  border-radius:9px!important;
+  font-weight:700!important;
+}
+
+.admin-user-actions button:first-child,.admin-barber-actions button:first-child,
+.row-actions button:first-child,.admin-gallery-grid footer button:first-child{
+  color:#fff!important;
+  background:var(--ui-info)!important;
+  border-color:var(--ui-info)!important;
+}
+
+.admin-user-actions .success,.admin-barber-actions .success{
+  color:#fff!important;
+  background:var(--ui-success)!important;
+  border-color:var(--ui-success)!important;
+}
+
+.admin-user-actions .danger,.admin-barber-actions .danger,
+.admin-gallery-grid footer .danger{
+  color:#fff!important;
+  background:var(--ui-danger)!important;
+  border-color:var(--ui-danger)!important;
+}
+
+.admin-user-actions .danger:hover,.admin-barber-actions .danger:hover,
+.admin-gallery-grid footer .danger:hover{
+  background:var(--ui-danger-hover)!important;
+  border-color:var(--ui-danger-hover)!important;
+}
+
+.row-actions .toggle,.admin-gallery-grid footer button:nth-child(2){
+  color:#9a5600!important;
+  background:var(--ui-warning-soft)!important;
+  border-color:#e5a33e!important;
+}
+
+/* Trang người dùng */
+.admin-user-group{
+  color:var(--thads-ink)!important;
+  background:var(--thads-surface)!important;
+  box-shadow:var(--thads-shadow)!important;
+}
+
+.admin-user-group-header h2{color:var(--thads-ink)!important}
+.admin-user-group-header p{color:var(--thads-muted)!important}
+.admin-user-group-header>span{
+  color:var(--thads-accent-strong)!important;
+  background:#fff!important;
+  border-color:var(--thads-border)!important;
+}
+
+/* Card Barber: bỏ các ô đen nặng và sửa chữ bị chìm */
+.admin-barber-card{padding:26px!important}
+.admin-barber-card-header,.admin-barber-meta{border-color:var(--thads-border)!important}
+.admin-barber-title h2{color:var(--thads-ink)!important}
+.admin-barber-contact div,.admin-barber-metrics div{
+  color:var(--thads-ink)!important;
+  background:#f8f2ea!important;
+  border-color:#e3d5c5!important;
+  border-radius:12px!important;
+}
+.admin-barber-contact span,.admin-barber-metrics span,
+.admin-barber-bio>span,.admin-barber-specialties>span,
+.admin-barber-meta small{color:var(--thads-muted)!important}
+.admin-barber-contact strong,.admin-barber-metrics strong,
+.admin-barber-bio p{color:var(--thads-ink)!important}
+.admin-barber-specialties small{
+  color:#43382f!important;
+  background:#f1e5d7!important;
+  border-color:#d8c3aa!important;
+  border-radius:8px!important;
+}
+
+/* Lịch làm việc Barber */
+.reception-schedule-list>section{padding:26px!important}
+.reception-schedule-list article{
+  color:#f8f4ec!important;
+  background:#28241f!important;
+  border:1px solid #453e35!important;
+  border-radius:12px!important;
+}
+.reception-schedule-list article strong,
+.reception-schedule-list article label{color:#f4eee6!important}
+.reception-schedule-list article input[type=time]{
+  color:#211a15!important;
+  background:#fff!important;
+  border-color:#d6c8b8!important;
+  border-radius:8px!important;
+}
+
+/* Gallery */
+.gallery-toolbar{
+  color:var(--thads-ink)!important;
+  background:var(--thads-surface)!important;
+  border-color:var(--thads-border)!important;
+  box-shadow:var(--thads-shadow)!important;
+}
+.admin-gallery-grid article{
+  color:var(--thads-ink)!important;
+  background:var(--thads-surface)!important;
+  border-color:var(--thads-border)!important;
+  box-shadow:var(--thads-shadow)!important;
+}
+.admin-gallery-image{background:#e8ded2!important}
+.admin-gallery-info h2{color:var(--thads-ink)!important}
+.admin-gallery-info p{color:#554b43!important}
+.admin-gallery-info small{color:var(--thads-muted)!important}
+.admin-gallery-grid footer{padding:0 16px 18px!important}
+
+/* Popup */
+.appointment-modal,.service-modal,.voucher-modal,.review-modal,.admin-user-modal,
+.admin-barbers-modal,.category-modal,.gallery-modal,.reception-modal{
+  border-radius:18px!important;
+}
+.admin-user-detail-grid p,.admin-user-barber-profile,
+.admin-user-recent-list article,.appointment-detail-grid>div,
+.review-detail-grid>div,.review-comment,.review-service-list>div,
+.appointment-detail-note{
+  border-radius:11px!important;
 }
