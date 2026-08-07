@@ -54,6 +54,9 @@ import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
 import AdminReviews from "./pages/Admin/Reviews";
 import StaffNotifications from "./pages/Admin/StaffNotifications";
 
+//VNpay
+import VnpayReturn from "./pages/Client/VnpayReturn";
+
 function App() {
   return (
     <Router>
@@ -117,6 +120,9 @@ function App() {
         <Route path="/barber/working-schedule"element={<WorkingSchedule />}/>
         <Route path="/barber/dashboard" element={<Dashboard />}/>
         <Route path="/barber/profile"element={<Profile />}/>
+
+        {/* ================= VNpay ================= */}
+        <Route path="/payment/vnpay-return"element={<VnpayReturn />}/>
 
 
         <Route path="*"element={

@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   createAppointment,
-  confirmAppointmentDeposit,
   getAvailableSlots,
   type AvailableSlot,
 } from "../../services/appointment.service";
@@ -24,6 +23,7 @@ import type {
   AvailableVoucher,
   VoucherCalculation,
 } from "../../types/Voucher";
+import { createVnpayPayment } from "../../services/vnpay.service";
 import "./css/Booking.css";
 import "./css/BookingDeposit.css";
 
@@ -58,7 +58,6 @@ function Booking() {
   const [barbers, setBarbers] = useState<CatalogBarber[]>([]);
   const [serviceIds, setServiceIds] = useState<string[]>([]);
   const [hairBarberId, setHairBarberId] = useState("");
-  const [careBarberId, setCareBarberId] = useState("");
   const [appointmentDate, setAppointmentDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
@@ -119,38 +118,25 @@ function Booking() {
   };
 
   const hairBarbers = barbers.filter((barber) => barberSupports(barber, "HAIR"));
-  const careBarbers = barbers.filter((barber) => barberSupports(barber, "CARE"));
-  const careBarberKey = careBarbers.map((barber) => barber.id).join(",");
-
-  const slotBarberId = needsHair ? hairBarberId : careBarberId;
-
-  useEffect(() => {
-    if (!needsCare || careBarbers.length === 0) {
-      setCareBarberId("");
-      return;
-    }
-
-    if (!careBarbers.some((barber) => barber.id === careBarberId)) {
-      const randomIndex = Math.floor(Math.random() * careBarbers.length);
-      setCareBarberId(careBarbers[randomIndex].id);
-    }
-  }, [careBarberId, careBarberKey, needsCare]);
-
   useEffect(() => {
     setStartTime("");
-    if (!slotBarberId || !appointmentDate || serviceIds.length === 0) {
+    if (
+      (needsHair && !hairBarberId) ||
+      !appointmentDate ||
+      serviceIds.length === 0
+    ) {
       setSlots([]);
       return;
     }
     setSlotsLoading(true);
-    getAvailableSlots(slotBarberId, serviceIds, appointmentDate)
+    getAvailableSlots(hairBarberId || undefined, serviceIds, appointmentDate)
       .then((response) => setSlots(response.slots))
       .catch((requestError) => {
         setSlots([]);
         setError(getError(requestError));
       })
       .finally(() => setSlotsLoading(false));
-  }, [slotBarberId, appointmentDate, serviceIds]);
+  }, [needsHair, hairBarberId, appointmentDate, serviceIds]);
 
   const subtotal = selectedServices.reduce((sum, service) => sum + service.price, 0);
   const hairDuration = selectedServices
@@ -183,7 +169,6 @@ function Booking() {
   const toggleService = (service: CatalogService) => {
     setError("");
     setHairBarberId("");
-    setCareBarberId("");
     setStartTime("");
     setVoucherCode("");
     setVoucherCalculation(null);
@@ -210,14 +195,14 @@ function Booking() {
     const timer = window.setTimeout(() => {
       getAvailableVouchers(
         serviceIds,
-        [hairBarberId, careBarberId].filter(Boolean)
+        [hairBarberId].filter(Boolean)
       )
         .then((response) => setAvailableVouchers(response.vouchers))
         .catch(() => setAvailableVouchers([]));
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [careBarberId, hairBarberId, serviceIds]);
+  }, [hairBarberId, serviceIds]);
 
   const chooseVoucher = (voucher: AvailableVoucher): void => {
     setVoucherCode(voucher.code);
@@ -247,15 +232,13 @@ function Booking() {
     if (!isAuthenticated || !user) return navigate("/login");
     if (!serviceIds.length) return setError("Vui lòng chọn ít nhất một dịch vụ.");
     if (needsHair && !hairBarberId) return setError("Vui lòng chọn nhân viên làm tóc.");
-    if (needsCare && !careBarberId) return setError("Hiện chưa có nhân viên chăm sóc phù hợp.");
     if (!appointmentDate || !startTime) return setError("Vui lòng chọn ngày và khung giờ.");
     if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim()) return setError("Vui lòng nhập đầy đủ thông tin người sử dụng dịch vụ.");
 
     try {
       setSubmitting(true);
       const response = await createAppointment({
-        barberId: needsHair ? hairBarberId : careBarberId,
-        careBarberId: needsCare ? careBarberId : undefined,
+        barberId: needsHair ? hairBarberId : "",
         serviceIds,
         appointmentDate,
         startTime,
@@ -293,11 +276,11 @@ function Booking() {
     if (!depositAppointment) return;
     try {
       setSubmitting(true);
-      await confirmAppointmentDeposit(depositAppointment._id);
-      navigate("/booking-history", {
-        replace: true,
-        state: { message: "Đặt lịch và thanh toán cọc thành công. Email xác nhận đang được gửi." },
-      });
+      const payment = await createVnpayPayment(
+        depositAppointment._id,
+        "DEPOSIT"
+      );
+      window.location.assign(payment.paymentUrl);
     } catch (requestError) {
       setError(getError(requestError));
     } finally {
@@ -413,9 +396,8 @@ function Booking() {
             <h2>Thanh toán đặt cọc 30%</h2>
             <p>Mã lịch: <b>{depositAppointment.appointmentCode}</b></p>
             <strong>{money(depositAppointment.depositAmount)}đ</strong>
-            <img alt="QR đặt cọc" src={`https://api.qrserver.com/v1/create-qr-code/?size=230x230&data=${encodeURIComponent(`THADS-DEPOSIT|${depositAppointment.appointmentCode}|${depositAppointment.depositAmount}`)}`} />
-            <p>Quét mã để chuyển khoản, sau đó xác nhận bên dưới.</p>
-            <button type="button" disabled={submitting} onClick={() => void finishDeposit()}>{submitting ? "Đang xác nhận..." : "Tôi đã thanh toán cọc"}</button>
+            <p>Bạn sẽ được chuyển sang cổng VNPay để chọn ngân hàng, quét QR hoặc thanh toán bằng phương thức được hỗ trợ.</p>
+            <button type="button" disabled={submitting} onClick={() => void finishDeposit()}>{submitting ? "Đang tạo giao dịch..." : "Thanh toán cọc qua VNPay"}</button>
           </section>
         </div>
       )}

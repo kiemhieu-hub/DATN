@@ -609,7 +609,7 @@ function Pricing() {
       <section className="testimonials">
         <div
           className="background bg-img bg-fixed section-padding pb-0"
-          data-background="img/slider/20.jpg"
+          data-background="img/slider/18.jpg"
           data-overlay-dark={6}
         >
           <div className="container">

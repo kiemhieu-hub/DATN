@@ -30,11 +30,17 @@ import adminReviewRoutes from "./routes/adminReview.routes";
 import hairstyleGalleryRoutes from "./routes/hairstyleGallery.routes";
 import reviewRoutes from "./routes/review.routes";
 import staffNotificationRoutes from "./routes/staffNotification.routes";
+import vnpayRoutes from "./routes/vnpay.routes";
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Test API
@@ -69,6 +75,7 @@ app.use("/api/admin/reviews", adminReviewRoutes);
 app.use("/api/admin", adminContentRoutes);
 app.use("/api/receptionist", receptionistRoutes);
 app.use("/api/staff/notifications", staffNotificationRoutes);
+app.use("/api/payments/vnpay", vnpayRoutes);
 
 
 

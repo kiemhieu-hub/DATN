@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import ReviewModal from "../../components/ReviewModal";
 import {cancelAppointment,getMyAppointments,} from "../../services/appointment.service";
 import { getMyReviews } from "../../services/review.service";
+import { createVnpayPayment, type VnpayPurpose } from "../../services/vnpay.service";
 import type {Appointment,AppointmentStatus,PaymentStatus,} from "../../types/Appointment";
 import "./css/BookingHistory.css";
 
@@ -119,6 +120,7 @@ function BookingHistory() {
   const [reviewTarget, setReviewTarget] = useState<Appointment | null>(null);
   const [reviewedAppointmentIds, setReviewedAppointmentIds] = useState<Set<string>>(new Set());
   const [cancelReason, setCancelReason] = useState("");
+  const [payingId, setPayingId] = useState<string | null>(null);
 
   const [
     cancellingId,
@@ -222,6 +224,21 @@ function BookingHistory() {
       );
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const startVnpayPayment = async (
+    appointment: Appointment,
+    purpose: VnpayPurpose
+  ): Promise<void> => {
+    try {
+      setPayingId(appointment._id);
+      setError("");
+      const result = await createVnpayPayment(appointment._id, purpose);
+      window.location.assign(result.paymentUrl);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể tạo giao dịch VNPay."));
+      setPayingId(null);
     }
   };
 
@@ -457,6 +474,17 @@ function BookingHistory() {
                         )}
                       </strong>
                     </div>
+                    {appointment.staffAssignments?.map((assignment) => (
+                      <div key={`${assignment.staffType}-${assignment.startTime}`}>
+                        <span>{assignment.staffType === "HAIR" ? "Time 1 · Làm tóc" : "Time 2 · Chăm sóc"}</span>
+                        <strong>
+                          {typeof assignment.barber === "string"
+                            ? "Nhân viên THADS"
+                            : assignment.barber.fullName}
+                        </strong>
+                        <small>{assignment.startTime} – {assignment.endTime}</small>
+                      </div>
+                    ))}
 
                     <div>
                       <span>Tổng tiền</span>
@@ -561,6 +589,33 @@ function BookingHistory() {
                           : "Hủy lịch"}
                       </button>
                     )}
+                    {appointment.depositRequired &&
+                      !appointment.depositPaid &&
+                      !["CANCELLED", "COMPLETED", "NO_SHOW"].includes(appointment.status) && (
+                        <button
+                          type="button"
+                          className="history-payment-button"
+                          disabled={payingId === appointment._id}
+                          onClick={() => void startVnpayPayment(appointment, "DEPOSIT")}
+                        >
+                          {payingId === appointment._id
+                            ? "Đang chuyển hướng..."
+                            : `Thanh toán cọc ${formatPrice(appointment.depositAmount)}đ`}
+                        </button>
+                      )}
+                    {appointment.status === "COMPLETED" &&
+                      appointment.paymentStatus !== "PAID" && (
+                        <button
+                          type="button"
+                          className="history-payment-button"
+                          disabled={payingId === appointment._id}
+                          onClick={() => void startVnpayPayment(appointment, "BALANCE")}
+                        >
+                          {payingId === appointment._id
+                            ? "Đang chuyển hướng..."
+                            : "Thanh toán qua VNPay"}
+                        </button>
+                      )}
                     {appointment.status === "COMPLETED" && (
                       reviewedAppointmentIds.has(appointment._id) ? (
                         <span className="history-reviewed-label">✓ Đã gửi đánh giá</span>

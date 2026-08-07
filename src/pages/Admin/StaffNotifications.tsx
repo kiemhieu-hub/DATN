@@ -91,10 +91,18 @@ function StaffNotifications() {
         notification._id
       );
     }
+    const appointmentId =
+      typeof notification.appointment === "string"
+        ? notification.appointment
+        : notification.appointment?._id;
+    const basePath = isReceptionist
+      ? "/receptionist/dashboard"
+      : "/admin/appointments";
+
     navigate(
-      isReceptionist
-        ? "/receptionist/dashboard"
-        : "/admin/appointments"
+      appointmentId
+        ? `${basePath}?appointmentId=${encodeURIComponent(appointmentId)}`
+        : basePath
     );
   };
 

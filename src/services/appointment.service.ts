@@ -87,17 +87,8 @@ export const cancelAppointment = async (
   return response.data;
 };
 
-export const confirmAppointmentDeposit = async (
-  appointmentId: string
-): Promise<CreateAppointmentResponse> => {
-  const response = await api.post<CreateAppointmentResponse>(
-    `/appointments/${appointmentId}/deposit`
-  );
-  return response.data;
-};
-
 export const getAvailableSlots = async (
-  barberId: string,
+  barberId: string | undefined,
   serviceIds: string[],
   appointmentDate: string
 ): Promise<GetAvailableSlotsResponse> => {

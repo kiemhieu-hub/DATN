@@ -1,14 +1,7 @@
-import {
-  type NextFunction,
-  type Request,
-  type Response,
-} from "express";
-
+import {type NextFunction,type Request,type Response,} from "express";
 import type { AuthenticatedRequest } from "../middleware/authenticate";
-
 import {
   cancelMyAppointment,
-  confirmClientDeposit,
   createAppointment,
   getAdminAppointments,
   getAvailableSlots,
@@ -398,21 +391,6 @@ export const getSlots = async (
       success: true,
       slots,
     });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const payDeposit = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
-    const appointmentId = getStringParam(req.params.id, "Mã lịch hẹn không hợp lệ");
-    const appointment = await confirmClientDeposit(appointmentId, req.user.userId);
-    res.status(200).json({ success: true, message: "Đã ghi nhận thanh toán đặt cọc 30%", appointment });
   } catch (error) {
     next(error);
   }

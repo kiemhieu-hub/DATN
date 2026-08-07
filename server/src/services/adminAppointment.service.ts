@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Appointment, { type AppointmentStatus } from "../models/Appointment";
 import BarberSchedule from "../models/BarberSchedule";
+import BarberProfile from "../models/BarberProfile";
 import User from "../models/User";
 import AppError from "../utils/AppError";
 import Service from "../models/Service";
@@ -92,7 +93,8 @@ const assertId = (id: string, message: string) => {
 const populate = (query: any) => query
   .populate("client", "fullName email phone role status")
   .populate("barber", "fullName email phone role status")
-  .populate("services.service", "name image group isActive");
+  .populate("services.service", "name image group isActive staffType")
+  .populate("staffAssignments.barber", "fullName email phone role status");
 
 type SortableAppointment = {
   status: AppointmentStatus;
@@ -153,12 +155,32 @@ const assertBarberAvailability = async (
 
   const existing = await Appointment.find({
     _id: { $ne: appointmentId },
-    barber: barberId,
+    $or: [
+      { barber: barberId },
+      { "staffAssignments.barber": barberId },
+    ],
     appointmentDate,
     status: { $in: ["PENDING", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"] },
-  }).select("startTime endTime").lean();
+  }).select("barber startTime endTime staffAssignments").lean();
 
-  if (existing.some((item) => overlaps(start, end, timeToMinutes(item.startTime), timeToMinutes(item.endTime)))) {
+  if (existing.some((item) => {
+    const assignments = item.staffAssignments?.filter(
+      (assignment) => String(assignment.barber) === barberId
+    ) ?? [];
+    const intervals = assignments.length > 0
+      ? assignments
+      : String(item.barber) === barberId
+        ? [{ startTime: item.startTime, endTime: item.endTime }]
+        : [];
+    return intervals.some((interval) =>
+      overlaps(
+        start,
+        end,
+        timeToMinutes(interval.startTime),
+        timeToMinutes(interval.endTime)
+      )
+    );
+  })) {
     throw new AppError("Barber đã có lịch trùng khung giờ này", 409);
   }
 };
@@ -315,9 +337,17 @@ export const reassignAppointmentBarber = async (
   if (["COMPLETED", "CANCELLED"].includes(appointment.status)) {
     throw new AppError("Không thể đổi Barber cho lịch đã hoàn thành hoặc đã hủy", 400);
   }
+  const hairAssignment = appointment.staffAssignments.find(
+    (assignment) => assignment.staffType === "HAIR"
+  );
+  const assignedStart = hairAssignment?.startTime ?? appointment.startTime;
+  const assignedEnd = hairAssignment?.endTime ?? appointment.endTime;
   await assertBarberAvailability(
-    barberId, appointmentId, appointment.appointmentDate,
-    appointment.startTime, appointment.endTime
+    barberId,
+    appointmentId,
+    appointment.appointmentDate,
+    assignedStart,
+    assignedEnd
   );
 
   const previousBarberId = String(appointment.barber);
@@ -326,6 +356,9 @@ export const reassignAppointmentBarber = async (
     User.findById(barberId).select("fullName").lean(),
   ]);
   appointment.barber = new mongoose.Types.ObjectId(barberId);
+  if (hairAssignment) {
+    hairAssignment.barber = new mongoose.Types.ObjectId(barberId);
+  }
   await appointment.save();
   await recordAppointmentActivity({
     appointmentId,
@@ -383,9 +416,42 @@ export const rescheduleAppointment = async (
     startTime: appointment.startTime,
     endTime: appointment.endTime,
   };
+  const minuteOffset = timeToMinutes(startTime) - timeToMinutes(appointment.startTime);
+  const shiftedAssignments = appointment.staffAssignments.map((assignment) => {
+    const shiftedStart = timeToMinutes(assignment.startTime) + minuteOffset;
+    const shiftedEnd = timeToMinutes(assignment.endTime) + minuteOffset;
+    return {
+      assignment,
+      startTime: `${String(Math.floor(shiftedStart / 60)).padStart(2, "0")}:${String(shiftedStart % 60).padStart(2, "0")}`,
+      endTime: `${String(Math.floor(shiftedEnd / 60)).padStart(2, "0")}:${String(shiftedEnd % 60).padStart(2, "0")}`,
+    };
+  });
+  if (shiftedAssignments.length > 0) {
+    for (const shifted of shiftedAssignments) {
+      await assertBarberAvailability(
+        String(shifted.assignment.barber),
+        appointmentId,
+        appointmentDate,
+        shifted.startTime,
+        shifted.endTime
+      );
+    }
+  } else {
+    await assertBarberAvailability(
+      String(appointment.barber),
+      appointmentId,
+      appointmentDate,
+      startTime,
+      endTime
+    );
+  }
   appointment.appointmentDate = appointmentDate;
   appointment.startTime = startTime;
   appointment.endTime = endTime;
+  shiftedAssignments.forEach(({ assignment, startTime: nextStart, endTime: nextEnd }) => {
+    assignment.startTime = nextStart;
+    assignment.endTime = nextEnd;
+  });
   appointment.rescheduleConsent = true;
   if (appointment.status === "NO_SHOW") appointment.status = "CONFIRMED";
   await appointment.save();
@@ -469,7 +535,41 @@ export const reopenNoShowAppointment = async (
     const endMinutes = timeToMinutes(startTime) + appointment.durationMinutes;
     if (endMinutes >= 24 * 60) throw new AppError("Thời gian kết thúc không hợp lệ", 400);
     const endTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
-    await assertBarberAvailability(barberId, appointmentId, appointmentDate, startTime, endTime);
+    const offset = timeToMinutes(startTime) - timeToMinutes(appointment.startTime);
+    const hasHairAssignment = appointment.staffAssignments.some(
+      (assignment) => assignment.staffType === "HAIR"
+    );
+    const shiftedAssignments = appointment.staffAssignments.map((assignment) => {
+      const shiftedStart = timeToMinutes(assignment.startTime) + offset;
+      const shiftedEnd = timeToMinutes(assignment.endTime) + offset;
+      return {
+        assignment,
+        barberId: assignment.staffType === "HAIR" || !hasHairAssignment
+          ? barberId
+          : String(assignment.barber),
+        startTime: `${String(Math.floor(shiftedStart / 60)).padStart(2, "0")}:${String(shiftedStart % 60).padStart(2, "0")}`,
+        endTime: `${String(Math.floor(shiftedEnd / 60)).padStart(2, "0")}:${String(shiftedEnd % 60).padStart(2, "0")}`,
+      };
+    });
+    if (shiftedAssignments.length > 0) {
+      for (const shifted of shiftedAssignments) {
+        await assertBarberAvailability(
+          shifted.barberId,
+          appointmentId,
+          appointmentDate,
+          shifted.startTime,
+          shifted.endTime
+        );
+      }
+    } else {
+      await assertBarberAvailability(
+        barberId,
+        appointmentId,
+        appointmentDate,
+        startTime,
+        endTime
+      );
+    }
 
     const previousSchedule = {
       appointmentDate: appointment.appointmentDate,
@@ -481,6 +581,13 @@ export const reopenNoShowAppointment = async (
     appointment.startTime = startTime;
     appointment.endTime = endTime;
     appointment.barber = new mongoose.Types.ObjectId(barberId);
+    shiftedAssignments.forEach((shifted) => {
+      shifted.assignment.startTime = shifted.startTime;
+      shifted.assignment.endTime = shifted.endTime;
+      if (shifted.assignment.staffType === "HAIR" || !hasHairAssignment) {
+        shifted.assignment.barber = new mongoose.Types.ObjectId(barberId);
+      }
+    });
     appointment.status = "CONFIRMED";
     appointment.confirmedAt = new Date();
     appointment.reopenedAt = new Date();
@@ -571,11 +678,102 @@ export const replaceAppointmentServices = async (
   appointment.subtotal = services.reduce((sum, item) => sum + item.price, 0);
   appointment.discountAmount = Math.round(appointment.subtotal * appointment.discountPercent / 100);
   appointment.totalPrice = appointment.subtotal - appointment.discountAmount;
-  appointment.depositRequired = appointment.totalPrice > 200000;
-  appointment.depositAmount = appointment.depositRequired ? Math.round(appointment.totalPrice * 0.3) : 0;
+  if (!appointment.depositPaid) {
+    appointment.depositRequired = appointment.subtotal > 200000;
+    appointment.depositAmount = appointment.depositRequired
+      ? Math.round(appointment.subtotal * 0.3)
+      : 0;
+  }
   appointment.durationMinutes = services.reduce((sum, item) => sum + item.durationMinutes, 0);
   const endMinutes = timeToMinutes(appointment.startTime) + appointment.durationMinutes;
+  if (endMinutes >= 24 * 60) {
+    throw new AppError("Thời gian kết thúc sau khi đổi dịch vụ không hợp lệ", 400);
+  }
   appointment.endTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
+
+  const hairServices = services.filter((service) => service.staffType === "HAIR");
+  const careServices = services.filter((service) => service.staffType === "CARE");
+  const hairDuration = hairServices.reduce((sum, service) => sum + service.durationMinutes, 0);
+  const hairEndMinutes = timeToMinutes(appointment.startTime) + hairDuration;
+  const hairEndTime = `${String(Math.floor(hairEndMinutes / 60)).padStart(2, "0")}:${String(hairEndMinutes % 60).padStart(2, "0")}`;
+  const currentHairAssignment = appointment.staffAssignments.find(
+    (assignment) => assignment.staffType === "HAIR"
+  );
+  const currentCareAssignment = appointment.staffAssignments.find(
+    (assignment) => assignment.staffType === "CARE"
+  );
+  const hairBarberId = String(currentHairAssignment?.barber ?? appointment.barber);
+
+  if (hairServices.length > 0) {
+    await assertBarberAvailability(
+      hairBarberId,
+      appointmentId,
+      appointment.appointmentDate,
+      appointment.startTime,
+      hairEndTime
+    );
+  }
+
+  let careBarberId = currentCareAssignment
+    ? String(currentCareAssignment.barber)
+    : hairServices.length === 0
+      ? String(appointment.barber)
+      : "";
+  if (careServices.length > 0) {
+    const careStartTime = hairServices.length > 0 ? hairEndTime : appointment.startTime;
+    const suitableProfiles = await BarberProfile.find({
+      isActive: true,
+      staffType: "CARE",
+      specialties: { $all: careServices.map((service) => service._id) },
+    }).select("user").lean();
+    const suitableIds = suitableProfiles.map((profile) => String(profile.user));
+    const candidates = suitableIds.sort((first) =>
+      first === careBarberId ? -1 : 0
+    );
+    careBarberId = "";
+    for (const candidate of candidates) {
+      try {
+        await assertBarberAvailability(
+          candidate,
+          appointmentId,
+          appointment.appointmentDate,
+          careStartTime,
+          appointment.endTime
+        );
+        careBarberId = candidate;
+        break;
+      } catch {
+        // Thử nhân viên chăm sóc phù hợp tiếp theo.
+      }
+    }
+    if (!careBarberId) {
+      throw new AppError("Không có nhân viên chăm sóc phù hợp cho thời lượng mới", 409);
+    }
+  }
+
+  appointment.staffAssignments = [
+    ...(hairServices.length > 0
+      ? [{
+          barber: new mongoose.Types.ObjectId(hairBarberId),
+          staffType: "HAIR" as const,
+          serviceIds: hairServices.map((service) => service._id),
+          startTime: appointment.startTime,
+          endTime: hairEndTime,
+        }]
+      : []),
+    ...(careServices.length > 0
+      ? [{
+          barber: new mongoose.Types.ObjectId(careBarberId),
+          staffType: "CARE" as const,
+          serviceIds: careServices.map((service) => service._id),
+          startTime: hairServices.length > 0 ? hairEndTime : appointment.startTime,
+          endTime: appointment.endTime,
+        }]
+      : []),
+  ];
+  appointment.barber = new mongoose.Types.ObjectId(
+    hairServices.length > 0 ? hairBarberId : careBarberId
+  );
   await appointment.save();
   await recordAppointmentActivity({
     appointmentId,

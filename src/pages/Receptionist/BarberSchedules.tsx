@@ -59,7 +59,9 @@ function BarberSchedules() {
   return <div className="reception-page reception-page-embedded">
     <main className="reception-main" style={{ marginLeft: 0, width: "100%" }}>
       <header><div><h1>Lịch làm việc Barber</h1><p>Lễ tân và Admin có thể thay đổi ca làm. Không sử dụng giờ nghỉ trưa.</p></div></header>
-      <Link to= {"/receptionist/dashboard"}>Quay lại</Link>
+      <Link to={isAdminPage ? "/admin/dashboard" : "/receptionist/dashboard"}>
+        Quay lại
+      </Link>
       {message && <div className="reception-alert success">{message}</div>}
       <div className="reception-schedule-list">{items.map((item, barberIndex) =>
         <section key={item.barber._id}><h2>{item.barber.fullName}</h2><p>{item.barber.phone} · {item.barber.email}</p>

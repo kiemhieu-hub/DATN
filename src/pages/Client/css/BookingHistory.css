@@ -446,6 +446,29 @@
   background: transparent;
 }
 
+.history-payment-button {
+  min-height: 41px;
+  padding: 0 19px;
+  color: #17140f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: #d2aa5c;
+  border: 1px solid #d2aa5c;
+}
+
+.history-payment-button:hover:not(:disabled) {
+  color: #f5f1e8;
+  background: transparent;
+}
+
+.history-payment-button:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
 .history-reviewed-label {
   color: #afe8ba;
   font-size: 13px;

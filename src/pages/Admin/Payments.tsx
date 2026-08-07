@@ -1,21 +1,12 @@
 import axios from "axios";
-import {
-  useCallback,
-  useEffect,
-  useState,
-  type FormEvent,
-} from "react";
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
-
+import {useCallback,useEffect,useState,type FormEvent,} from "react";
+import {Link,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { deleteAdminPayment, getAdminPayments } from "../../services/payment.service";
-
 import type {
   Payment,
   PaymentMethod,
+  PaymentPurpose,
   PaymentSummary,
   PaymentTransactionStatus,
 } from "../../types/Payment";
@@ -35,6 +26,12 @@ const statusLabels: Record<PaymentTransactionStatus, string> = {
   FAILED: "Thất bại",
   CANCELLED: "Đã hủy",
   REFUNDED: "Đã hoàn tiền",
+};
+
+const purposeLabels: Record<PaymentPurpose, string> = {
+  DEPOSIT: "Tiền đặt cọc",
+  BALANCE: "Thanh toán còn lại",
+  FULL: "Thanh toán toàn bộ",
 };
 
 const formatMoney = (value: number): string => {
@@ -394,21 +391,42 @@ function Payments() {
               <p><span>Số điện thoại</span><strong>{typeof selectedPayment.client === "string" ? "" : selectedPayment.client.phone}</strong></p>
               <p><span>Thời gian thanh toán</span><strong>{formatDateTime(selectedPayment.paidAt)}</strong></p>
               <p><span>Phương thức</span><strong>{methodLabels[selectedPayment.method]}</strong></p>
+              <p><span>Loại giao dịch</span><strong>{purposeLabels[selectedPayment.purpose]}</strong></p>
             </div>
 
             {typeof selectedPayment.appointment !== "string" && (
-              <ul className="invoice-services">
-                {selectedPayment.appointment.services.map((service, index) => (
-                  <li key={`${service.nameSnapshot}-${index}`}>
-                    <span>{service.nameSnapshot}</span>
-                    <strong>{formatMoney(service.priceSnapshot)}đ</strong>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <ul className="invoice-services">
+                  {selectedPayment.appointment.services.map((service, index) => (
+                    <li key={`${service.nameSnapshot}-${index}`}>
+                      <span>{service.nameSnapshot}</span>
+                      <strong>{formatMoney(service.priceSnapshot)}đ</strong>
+                    </li>
+                  ))}
+                </ul>
+                <div className="invoice-info invoice-breakdown">
+                  <p>
+                    <span>Tạm tính</span>
+                    <strong>{formatMoney(selectedPayment.appointment.subtotal)}đ</strong>
+                  </p>
+                  {selectedPayment.appointment.discountAmount > 0 && (
+                    <p>
+                      <span>Giảm giá</span>
+                      <strong>-{formatMoney(selectedPayment.appointment.discountAmount)}đ</strong>
+                    </p>
+                  )}
+                  {selectedPayment.appointment.depositPaid && (
+                    <p>
+                      <span>Đã đặt cọc</span>
+                      <strong>-{formatMoney(selectedPayment.appointment.depositAmount)}đ</strong>
+                    </p>
+                  )}
+                </div>
+              </>
             )}
 
             <div className="invoice-total">
-              <span>Tổng thanh toán</span>
+              <span>{purposeLabels[selectedPayment.purpose]}</span>
               <strong>{formatMoney(selectedPayment.amount)}đ</strong>
             </div>
 

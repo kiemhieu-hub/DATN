@@ -5,6 +5,7 @@ import {
 } from "express";
 
 import type { UserStatus } from "../models/User";
+import AppError from "../utils/AppError";
 
 import * as adminBarberService from "../services/adminBarber.service";
 
@@ -51,9 +52,7 @@ const getRouteParam = (
   const normalizedValue = value.trim();
 
   if (!normalizedValue) {
-    throw new Error(
-      `${fieldName} không hợp lệ`
-    );
+    throw new AppError(`${fieldName} không hợp lệ`, 400);
   }
 
   return normalizedValue;

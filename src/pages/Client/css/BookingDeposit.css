@@ -24,15 +24,6 @@
   font-size: 30px;
 }
 
-.booking-deposit-modal img {
-  display: block;
-  width: 230px;
-  height: 230px;
-  margin: 18px auto;
-  padding: 8px;
-  background: #fff;
-}
-
 .booking-deposit-modal button {
   padding: 14px 20px;
   color: #111;

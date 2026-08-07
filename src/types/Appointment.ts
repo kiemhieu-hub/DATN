@@ -29,6 +29,14 @@ export interface AppointmentService {
   durationSnapshot: number;
 }
 
+export interface AppointmentStaffAssignment {
+  barber: string | AppointmentUser;
+  staffType: "HAIR" | "CARE";
+  serviceIds: string[];
+  startTime: string;
+  endTime: string;
+}
+
 export interface AppointmentCancellation {
   cancelledBy?:
     | string
@@ -79,6 +87,7 @@ export interface Appointment {
     | AppointmentUser;
 
   services: AppointmentService[];
+  staffAssignments?: AppointmentStaffAssignment[];
 
   totalPrice: number;
   subtotal: number;
