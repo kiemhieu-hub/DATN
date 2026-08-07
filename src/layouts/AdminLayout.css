@@ -226,10 +226,201 @@
 }
 
 .admin-shell-content {
+  position: relative;
   min-width: 0;
   min-height: 100vh;
   margin-left: var(--admin-sidebar-width);
   transition: margin-left 220ms ease;
+}
+
+/* Trung tâm thông báo dùng chung cho khu vực Lễ tân. */
+.reception-notification-center {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 1200;
+}
+
+.reception-notification-bell {
+  position: relative;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  color: #805a24;
+  cursor: pointer;
+  background: #fffaf3;
+  border: 1px solid #c9a66a;
+  border-radius: 50%;
+  box-shadow: 0 10px 28px rgb(54 38 22 / 18%);
+  place-items: center;
+  transition: 180ms ease;
+}
+
+.reception-notification-bell:hover,
+.reception-notification-bell[aria-expanded="true"] {
+  color: #fff;
+  background: #9b6a2e;
+  border-color: #9b6a2e;
+  transform: translateY(-1px);
+}
+
+.reception-notification-bell svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.reception-notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 5px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  background: #d64545;
+  border: 2px solid #f5eee5;
+  border-radius: 999px;
+  place-items: center;
+}
+
+.reception-notification-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: min(440px, calc(100vw - 32px));
+  overflow: hidden;
+  color: #2d261f;
+  background: #fffaf4;
+  border: 1px solid #d7c5b2;
+  border-radius: 15px;
+  box-shadow: 0 24px 70px rgb(45 30 18 / 28%);
+}
+
+.reception-notification-panel > header {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  background: #f4e9dc;
+  border-bottom: 1px solid #dfcfbd;
+}
+
+.reception-notification-panel > header span {
+  color: #9b6a2e;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.reception-notification-panel > header h2 {
+  margin: 5px 0 0;
+  color: #241d17;
+  font-size: 18px;
+}
+
+.reception-notification-panel > header button,
+.reception-notification-error button {
+  min-height: 34px;
+  padding: 7px 10px;
+  color: #704918;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #cba873;
+  border-radius: 8px;
+}
+
+.reception-notification-list {
+  max-height: min(520px, calc(100vh - 150px));
+  overflow-y: auto;
+}
+
+.reception-notification-item {
+  display: block;
+  width: 100%;
+  padding: 15px 19px;
+  color: #3e352d;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: #fffaf4;
+  border: 0;
+  border-bottom: 1px solid #eadfd3;
+  transition: background 160ms ease;
+}
+
+.reception-notification-item:hover,
+.reception-notification-item:focus-visible {
+  background: #f5eadc;
+}
+
+.reception-notification-item.unread {
+  background: #fff4df;
+  box-shadow: inset 4px 0 #b77c34;
+}
+
+.reception-notification-item strong,
+.reception-notification-item span,
+.reception-notification-item time {
+  display: block;
+}
+
+.reception-notification-item strong {
+  margin-bottom: 5px;
+  color: #704918;
+  font-size: 13px;
+}
+
+.reception-notification-item span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #554b42;
+  font-size: 12px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.reception-notification-item:hover span,
+.reception-notification-item:focus-visible span {
+  display: block;
+  overflow: visible;
+}
+
+.reception-notification-item time {
+  margin-top: 7px;
+  color: #8e8175;
+  font-size: 10px;
+}
+
+.reception-notification-empty,
+.reception-notification-error {
+  padding: 34px 20px;
+  margin: 0;
+  color: #75685c;
+  text-align: center;
+}
+
+.reception-notification-error {
+  color: #8f3030;
+  background: #fbe6e6;
+}
+
+.reception-notification-error button {
+  display: block;
+  margin: 12px auto 0;
 }
 
 .admin-logout-short {
@@ -372,6 +563,11 @@
 
   .admin-shell.sidebar-collapsed .admin-shell-content {
     margin-left: 0;
+  }
+
+  .reception-notification-center {
+    top: 16px;
+    right: 16px;
   }
 }
 

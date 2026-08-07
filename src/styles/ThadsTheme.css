@@ -480,3 +480,226 @@ body{margin:0;letter-spacing:0;color:var(--thads-ink)}
 .appointment-detail-note{
   border-radius:11px!important;
 }
+
+/* =========================================================
+   BARBER + RECEPTION — tương phản, màu nút và bo góc đồng bộ
+========================================================= */
+.barber-dashboard-page,
+.barber-view-page,
+.barber-profile-page{
+  color:var(--thads-ink)!important;
+  background:linear-gradient(135deg,#f6efe6 0%,#eee4d8 100%)!important;
+}
+
+.barber-dashboard-container,
+.barber-view-page main,
+.barber-profile-container{
+  width:min(1180px,100%)!important;
+  margin-inline:auto!important;
+}
+
+.barber-dashboard-header,
+.barber-dashboard-date-banner,
+.barber-dashboard-statistics article,
+.barber-dashboard-revenue-card,
+.barber-dashboard-next-card,
+.barber-dashboard-today-section,
+.barber-dashboard-next-content,
+.barber-dashboard-appointment-card,
+.barber-view-page header,
+.barber-view-filter,
+.barber-week-grid article,
+.barber-profile-header,
+.barber-profile-section{
+  color:var(--thads-ink)!important;
+  background:#fffaf4!important;
+  border:1px solid #dccbbb!important;
+  border-radius:16px!important;
+  box-shadow:0 14px 36px rgb(60 42 27 / 9%)!important;
+}
+
+.barber-dashboard-header h1,
+.barber-dashboard-section-heading h2,
+.barber-dashboard-client strong,
+.barber-dashboard-next-content strong,
+.barber-dashboard-today-section h2,
+.barber-view-page header h1,
+.barber-view-page h1,
+.barber-profile-page h1,
+.barber-profile-page h2{
+  color:#201912!important;
+}
+
+.barber-dashboard-header>div:first-child>p:last-child,
+.barber-dashboard-date-banner span,
+.barber-dashboard-statistics span,
+.barber-dashboard-revenue-card p,
+.barber-dashboard-client span,
+.barber-dashboard-next-content p,
+.barber-view-page header p,
+.barber-view-table small,
+.barber-week-grid article span,
+.barber-week-grid article small,
+.barber-profile-page p,
+.barber-profile-page small{
+  color:#76695e!important;
+}
+
+.barber-dashboard-date-banner strong,
+.barber-dashboard-revenue-card strong,
+.barber-dashboard-statistics strong,
+.barber-week-grid article b{
+  color:#9a6526!important;
+}
+
+.barber-dashboard-header-actions a,
+.barber-view-page nav a,
+.barber-profile-page nav a{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:42px!important;
+  padding:10px 16px!important;
+  color:#fff!important;
+  font-weight:700!important;
+  text-decoration:none!important;
+  background:var(--ui-primary)!important;
+  border:1px solid var(--ui-primary)!important;
+  border-radius:10px!important;
+  box-shadow:0 7px 16px rgb(37 99 235 / 16%)!important;
+}
+
+.barber-dashboard-header-actions a:hover,
+.barber-view-page nav a:hover,
+.barber-profile-page nav a:hover{
+  color:#fff!important;
+  background:var(--ui-primary-hover)!important;
+  border-color:var(--ui-primary-hover)!important;
+}
+
+.barber-dashboard-header-actions button,
+.barber-profile-page .logout-button{
+  color:#fff!important;
+  background:var(--ui-danger)!important;
+  border:1px solid var(--ui-danger)!important;
+}
+
+.barber-dashboard-header-actions button:hover,
+.barber-profile-page .logout-button:hover{
+  background:var(--ui-danger-hover)!important;
+  border-color:var(--ui-danger-hover)!important;
+}
+
+.barber-dashboard-date-banner button,
+.barber-dashboard-revenue-card a,
+.barber-dashboard-message button{
+  color:#fff!important;
+  background:var(--ui-info)!important;
+  border-color:var(--ui-info)!important;
+  border-radius:9px!important;
+}
+
+.barber-view-page{
+  padding:44px 28px 64px!important;
+}
+
+.barber-view-page header{
+  align-items:center!important;
+  padding:26px 28px!important;
+}
+
+.barber-view-page header>div>span{
+  color:#a36c2b!important;
+  font-weight:800!important;
+}
+
+.barber-view-filter{
+  padding:18px 20px!important;
+}
+
+.barber-view-filter input{
+  min-height:44px!important;
+  color:#261f19!important;
+  background:#fff!important;
+}
+
+.barber-view-table{
+  border-radius:16px!important;
+  box-shadow:0 14px 36px rgb(60 42 27 / 9%)!important;
+}
+
+.barber-view-table td>span{
+  display:inline-flex!important;
+  padding:7px 11px!important;
+  color:#fff!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  background:var(--ui-info)!important;
+  border-radius:999px!important;
+}
+
+.barber-week-grid{
+  gap:16px!important;
+}
+
+.barber-week-grid article{
+  min-height:158px!important;
+  padding:24px!important;
+}
+
+.barber-week-grid article.off{
+  background:#f0e7dd!important;
+  opacity:.72!important;
+}
+
+/* Lễ tân dùng cùng hệ card sáng nhưng nút nghiệp vụ có màu rõ ràng. */
+.admin-shell-content .reception-page,
+.admin-shell-content .admin-appointments-page{
+  background:linear-gradient(135deg,#f6efe6 0%,#eee4d8 100%)!important;
+}
+
+.admin-shell-content .appointment-filters,
+.admin-shell-content .appointment-table-wrapper,
+.admin-shell-content .reception-schedule-list>section{
+  border-radius:16px!important;
+}
+
+.admin-shell-content .appointment-actions button,
+.admin-shell-content .appointment-icon-button{
+  border-radius:9px!important;
+}
+
+.admin-shell-content .appointment-actions .primary,
+.admin-shell-content .appointment-icon-confirm,
+.admin-shell-content .appointment-icon-start,
+.admin-shell-content .appointment-icon-complete{
+  color:#fff!important;
+  background:var(--ui-success)!important;
+  border-color:var(--ui-success)!important;
+}
+
+.admin-shell-content .appointment-actions .danger,
+.admin-shell-content .appointment-icon-cancel{
+  color:#fff!important;
+  background:var(--ui-danger)!important;
+  border-color:var(--ui-danger)!important;
+}
+
+.admin-shell-content .appointment-actions button:not(.primary):not(.danger),
+.admin-shell-content .appointment-icon-detail,
+.admin-shell-content .appointment-icon-reschedule{
+  color:#fff!important;
+  background:var(--ui-info)!important;
+  border-color:var(--ui-info)!important;
+}
+
+@media(max-width:800px){
+  .barber-view-page{padding:74px 14px 40px!important}
+  .barber-view-page header{align-items:flex-start!important}
+  .barber-view-page nav{flex-wrap:wrap!important}
+  .barber-week-grid{grid-template-columns:1fr 1fr!important}
+}
+
+@media(max-width:520px){
+  .barber-week-grid{grid-template-columns:1fr!important}
+}
