@@ -1387,11 +1387,9 @@ export const updateAppointmentStatus =
     }
 
     if (status === "COMPLETED") {
-      const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
-      const endsAt = new Date(`${appointment.appointmentDate}T${appointment.endTime}:00`);
-      if (Date.now() < startsAt.getTime() || Date.now() > endsAt.getTime()) {
-        throw new AppError("Chỉ được nhấn hoàn thành trong khung thời gian của lịch hẹn", 400);
-      }
+      // Chỉ có lịch đang thực hiện mới chuyển được sang COMPLETED theo
+      // STATUS_TRANSITIONS. Cho phép kết thúc sớm khi khách đã làm xong,
+      // không khóa thao tác theo giờ kết thúc dự kiến.
       appointment.completedAt =
         new Date();
     }

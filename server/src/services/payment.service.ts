@@ -75,13 +75,9 @@ export const confirmCashPayment = async (
         throw new AppError("Không tìm thấy lịch hẹn", 404);
       }
 
-      if (
-        !["IN_PROGRESS", "COMPLETED"].includes(
-          appointment.status
-        )
-      ) {
+      if (appointment.status !== "COMPLETED") {
         throw new AppError(
-          "Chỉ thanh toán khi lịch đang thực hiện hoặc đã hoàn thành",
+          "Chỉ được thanh toán sau khi lịch hẹn đã hoàn thành",
           400
         );
       }

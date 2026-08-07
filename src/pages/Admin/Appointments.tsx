@@ -709,13 +709,6 @@ function Appointments() {
     }
   };
 
-  const canCompleteNow = (appointment: Appointment): boolean => {
-    const now = Date.now();
-    const start = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`).getTime();
-    const end = new Date(`${appointment.appointmentDate}T${appointment.endTime}:00`).getTime();
-    return now >= start && now <= end;
-  };
-
   if (authLoading || (loading && appointments.length === 0)) {
     return (
       <div className="admin-appointments-page">
@@ -1000,10 +993,9 @@ function Appointments() {
                               type="button"
                               key={action.status}
                               disabled={
-                                processingId === appointment._id ||
-                                (action.status === "COMPLETED" && !canCompleteNow(appointment))
+                                processingId === appointment._id
                               }
-                              title={action.status === "COMPLETED" && !canCompleteNow(appointment) ? "Chỉ được hoàn thành trong khung giờ của lịch hẹn" : action.label}
+                              title={action.label}
                               aria-label={action.label}
                               className={`appointment-icon-button ${action.status === "CANCELLED" ? "appointment-icon-cancel" : `appointment-icon-${action.status.toLowerCase()}`}`}
                               onClick={() =>
@@ -1044,9 +1036,8 @@ function Appointments() {
                           </button>
                         )}
 
-                        {(["IN_PROGRESS", "COMPLETED"] as AppointmentStatus[]).includes(
-                          appointment.status
-                        ) && appointment.paymentStatus !== "PAID" && (
+                        {appointment.status === "COMPLETED" &&
+                          appointment.paymentStatus !== "PAID" && (
                           <button
                             type="button"
                             className="appointment-icon-button appointment-icon-payment"
@@ -1226,9 +1217,8 @@ function Appointments() {
               )}
             </section>
 
-            {["IN_PROGRESS", "COMPLETED"].includes(
-              selectedAppointment.status
-            ) && selectedAppointment.paymentStatus !== "PAID" && (
+            {selectedAppointment.status === "COMPLETED" &&
+              selectedAppointment.paymentStatus !== "PAID" && (
               <button
                 type="button"
                 className="appointment-modal-payment-button"
