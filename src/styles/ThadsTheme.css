@@ -192,7 +192,7 @@ body{margin:0;letter-spacing:0;color:var(--thads-ink)}
 /* Buttons and links */
 .admin-shell-content button,.reception-page button,.barber-dashboard-page button,
 .barber-profile-page button,.barber-view-page button{
-  border-radius:0!important;font-family:inherit!important;transition:.18s ease!important
+  border-radius:8px!important;font-family:inherit!important;transition:.18s ease!important
 }
 .appointment-search-button,.service-filters button,.review-filters button,
 .admin-users-filters button,.payments-filters button,.admin-revenue-filters button,

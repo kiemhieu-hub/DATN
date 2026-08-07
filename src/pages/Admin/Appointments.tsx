@@ -38,6 +38,11 @@ interface StatusAction {
   label: string;
 }
 
+interface ServiceEditorState {
+  appointment: Appointment;
+  selectedIds: string[];
+}
+
 const statusLabels: Record<AppointmentStatus, string> = {
   PENDING: "Chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
@@ -112,6 +117,24 @@ const statusActionIcons: Record<AppointmentStatus, string> = {
 
 const formatMoney = (value: number): string => {
   return new Intl.NumberFormat("vi-VN").format(value);
+};
+
+const getPaidDeposit = (appointment: Appointment): number => {
+  return appointment.depositPaid ? appointment.depositAmount : 0;
+};
+
+const getRemainingPayment = (appointment: Appointment): number => {
+  return Math.max(0, appointment.totalPrice - getPaidDeposit(appointment));
+};
+
+const getPaymentLabel = (appointment: Appointment): string => {
+  if (appointment.paymentStatus === "PAID") return "Đã thanh toán";
+  if (appointment.paymentStatus === "REFUNDED") return "Đã hoàn tiền";
+  if (appointment.depositPaid) {
+    return `Đã cọc: ${formatMoney(appointment.depositAmount)}đ`;
+  }
+
+  return "Chưa thanh toán";
 };
 
 const formatDate = (value: string): string => {
@@ -208,6 +231,12 @@ function Appointments() {
     barberId: string;
   } | null>(null);
   const [receipt, setReceipt] = useState<{
+    appointment: Appointment;
+    method: "CASH" | "BANK_TRANSFER";
+  } | null>(null);
+  const [serviceEditor, setServiceEditor] =
+    useState<ServiceEditorState | null>(null);
+  const [paymentDialog, setPaymentDialog] = useState<{
     appointment: Appointment;
     method: "CASH" | "BANK_TRANSFER";
   } | null>(null);
@@ -502,16 +531,6 @@ function Appointments() {
   const handleCashPayment = async (
     appointment: Appointment
   ): Promise<void> => {
-    const confirmed = window.confirm(
-      `Xác nhận đã nhận ${formatMoney(
-        appointment.totalPrice
-      )}đ tiền mặt từ khách hàng?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     try {
       setProcessingId(appointment._id);
       setError("");
@@ -522,6 +541,7 @@ function Appointments() {
       );
 
       setMessage(response.message);
+      setPaymentDialog(null);
       setReceipt({ appointment: response.appointment, method: "CASH" });
 
       if (selectedAppointment?._id === appointment._id) {
@@ -590,12 +610,12 @@ function Appointments() {
   };
 
   const handleBankTransfer = async (appointment: Appointment): Promise<void> => {
-    if (!window.confirm("Xác nhận khách hàng đã chuyển khoản?")) return;
     try {
       setProcessingId(appointment._id);
       setError("");
       const response = await confirmBankTransfer(appointment._id);
       setMessage(response.message);
+      setPaymentDialog(null);
       setReceipt({ appointment: response.appointment, method: "BANK_TRANSFER" });
       if (selectedAppointment?._id === appointment._id) {
         setSelectedAppointment(response.appointment);
@@ -626,22 +646,61 @@ function Appointments() {
     }
   };
 
-  const handleUpdateServices = async (appointment: Appointment): Promise<void> => {
+  const openServiceEditor = (appointment: Appointment): void => {
     const currentIds = appointment.services.map((item) =>
       typeof item.service === "string" ? item.service : item.service._id
     );
-    const available = services.map((item) => `${item.name}: ${item.id}`).join("\n");
-    const input = window.prompt(
-      `Nhập ID dịch vụ, cách nhau bằng dấu phẩy. Không được nhập trùng.\n\n${available}`,
-      currentIds.join(",")
-    );
-    if (!input) return;
-    const serviceIds = input.split(",").map((id) => id.trim()).filter(Boolean);
+
+    setError("");
+    setServiceEditor({ appointment, selectedIds: currentIds });
+  };
+
+  const addEditorService = (serviceId: string): void => {
+    setServiceEditor((current) => {
+      if (!current || current.selectedIds.includes(serviceId)) return current;
+
+      return {
+        ...current,
+        selectedIds: [...current.selectedIds, serviceId],
+      };
+    });
+  };
+
+  const removeEditorService = (serviceId: string): void => {
+    setServiceEditor((current) => {
+      if (!current) return current;
+
+      return {
+        ...current,
+        selectedIds: current.selectedIds.filter((id) => id !== serviceId),
+      };
+    });
+  };
+
+  const saveEditorServices = async (): Promise<void> => {
+    if (!serviceEditor) return;
+
+    if (serviceEditor.selectedIds.length === 0) {
+      setError("Lịch hẹn phải có ít nhất một dịch vụ");
+      return;
+    }
+
     try {
-      setProcessingId(appointment._id);
-      const response = await updateAdminAppointmentServices(appointment._id, serviceIds);
+      setProcessingId(serviceEditor.appointment._id);
+      setError("");
+
+      const response = await updateAdminAppointmentServices(
+        serviceEditor.appointment._id,
+        serviceEditor.selectedIds
+      );
+
       setMessage(response.message);
-      if (selectedAppointment?._id === appointment._id) setSelectedAppointment(response.appointment);
+      setServiceEditor(null);
+
+      if (selectedAppointment?._id === response.appointment._id) {
+        setSelectedAppointment(response.appointment);
+      }
+
       await loadAppointments();
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Không thể cập nhật dịch vụ"));
@@ -905,8 +964,8 @@ function Appointments() {
                     </td>
 
                     <td>
-                      <span className={`appointment-payment-status appointment-payment-${appointment.paymentStatus.toLowerCase()}`}>
-                        {paymentStatusLabels[appointment.paymentStatus]}
+                      <span className={`appointment-payment-status ${appointment.depositPaid && appointment.paymentStatus !== "PAID" ? "appointment-payment-deposit" : `appointment-payment-${appointment.paymentStatus.toLowerCase()}`}`}>
+                        {getPaymentLabel(appointment)}
                       </span>
                     </td>
 
@@ -979,26 +1038,9 @@ function Appointments() {
                             title="Thêm hoặc bớt dịch vụ"
                             aria-label="Thêm hoặc bớt dịch vụ"
                             disabled={processingId === appointment._id}
-                            onClick={() => void handleUpdateServices(appointment)}
+                            onClick={() => openServiceEditor(appointment)}
                           >
                             ±
-                          </button>
-                        )}
-
-                        {["IN_PROGRESS", "COMPLETED"].includes(
-                          appointment.status
-                        ) && appointment.paymentStatus !== "PAID" && (
-                          <button
-                            type="button"
-                            className="appointment-icon-button appointment-icon-cash"
-                            title="Xác nhận thu tiền mặt"
-                            aria-label="Xác nhận thu tiền mặt"
-                            disabled={processingId === appointment._id}
-                            onClick={() =>
-                              void handleCashPayment(appointment)
-                            }
-                          >
-                            ₫
                           </button>
                         )}
 
@@ -1007,13 +1049,16 @@ function Appointments() {
                         ) && appointment.paymentStatus !== "PAID" && (
                           <button
                             type="button"
-                            className="appointment-icon-button appointment-icon-transfer"
-                            title="Xác nhận chuyển khoản"
-                            aria-label="Xác nhận chuyển khoản"
+                            className="appointment-icon-button appointment-icon-payment"
+                            title="Thanh toán"
+                            aria-label="Thanh toán"
                             disabled={processingId === appointment._id}
-                            onClick={() => void handleBankTransfer(appointment)}
+                            onClick={() => setPaymentDialog({
+                              appointment,
+                              method: "CASH",
+                            })}
                           >
-                            ⇄
+                            ₫
                           </button>
                         )}
 
@@ -1188,15 +1233,16 @@ function Appointments() {
                 type="button"
                 className="appointment-modal-payment-button"
                 disabled={processingId === selectedAppointment._id}
-                onClick={() =>
-                  void handleCashPayment(selectedAppointment)
-                }
+                onClick={() => setPaymentDialog({
+                  appointment: selectedAppointment,
+                  method: "CASH",
+                })}
               >
                 {processingId === selectedAppointment._id
                   ? "Đang xác nhận..."
-                  : `Xác nhận thu ${formatMoney(
-                      selectedAppointment.totalPrice
-                    )}đ tiền mặt`}
+                  : `Thanh toán ${formatMoney(
+                      getRemainingPayment(selectedAppointment)
+                    )}đ`}
               </button>
             )}
 
@@ -1235,6 +1281,236 @@ function Appointments() {
                 </button>
               </div>
             )}
+          </section>
+        </div>
+      )}
+      {paymentDialog && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setPaymentDialog(null)}
+        >
+          <section
+            className="appointment-modal appointment-payment-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              aria-label="Đóng"
+              disabled={Boolean(processingId)}
+              onClick={() => setPaymentDialog(null)}
+            >
+              ×
+            </button>
+
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2>Xác nhận thanh toán</h2>
+            <p className="appointment-payment-description">
+              {paymentDialog.appointment.appointmentCode} · {getUserName(paymentDialog.appointment.client)}
+            </p>
+
+            <div className="appointment-payment-summary">
+              <div>
+                <span>Tổng hóa đơn</span>
+                <strong>{formatMoney(paymentDialog.appointment.totalPrice)}đ</strong>
+              </div>
+              <div>
+                <span>Đã đặt cọc</span>
+                <strong>-{formatMoney(getPaidDeposit(paymentDialog.appointment))}đ</strong>
+              </div>
+              <div className="appointment-payment-remaining">
+                <span>Số tiền còn phải thu</span>
+                <strong>{formatMoney(getRemainingPayment(paymentDialog.appointment))}đ</strong>
+              </div>
+            </div>
+
+            <h3>Chọn phương thức thanh toán</h3>
+            <div className="appointment-payment-methods">
+              <button
+                type="button"
+                className={paymentDialog.method === "CASH" ? "active" : ""}
+                onClick={() => setPaymentDialog({
+                  ...paymentDialog,
+                  method: "CASH",
+                })}
+              >
+                <span>₫</span>
+                <div>
+                  <strong>Tiền mặt</strong>
+                  <small>Thu tiền trực tiếp tại quầy</small>
+                </div>
+                <b>{paymentDialog.method === "CASH" ? "✓" : ""}</b>
+              </button>
+
+              <button
+                type="button"
+                className={paymentDialog.method === "BANK_TRANSFER" ? "active" : ""}
+                onClick={() => setPaymentDialog({
+                  ...paymentDialog,
+                  method: "BANK_TRANSFER",
+                })}
+              >
+                <span>⇄</span>
+                <div>
+                  <strong>Chuyển khoản</strong>
+                  <small>Xác nhận giao dịch ngân hàng</small>
+                </div>
+                <b>{paymentDialog.method === "BANK_TRANSFER" ? "✓" : ""}</b>
+              </button>
+            </div>
+
+            <div className="appointment-payment-actions">
+              <button
+                type="button"
+                className="appointment-payment-cancel"
+                disabled={Boolean(processingId)}
+                onClick={() => setPaymentDialog(null)}
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                className="appointment-payment-confirm"
+                disabled={Boolean(processingId)}
+                onClick={() => paymentDialog.method === "CASH"
+                  ? void handleCashPayment(paymentDialog.appointment)
+                  : void handleBankTransfer(paymentDialog.appointment)}
+              >
+                {processingId
+                  ? "Đang xác nhận..."
+                  : `Xác nhận đã thu ${formatMoney(
+                      getRemainingPayment(paymentDialog.appointment)
+                    )}đ`}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {serviceEditor && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setServiceEditor(null)}
+        >
+          <section
+            className="appointment-modal appointment-services-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              aria-label="Đóng"
+              disabled={Boolean(processingId)}
+              onClick={() => setServiceEditor(null)}
+            >
+              ×
+            </button>
+
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2>Thêm hoặc bớt dịch vụ</h2>
+            <p className="appointment-service-editor-description">
+              {serviceEditor.appointment.appointmentCode} · {getUserName(serviceEditor.appointment.client)}
+            </p>
+
+            <div className="appointment-service-editor-heading">
+              <div>
+                <strong>Dịch vụ đang sử dụng</strong>
+                <span>Thứ tự bên dưới cũng là thứ tự thực hiện dịch vụ.</span>
+              </div>
+              <b>{serviceEditor.selectedIds.length} dịch vụ</b>
+            </div>
+
+            <div className="appointment-selected-services">
+              {serviceEditor.selectedIds.map((serviceId, index) => {
+                const service = services.find((item) => item.id === serviceId);
+
+                if (!service) return null;
+
+                return (
+                  <article className="appointment-selected-service" key={service.id}>
+                    <span className="appointment-service-order">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="appointment-service-editor-info">
+                      <strong>{service.name}</strong>
+                      <small>
+                        {service.durationMinutes} phút · {formatMoney(service.price)}đ
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      title={`Bỏ ${service.name}`}
+                      aria-label={`Bỏ ${service.name}`}
+                      onClick={() => removeEditorService(service.id)}
+                    >
+                      ×
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="appointment-service-editor-heading appointment-available-heading">
+              <div>
+                <strong>Thêm dịch vụ</strong>
+                <span>Chọn theo tên dịch vụ, không cần nhập mã ID.</span>
+              </div>
+            </div>
+
+            <div className="appointment-available-services">
+              {services
+                .filter(
+                  (service) =>
+                    service.isActive &&
+                    !serviceEditor.selectedIds.includes(service.id)
+                )
+                .map((service) => (
+                  <button
+                    type="button"
+                    className="appointment-available-service"
+                    key={service.id}
+                    onClick={() => addEditorService(service.id)}
+                  >
+                    <span className="appointment-service-add-icon">+</span>
+                    <span className="appointment-service-editor-info">
+                      <strong>{service.name}</strong>
+                      <small>
+                        {service.durationMinutes} phút · {formatMoney(service.price)}đ
+                      </small>
+                    </span>
+                  </button>
+                ))}
+            </div>
+
+            <div className="appointment-service-editor-total">
+              <span>Tạm tính dịch vụ đã chọn</span>
+              <strong>
+                {formatMoney(
+                  serviceEditor.selectedIds.reduce((total, serviceId) => {
+                    const service = services.find((item) => item.id === serviceId);
+                    return total + (service?.price ?? 0);
+                  }, 0)
+                )}đ
+              </strong>
+            </div>
+
+            <div className="appointment-service-editor-actions">
+              <button
+                type="button"
+                className="appointment-service-editor-cancel"
+                disabled={Boolean(processingId)}
+                onClick={() => setServiceEditor(null)}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="appointment-service-editor-save"
+                disabled={Boolean(processingId) || serviceEditor.selectedIds.length === 0}
+                onClick={() => void saveEditorServices()}
+              >
+                {processingId ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            </div>
           </section>
         </div>
       )}
