@@ -7,6 +7,7 @@ import {cancelAppointment,getMyAppointments,} from "../../services/appointment.s
 import { getMyReviews } from "../../services/review.service";
 import { createVnpayPayment, type VnpayPurpose } from "../../services/vnpay.service";
 import type {Appointment,AppointmentStatus,PaymentStatus,} from "../../types/Appointment";
+import ClientHeader from "../../components/ClientHeader";
 import "./css/BookingHistory.css";
 
 interface LocationState {
@@ -120,6 +121,9 @@ function BookingHistory() {
   const [reviewTarget, setReviewTarget] = useState<Appointment | null>(null);
   const [reviewedAppointmentIds, setReviewedAppointmentIds] = useState<Set<string>>(new Set());
   const [cancelReason, setCancelReason] = useState("");
+  const [refundBankName, setRefundBankName] = useState("");
+  const [refundAccountNumber, setRefundAccountNumber] = useState("");
+  const [refundAccountName, setRefundAccountName] = useState("");
   const [payingId, setPayingId] = useState<string | null>(null);
 
   const [
@@ -186,7 +190,8 @@ function BookingHistory() {
   ): boolean => {
     if (!["PENDING", "CONFIRMED"].includes(appointment.status)) return false;
     const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
-    return startsAt.getTime() - Date.now() >= 6 * 60 * 60 * 1000;
+    const leadTime = startsAt.getTime() - Date.now();
+    return appointment.status === "PENDING" ? leadTime > 0 : leadTime >= 24 * 60 * 60 * 1000;
   };
 
   const handleCancel = async (
@@ -204,6 +209,9 @@ function BookingHistory() {
           appointment._id,
           {
               reason: cancelReason.trim(),
+              refundBankName: refundBankName.trim() || undefined,
+              refundAccountNumber: refundAccountNumber.trim() || undefined,
+              refundAccountName: refundAccountName.trim() || undefined,
           }
         );
 
@@ -257,7 +265,7 @@ function BookingHistory() {
   }
 
   return (
-    <div className="history-page">
+    <><ClientHeader /><div className="history-page">
       <main className="history-container">
         <header className="history-heading">
           <p className="history-brand">
@@ -496,8 +504,8 @@ function BookingHistory() {
                         đ
                       </strong>
                     </div>
-                    {appointment.discountPercent > 0 && <div><span>Voucher</span><strong>{appointment.voucherCode} (-{appointment.discountPercent}%)</strong></div>}
-                    <div><span>Đặt cọc</span><strong>{appointment.depositRequired ? `${formatPrice(appointment.depositAmount)}đ` : "Không yêu cầu"}</strong></div>
+                    {appointment.voucherCode && <div><span>Voucher</span><strong>{appointment.voucherCode} (-{formatPrice(appointment.discountAmount)}đ)</strong></div>}
+                    <div><span>Đặt cọc</span><strong>{appointment.depositRequired ? `${formatPrice(appointment.depositAmount)}đ · ${appointment.depositPaid ? "Đã cọc" : "Chưa cọc"}` : "Không yêu cầu"}</strong></div>
 
                     <div>
                       <span>Trạng thái lịch</span>
@@ -636,7 +644,7 @@ function BookingHistory() {
           </div>
         )}
       </main>
-      {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label><small>Chỉ có thể hủy trước giờ hẹn ít nhất 6 tiếng.</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id}>Xác nhận hủy</button></div></form></div>}
+      {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label>{cancelTarget.depositPaid && <fieldset><legend>Tài khoản nhận hoàn cọc</legend><label>Ngân hàng<input value={refundBankName} onChange={(event) => setRefundBankName(event.target.value)} /></label><label>Số tài khoản<input value={refundAccountNumber} onChange={(event) => setRefundAccountNumber(event.target.value)} /></label><label>Chủ tài khoản<input value={refundAccountName} onChange={(event) => setRefundAccountName(event.target.value)} /></label></fieldset>}<small>Lịch chưa xác nhận được hủy trước giờ hẹn. Lịch đã xác nhận phải hủy trước 24 giờ; hoàn cọc nếu hủy trước ít nhất 3 ngày.</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id}>Xác nhận hủy</button></div></form></div>}
       {reviewTarget && (
         <ReviewModal
           appointment={reviewTarget}
@@ -650,7 +658,7 @@ function BookingHistory() {
           }}
         />
       )}
-    </div>
+    </div></>
   );
 }
 

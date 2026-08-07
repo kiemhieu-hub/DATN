@@ -2,7 +2,7 @@ import axios from "axios";
 import {useCallback,useEffect,useState,type FormEvent,} from "react";
 import {Link,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { deleteAdminPayment, getAdminPayments } from "../../services/payment.service";
+import { getAdminPayments } from "../../services/payment.service";
 import type {
   Payment,
   PaymentMethod,
@@ -95,7 +95,6 @@ function Payments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadPayments = useCallback(async () => {
     try {
@@ -150,23 +149,6 @@ function Payments() {
     event.preventDefault();
     setPage(1);
     setSubmittedKeyword(keyword.trim());
-  };
-
-  const handleDeletePayment = async (payment: Payment): Promise<void> => {
-    if (!window.confirm(`Xóa vĩnh viễn hóa đơn ${payment.transactionCode || payment._id}?`)) return;
-    try {
-      setDeletingId(payment._id);
-      setError("");
-      setMessage("");
-      const response = await deleteAdminPayment(payment._id);
-      setMessage(response.message);
-      if (selectedPayment?._id === payment._id) setSelectedPayment(null);
-      await loadPayments();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError));
-    } finally {
-      setDeletingId(null);
-    }
   };
 
   const handlePrint = (): void => {
@@ -330,14 +312,6 @@ function Payments() {
                         onClick={() => setSelectedPayment(payment)}
                       >
                         Xem hóa đơn
-                      </button>
-                      <button
-                        type="button"
-                        className="payments-delete-button"
-                        disabled={deletingId === payment._id}
-                        onClick={() => void handleDeletePayment(payment)}
-                      >
-                        Xóa
                       </button>
                     </td>
                   </tr>

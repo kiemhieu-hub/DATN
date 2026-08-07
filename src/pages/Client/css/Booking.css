@@ -3,8 +3,8 @@
 }
 
 .booking-page {
-  min-height: 100vh;
-  padding: 48px 32px 70px;
+  min-height: calc(100vh - 72px);
+  padding: 30px 32px 70px;
   color: #f4f0e8;
   font-family: "Be Vietnam Pro", sans-serif;
   background:
@@ -327,12 +327,12 @@
 
 .booking-summary {
   position: sticky;
-  top: 0;
+  top: 88px;
   display: grid;
   grid-template-rows: auto minmax(90px, 1fr) auto auto auto;
   width: 100%;
-  height: 100vh;
-  max-height: 100vh;
+  height: calc(100vh - 104px);
+  max-height: calc(100vh - 104px);
   padding: 22px;
   overflow: visible;
   background: #1b1b19;

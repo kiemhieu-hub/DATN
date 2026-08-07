@@ -6,7 +6,6 @@ import {
   getPayments,
   getPaymentDetail,
   payBankTransfer,
-  deletePayment,
 } from "../controllers/payment.controller";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
@@ -23,11 +22,6 @@ router.get(
   getPayments
 );
 
-router.delete(
-  "/:id",
-  authorize("ADMIN"),
-  deletePayment
-);
 
 router.post(
   "/appointments/:appointmentId/cash",

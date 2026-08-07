@@ -104,6 +104,9 @@ interface CancelAppointmentInput {
   userId: string;
   role: CancellationRole;
   reason?: string;
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountName?: string;
 }
 
 interface GetAppointmentsOptions {
@@ -1082,6 +1085,9 @@ export const cancelMyAppointment =
     userId,
     role,
     reason,
+    refundBankName,
+    refundAccountNumber,
+    refundAccountName,
   }: CancelAppointmentInput) => {
     assertObjectId(
       appointmentId,
@@ -1140,8 +1146,14 @@ export const cancelMyAppointment =
     }
 
     const appointmentStart = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
-    if (appointmentStart.getTime() - Date.now() < 6 * 60 * 60 * 1000) {
-      throw new AppError("Chỉ có thể hủy lịch trước giờ hẹn ít nhất 6 tiếng", 400);
+    const leadTime = appointmentStart.getTime() - Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const threeDays = 3 * oneDay;
+
+    // Lịch chưa xác nhận có thể hủy bất cứ lúc nào trước giờ hẹn.
+    // Lịch đã xác nhận phải hủy trước ít nhất 24 giờ; hoàn cọc nếu trước 72 giờ.
+    if (appointment.status === "CONFIRMED" && leadTime < oneDay) {
+      throw new AppError("Lịch đã xác nhận chỉ có thể hủy trước giờ hẹn ít nhất 24 tiếng", 400);
     }
 
     if (!reason?.trim()) {
@@ -1150,6 +1162,13 @@ export const cancelMyAppointment =
 
     appointment.status =
       "CANCELLED";
+
+    const refundEligible = appointment.depositPaid && (
+      previousStatus === "PENDING" || leadTime >= threeDays
+    );
+    if (refundEligible && (!refundBankName?.trim() || !refundAccountNumber?.trim() || !refundAccountName?.trim())) {
+      throw new AppError("Vui lòng nhập đủ thông tin tài khoản nhận hoàn cọc", 400);
+    }
 
     appointment.cancellation = {
       cancelledBy:
@@ -1164,6 +1183,15 @@ export const cancelMyAppointment =
         "Khách hàng hủy lịch",
 
       cancelledAt: new Date(),
+      depositRefundStatus: !appointment.depositPaid
+        ? "NOT_APPLICABLE"
+        : refundEligible
+          ? "ELIGIBLE"
+          : "NOT_ELIGIBLE",
+      depositRefundAmount: refundEligible ? appointment.depositAmount : 0,
+      refundBankName: refundBankName?.trim() ?? "",
+      refundAccountNumber: refundAccountNumber?.trim() ?? "",
+      refundAccountName: refundAccountName?.trim() ?? "",
     };
 
     await appointment.save();
@@ -1342,9 +1370,10 @@ export const updateAppointmentStatus =
 
     if (status === "CHECKED_IN") {
       const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
-      const earliest = startsAt.getTime() - 60 * 60 * 1000;
+      // Cho phép check-in sớm tối đa 24 giờ để thuận tiện kiểm thử/demo.
+      const earliest = startsAt.getTime() - 24 * 60 * 60 * 1000;
       if (Date.now() < earliest) {
-        throw new AppError("Chỉ được check-in sớm nhất 1 tiếng trước giờ hẹn", 400);
+        throw new AppError("Chỉ được check-in sớm nhất 1 ngày trước giờ hẹn", 400);
       }
       appointment.checkedInAt = new Date();
     }
@@ -1387,6 +1416,9 @@ export const updateAppointmentStatus =
 
         cancelledAt:
           new Date(),
+        // Hủy bởi cửa hàng luôn hoàn phần cọc đã thu cho khách.
+        depositRefundStatus: appointment.depositPaid ? "ELIGIBLE" : "NOT_APPLICABLE",
+        depositRefundAmount: appointment.depositPaid ? appointment.depositAmount : 0,
 };
 
     }

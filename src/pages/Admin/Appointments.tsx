@@ -15,7 +15,6 @@ import { useAuth } from "../../contexts/AuthContext";
 
 import {
   changeAdminAppointmentBarber,
-  deleteAdminAppointment,
   getAdminAppointment,
   getAdminAppointments,
   reopenAdminNoShowAppointment,
@@ -99,6 +98,16 @@ const nextActions: Partial<
       label: "Hủy",
     },
   ],
+};
+
+const statusActionIcons: Record<AppointmentStatus, string> = {
+  PENDING: "…",
+  CONFIRMED: "✓",
+  CHECKED_IN: "↳",
+  IN_PROGRESS: "▶",
+  COMPLETED: "✓",
+  NO_SHOW: "!",
+  CANCELLED: "×",
 };
 
 const formatMoney = (value: number): string => {
@@ -648,23 +657,6 @@ function Appointments() {
     return now >= start && now <= end;
   };
 
-  const handleDeleteAppointment = async (appointment: Appointment): Promise<void> => {
-    if (!window.confirm(`Xóa vĩnh viễn lịch hẹn ${appointment.appointmentCode || appointment._id}? Hóa đơn và review liên quan cũng sẽ bị xóa.`)) return;
-    try {
-      setProcessingId(appointment._id);
-      setError("");
-      setMessage("");
-      const response = await deleteAdminAppointment(appointment._id);
-      setMessage(response.message);
-      if (selectedAppointment?._id === appointment._id) setSelectedAppointment(null);
-      await loadAppointments();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, "Không thể xóa lịch hẹn."));
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
   if (authLoading || (loading && appointments.length === 0)) {
     return (
       <div className="admin-appointments-page">
@@ -852,6 +844,7 @@ function Appointments() {
                 <th>Thời gian</th>
                 <th>Tổng tiền</th>
                 <th>Trạng thái</th>
+                <th>Thanh toán</th>
                 <th>Thao tác</th>
               </tr>
             </thead>
@@ -860,7 +853,7 @@ function Appointments() {
               {appointments.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="appointment-empty"
                   >
                     Không có lịch hẹn phù hợp.
@@ -906,52 +899,39 @@ function Appointments() {
                     </td>
 
                     <td>
-                      <div className="appointment-status-list">
-                        <span
-                          className={`appointment-status appointment-status-${appointment.status.toLowerCase()}`}
-                        >
-                          {statusLabels[appointment.status]}
-                        </span>
+                      <span className={`appointment-status appointment-status-${appointment.status.toLowerCase()}`}>
+                        {statusLabels[appointment.status]}
+                      </span>
+                    </td>
 
-                        <span
-                          className={`appointment-payment-status appointment-payment-${appointment.paymentStatus.toLowerCase()}`}
-                        >
-                          {paymentStatusLabels[appointment.paymentStatus]}
-                        </span>
-                      </div>
+                    <td>
+                      <span className={`appointment-payment-status appointment-payment-${appointment.paymentStatus.toLowerCase()}`}>
+                        {paymentStatusLabels[appointment.paymentStatus]}
+                      </span>
                     </td>
 
                     <td>
                       <div className="appointment-actions">
                         <button
                           type="button"
-                          className="appointment-action-detail"
+                          className="appointment-icon-button appointment-icon-detail"
+                          title="Xem chi tiết"
+                          aria-label="Xem chi tiết"
                           onClick={() => void openDetail(appointment)}
                         >
-                          Chi tiết
+                          ⓘ
                         </button>
-
-                        {!(["COMPLETED", "CANCELLED"] as AppointmentStatus[]).includes(
-                          appointment.status
-                        ) && (
-                          <button
-                            type="button"
-                            className="appointment-action-detail"
-                            disabled={processingId === appointment._id}
-                            onClick={() => void openDetail(appointment)}
-                          >
-                            Đổi Barber
-                          </button>
-                        )}
 
                         {appointment.status === "NO_SHOW" && (
                           <button
                             type="button"
-                            className="appointment-action-primary"
+                            className="appointment-icon-button appointment-icon-reopen"
+                            title="Bật lại lịch vắng mặt"
+                            aria-label="Bật lại lịch vắng mặt"
                             disabled={processingId === appointment._id}
                             onClick={() => openReopenModal(appointment)}
                           >
-                            Bật lại
+                            ↻
                           </button>
                         )}
 
@@ -964,14 +944,9 @@ function Appointments() {
                                 processingId === appointment._id ||
                                 (action.status === "COMPLETED" && !canCompleteNow(appointment))
                               }
-                              title={action.status === "COMPLETED" && !canCompleteNow(appointment)
-                                ? "Chỉ được hoàn thành trong khung giờ của lịch hẹn"
-                                : undefined}
-                              className={
-                                action.status === "CANCELLED"
-                                  ? "appointment-action-cancel"
-                                  : "appointment-action-primary"
-                              }
+                              title={action.status === "COMPLETED" && !canCompleteNow(appointment) ? "Chỉ được hoàn thành trong khung giờ của lịch hẹn" : action.label}
+                              aria-label={action.label}
+                              className={`appointment-icon-button ${action.status === "CANCELLED" ? "appointment-icon-cancel" : `appointment-icon-${action.status.toLowerCase()}`}`}
                               onClick={() =>
                                 void handleChangeStatus(
                                   appointment,
@@ -979,7 +954,7 @@ function Appointments() {
                                 )
                               }
                             >
-                              {action.label}
+                              {statusActionIcons[action.status]}
                             </button>
                           )
                         )}
@@ -987,22 +962,26 @@ function Appointments() {
                         {!(["COMPLETED", "CANCELLED"] as AppointmentStatus[]).includes(appointment.status) && (
                           <button
                             type="button"
-                            className="appointment-action-detail"
+                            className="appointment-icon-button appointment-icon-reschedule"
+                            title="Đổi lịch hẹn"
+                            aria-label="Đổi lịch hẹn"
                             disabled={processingId === appointment._id}
                             onClick={() => void handleReschedule(appointment)}
                           >
-                            Đổi lịch
+                            ◷
                           </button>
                         )}
 
                         {(["CHECKED_IN", "IN_PROGRESS"] as AppointmentStatus[]).includes(appointment.status) && (
                           <button
                             type="button"
-                            className="appointment-action-detail"
+                            className="appointment-icon-button appointment-icon-services"
+                            title="Thêm hoặc bớt dịch vụ"
+                            aria-label="Thêm hoặc bớt dịch vụ"
                             disabled={processingId === appointment._id}
                             onClick={() => void handleUpdateServices(appointment)}
                           >
-                            Sửa dịch vụ
+                            ±
                           </button>
                         )}
 
@@ -1011,13 +990,15 @@ function Appointments() {
                         ) && appointment.paymentStatus !== "PAID" && (
                           <button
                             type="button"
-                            className="appointment-action-payment"
+                            className="appointment-icon-button appointment-icon-cash"
+                            title="Xác nhận thu tiền mặt"
+                            aria-label="Xác nhận thu tiền mặt"
                             disabled={processingId === appointment._id}
                             onClick={() =>
                               void handleCashPayment(appointment)
                             }
                           >
-                            Thu tiền
+                            ₫
                           </button>
                         )}
 
@@ -1026,22 +1007,16 @@ function Appointments() {
                         ) && appointment.paymentStatus !== "PAID" && (
                           <button
                             type="button"
-                            className="appointment-action-payment"
+                            className="appointment-icon-button appointment-icon-transfer"
+                            title="Xác nhận chuyển khoản"
+                            aria-label="Xác nhận chuyển khoản"
                             disabled={processingId === appointment._id}
                             onClick={() => void handleBankTransfer(appointment)}
                           >
-                            Chuyển khoản
+                            ⇄
                           </button>
                         )}
 
-                        {!isReceptionistPage && <button
-                          type="button"
-                          className="appointment-action-delete"
-                          disabled={processingId === appointment._id}
-                          onClick={() => void handleDeleteAppointment(appointment)}
-                        >
-                          Xóa
-                        </button>}
                       </div>
                     </td>
                   </tr>
@@ -1148,7 +1123,7 @@ function Appointments() {
             </ul>
 
             <div className="appointment-detail-total">
-              <span>Tổng tiền</span>
+              <span>Tổng dịch vụ: {formatMoney(selectedAppointment.subtotal)}đ{selectedAppointment.voucherCode ? ` · Voucher ${selectedAppointment.voucherCode}: -${formatMoney(selectedAppointment.discountAmount)}đ` : ""}<br />Đặt cọc: {selectedAppointment.depositRequired ? `${formatMoney(selectedAppointment.depositAmount)}đ (${selectedAppointment.depositPaid ? "đã cọc" : "chưa cọc"})` : "không yêu cầu"}<br />Còn phải thu</span>
               <strong>
                 {formatMoney(selectedAppointment.totalPrice)}đ
               </strong>
@@ -1162,7 +1137,7 @@ function Appointments() {
             {selectedAppointment.cancellation && (
               <div className="appointment-cancel-reason">
                 <strong>Lý do hủy:</strong>
-                <span>{selectedAppointment.cancellation.reason}</span>
+                <span>{selectedAppointment.cancellation.reason}<br />Hoàn cọc: {selectedAppointment.cancellation.depositRefundStatus === "ELIGIBLE" ? `Đủ điều kiện · ${formatMoney(selectedAppointment.cancellation.depositRefundAmount ?? 0)}đ` : selectedAppointment.cancellation.depositRefundStatus === "REFUNDED" ? "Đã hoàn" : selectedAppointment.cancellation.depositRefundStatus === "NOT_ELIGIBLE" ? "Không đủ điều kiện" : "Không áp dụng"}</span>
               </div>
             )}
 

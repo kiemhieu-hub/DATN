@@ -6,10 +6,7 @@ import User from "../models/User";
 import AppError from "../utils/AppError";
 import Service from "../models/Service";
 import { processAutomaticAppointmentStatuses, updateAppointmentStatus } from "./appointment.service";
-import Payment from "../models/Payment";
-import Review from "../models/Review";
 import {
-  deleteAppointmentActivities,
   getAppointmentActivities,
   recordAppointmentActivity,
 } from "./appointmentActivity.service";
@@ -405,6 +402,10 @@ export const rescheduleAppointment = async (
   if (!datePattern.test(appointmentDate) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) {
     throw new AppError("Ngày hoặc giờ hẹn không hợp lệ", 400);
   }
+  const nextStart = new Date(`${appointmentDate}T${startTime}:00`);
+  if (Number.isNaN(nextStart.getTime()) || nextStart.getTime() <= Date.now()) {
+    throw new AppError("Không thể đổi lịch sang thời gian trong quá khứ", 400);
+  }
   const appointment = await Appointment.findById(appointmentId);
   if (!appointment || ["COMPLETED", "CANCELLED"].includes(appointment.status)) {
     throw new AppError("Không thể đổi lịch hẹn này", 400);
@@ -676,7 +677,11 @@ export const replaceAppointmentServices = async (
     return { service: item._id, nameSnapshot: item.name, priceSnapshot: item.price, durationSnapshot: item.durationMinutes };
   });
   appointment.subtotal = services.reduce((sum, item) => sum + item.price, 0);
-  appointment.discountAmount = Math.round(appointment.subtotal * appointment.discountPercent / 100);
+  // Giữ nguyên snapshot voucher đã áp dụng. Voucher phần trăm được tính lại
+  // theo tổng dịch vụ mới; voucher cố định giữ nguyên số tiền giảm ban đầu.
+  appointment.discountAmount = appointment.discountPercent > 0
+    ? Math.round(appointment.subtotal * appointment.discountPercent / 100)
+    : Math.min(appointment.discountAmount, appointment.subtotal);
   appointment.totalPrice = appointment.subtotal - appointment.discountAmount;
   if (!appointment.depositPaid) {
     appointment.depositRequired = appointment.subtotal > 200000;
@@ -797,15 +802,8 @@ export const replaceAppointmentServices = async (
 
 export const deleteAdminAppointment = async (appointmentId: string) => {
   assertId(appointmentId, "Mã lịch hẹn không hợp lệ");
-  const appointment = await Appointment.findById(appointmentId).select("appointmentCode");
-  if (!appointment) throw new AppError("Không tìm thấy lịch hẹn", 404);
-
-  await Promise.all([
-    Payment.deleteMany({ appointment: appointment._id }),
-    Review.deleteMany({ appointment: appointment._id }),
-    deleteAppointmentActivities(appointment._id),
-  ]);
-  await appointment.deleteOne();
-
-  return { id: appointmentId, appointmentCode: appointment.appointmentCode };
+  throw new AppError(
+    "Lịch hẹn là dữ liệu nghiệp vụ và không được phép xóa. Hãy sử dụng chức năng hủy lịch.",
+    405
+  );
 };

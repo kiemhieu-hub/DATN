@@ -2,7 +2,7 @@ import axios from "axios";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { createAdminService, deleteAdminService, getAdminServices, updateAdminService, updateAdminServiceStatus } from "../../services/adminService.service";
+import { createAdminService, getAdminServices, updateAdminService, updateAdminServiceStatus } from "../../services/adminService.service";
 import type { AdminService, AdminServicePayload } from "../../types/AdminService";
 import type { ServiceGroup } from "../../types/Catalog";
 import "./css/Services.css";
@@ -99,16 +99,6 @@ function Services() {
     finally { setProcessingId(null); }
   };
 
-  const removeService = async (item: AdminService) => {
-    if (!window.confirm(`Xóa vĩnh viễn dịch vụ “${item.name}”?`)) return;
-    try {
-      setProcessingId(item.id); setError("");
-      const response = await deleteAdminService(item.id);
-      setMessage(response.message); await load();
-    } catch (e) { setError(errorMessage(e)); }
-    finally { setProcessingId(null); }
-  };
-
   if (authLoading || (loading && items.length === 0)) return <div className="admin-services-page"><p className="service-loading">Đang tải dịch vụ...</p></div>;
   if (user?.role !== "ADMIN") return null;
 
@@ -128,7 +118,7 @@ function Services() {
         <td><strong>{item.name}</strong><small>{item.description || "Chưa có mô tả"}</small></td>
         <td>{item.category?.name ?? "Chưa phân loại"}</td><td>{groups.find((g) => g.value === item.group)?.label}</td><td>{item.priceFrom && "Từ "}{money(item.price)}đ</td><td>{item.durationMinutes} phút</td>
         <td><span className={`status ${item.isActive ? "active" : "inactive"}`}>{item.isActive ? "Hoạt động" : "Tạm ngừng"}</span></td>
-        <td><div className="row-actions"><button onClick={() => openEdit(item)}>Sửa</button><button disabled={processingId === item.id} className="toggle" onClick={() => void toggleStatus(item)}>{item.isActive ? "Tắt" : "Bật"}</button><button disabled={processingId === item.id} className="danger" onClick={() => void removeService(item)}>Xóa</button></div></td>
+        <td><div className="row-actions"><button onClick={() => openEdit(item)}>Sửa</button><button disabled={processingId === item.id} className="toggle" onClick={() => void toggleStatus(item)}>{item.isActive ? "Ẩn" : "Hiện"}</button></div></td>
       </tr>)}</tbody></table></div>
     <div className="service-pagination"><button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Trước</button><span>Trang {page}/{totalPages}</span><button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Sau</button></div>
   </main>

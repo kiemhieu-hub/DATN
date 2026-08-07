@@ -15,7 +15,6 @@ import { useAuth } from "../../contexts/AuthContext";
 
 import {
   createAdminBarber,
-  deleteAdminBarber,
   getAdminBarbers,
   resetAdminBarberPassword,
   updateAdminBarber,
@@ -600,22 +599,6 @@ function Barbers() {
     }
   };
 
-  const handleDeleteBarber = async (barber: AdminBarber): Promise<void> => {
-    if (!window.confirm(`Xóa vĩnh viễn Barber “${barber.fullName}”? Hồ sơ và ca làm của Barber cũng sẽ bị xóa.`)) return;
-    try {
-      setProcessingId(barber.id);
-      setError("");
-      setMessage("");
-      const response = await deleteAdminBarber(barber.id);
-      setMessage(response.message);
-      await loadBarbers();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, "Không thể xóa Barber."));
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
   const handleSearch = (
     event: FormEvent<HTMLFormElement>
   ): void => {
@@ -1031,14 +1014,6 @@ function Barbers() {
                     </button>
                   )}
 
-                  <button
-                    type="button"
-                    className="danger"
-                    disabled={processingId === barber.id}
-                    onClick={() => void handleDeleteBarber(barber)}
-                  >
-                    Xóa
-                  </button>
                 </footer>
               </article>
             ))}

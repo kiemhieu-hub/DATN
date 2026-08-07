@@ -14,7 +14,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import {
   getAdminUserById,
   getAdminUsers,
-  deleteAdminUser,
   updateAdminUserStatus,
 } from "../../services/adminUser.service";
 
@@ -46,7 +45,6 @@ interface UserTableProps {
     account: AdminUser,
     status: AdminUserStatus
   ) => void;
-  onDelete: (account: AdminUser) => void;
   onPageChange: (page: number) => void;
 }
 
@@ -118,7 +116,6 @@ function UserTable({
   processingId,
   onViewDetail,
   onChangeStatus,
-  onDelete,
   onPageChange,
 }: UserTableProps) {
   return (
@@ -212,16 +209,6 @@ function UserTable({
                           </button>
                         )}
 
-                      {(account.role === "CLIENT" || account.role === "BARBER") && (
-                        <button
-                          type="button"
-                          className="danger"
-                          disabled={processingId === account.id}
-                          onClick={() => onDelete(account)}
-                        >
-                          Xóa
-                        </button>
-                      )}
 
                       {account.id !== currentAdminId &&
                         account.status === "BLOCKED" && (
@@ -489,23 +476,6 @@ function Users() {
     }
   };
 
-  const handleDelete = async (account: AdminUser): Promise<void> => {
-    if (!window.confirm(`Xóa vĩnh viễn tài khoản “${account.fullName}”?`)) return;
-    try {
-      setProcessingId(account.id);
-      setError("");
-      setMessage("");
-      const response = await deleteAdminUser(account.id);
-      setMessage(response.message);
-      if (selectedUser?.id === account.id) setSelectedUser(null);
-      await loadUsers();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError));
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
   if (authLoading || (loading && summary.totalUsers === 0)) {
     return (
       <div className="admin-users-page">
@@ -605,7 +575,6 @@ function Users() {
           onChangeStatus={(account, newStatus) =>
             void handleStatus(account, newStatus)
           }
-          onDelete={(account) => void handleDelete(account)}
           onPageChange={setAdminPage}
         />
 
@@ -618,7 +587,6 @@ function Users() {
           processingId={processingId}
           onViewDetail={(userId) => void openDetail(userId)}
           onChangeStatus={(account, newStatus) => void handleStatus(account, newStatus)}
-          onDelete={(account) => void handleDelete(account)}
           onPageChange={setReceptionistPage}
         />
 
@@ -633,7 +601,6 @@ function Users() {
           onChangeStatus={(account, newStatus) =>
             void handleStatus(account, newStatus)
           }
-          onDelete={(account) => void handleDelete(account)}
           onPageChange={setBarberPage}
         />
 
@@ -648,7 +615,6 @@ function Users() {
           onChangeStatus={(account, newStatus) =>
             void handleStatus(account, newStatus)
           }
-          onDelete={(account) => void handleDelete(account)}
           onPageChange={setClientPage}
         />
       </main>

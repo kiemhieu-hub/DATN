@@ -50,6 +50,11 @@ export interface AppointmentCancellation {
 
   reason: string;
   cancelledAt?: string;
+  depositRefundStatus?: "NOT_APPLICABLE" | "ELIGIBLE" | "NOT_ELIGIBLE" | "REFUNDED";
+  depositRefundAmount?: number;
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountName?: string;
 }
 
 export interface AppointmentActivityActor {

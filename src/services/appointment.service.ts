@@ -30,6 +30,9 @@ export interface GetMyAppointmentsResponse {
 
 export interface CancelAppointmentPayload {
   reason: string;
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountName?: string;
 }
 
 export interface CancelAppointmentResponse {

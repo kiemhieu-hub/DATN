@@ -1,0 +1,250 @@
+/* THADS unified theme — imported last from App.tsx */
+:root{
+  --thads-bg:#f3ede5;
+  --thads-surface:#fffaf3;
+  --thads-surface-2:#e9dfd3;
+  --thads-ink:#18130f;
+  --thads-muted:#756b61;
+  --thads-accent:#aa804d;
+  --thads-accent-strong:#8c6538;
+  --thads-dark:#1d1a17;
+  --thads-dark-2:#28231f;
+  --thads-border:#d7c9b9;
+  --thads-danger:#a94343;
+  --thads-success:#2f7652;
+  --thads-info:#39758d;
+  --thads-shadow:0 16px 42px rgb(57 39 24 / 10%);
+  --admin-gold:var(--thads-accent);
+  --admin-background:var(--thads-bg);
+  --admin-panel:var(--thads-dark);
+  --admin-border:#3c352e;
+  --admin-text:#f8f1e8;
+  --admin-muted:#aaa096;
+}
+
+html,body,#root{min-height:100%;background:var(--thads-bg);color:var(--thads-ink)}
+body,button,input,select,textarea{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important}
+body{margin:0;letter-spacing:0;color:var(--thads-ink)}
+::selection{color:#fff;background:var(--thads-accent)}
+
+/* Booking and customer history follow the cream client pages */
+.booking-page,.history-page{color:var(--thads-ink)!important;background:var(--thads-bg)!important}
+.booking-header h1,.booking-panel h2,.booking-service-group h3,.history-page h1,
+.history-page h2,.history-page h3{color:var(--thads-ink)!important}
+.booking-header p,.booking-panel-title p,.history-page p{color:var(--thads-muted)!important}
+.booking-panel,.history-card,.history-empty{
+  color:var(--thads-ink)!important;background:var(--thads-surface)!important;
+  border-color:var(--thads-border)!important;box-shadow:var(--thads-shadow)!important
+}
+.booking-service-card,.booking-barber-picker button,.booking-auto-care{
+  color:var(--thads-ink)!important;background:#fffdf9!important;border-color:var(--thads-border)!important
+}
+.booking-service-card.selected,.booking-barber-picker button.selected{
+  background:#efe1ce!important;border-color:var(--thads-accent)!important
+}
+.booking-service-card strong,.booking-barber-picker b{color:var(--thads-ink)!important}
+.booking-service-card p,.booking-service-card small,.booking-barber-picker small{color:var(--thads-muted)!important}
+.booking-fields input,.booking-date input,.booking-note textarea{
+  color:var(--thads-ink)!important;background:#fff!important;border-color:#cdbba8!important
+}
+.booking-slots button{color:#443a31!important;background:#fffdf9!important;border-color:var(--thads-border)!important}
+.booking-slots button.selected{color:#17120d!important;background:var(--thads-accent)!important;border-color:var(--thads-accent)!important}
+.booking-summary{color:#f7efe5!important;background:var(--thads-dark)!important;border-color:#4b4238!important}
+.booking-summary-header h2,.booking-summary li b,.booking-times b{color:#fffaf3!important}
+.booking-summary li,.booking-times>div,.booking-voucher-trigger{background:#29251f!important;border-color:#494139!important}
+.booking-totals .grand-total{background:#cda25f!important}
+.history-card>header,.history-detail-grid>div,.history-services,.history-cancel-reason{background:#fffdf9!important;border-color:var(--thads-border)!important;color:var(--thads-ink)!important}
+
+/* Shell: sidebar dark like client navigation, working area light like client content */
+.admin-shell{color:var(--thads-ink)!important;background:var(--thads-bg)!important}
+.admin-shell-sidebar{background:linear-gradient(180deg,#211e1a,#171512)!important;border-right-color:#40382f!important}
+.admin-shell-content{background:var(--thads-bg)!important}
+.admin-nav-link{color:#c9c0b6!important;border-radius:0!important}
+.admin-nav-link:hover{color:#fff!important;background:#2b2722!important}
+.admin-nav-link.active{color:#fff!important;background:linear-gradient(90deg,rgb(170 128 77 / 25%),#2a251f)!important;border-color:rgb(170 128 77 / 60%)!important}
+.admin-shell-brand h2,.admin-nav-icon{color:#d4aa72!important}
+.admin-shell-logo,.admin-sidebar-toggle{background:#cda25f!important}
+
+/* All operational pages */
+.admin-dashboard-page,.admin-revenue-page,.admin-payments-page,.admin-vouchers-page,
+.admin-reviews-page,.admin-users-page,.admin-barbers-page,.service-categories-page,
+.admin-services-page,.admin-appointments-page,.admin-gallery-page,.admin-content-page,
+.admin-module-page,.staff-notifications-page,.reception-page-embedded,
+.barber-dashboard-page,.barber-profile-page,.barber-view-page{
+  min-height:100vh!important;
+  color:var(--thads-ink)!important;
+  background:var(--thads-bg)!important;
+}
+
+.admin-dashboard-container,.admin-revenue-container,.admin-payments-container,
+.admin-users-container,.admin-barbers-container,.admin-services-container,
+.admin-appointments-container,.admin-module-container,.reception-main{
+  color:var(--thads-ink)!important;
+}
+
+/* Typography */
+.admin-dashboard-page h1,.admin-revenue-page h1,.admin-payments-page h1,
+.admin-vouchers-page h1,.admin-reviews-page h1,.admin-users-page h1,
+.admin-barbers-page h1,.service-categories-page h1,.admin-services-page h1,
+.admin-appointments-page h1,.admin-gallery-page h1,.admin-content-page h1,
+.barber-dashboard-page h1,.barber-profile-page h1,.barber-view-page h1,
+.reception-page h1{color:var(--thads-ink)!important;font-weight:800!important;letter-spacing:-1.2px!important;text-transform:none!important}
+
+.admin-dashboard-page h2,.admin-revenue-page h2,.admin-payments-page h2,
+.admin-vouchers-page h2,.admin-reviews-page h2,.admin-users-page h2,
+.admin-barbers-page h2,.service-categories-page h2,.admin-services-page h2,
+.admin-appointments-page h2,.admin-gallery-page h2,.barber-dashboard-page h2,
+.barber-profile-page h2,.reception-page h2{color:var(--thads-ink)!important}
+
+.admin-dashboard-header>div>p:first-child,.admin-revenue-header p,.admin-payments-header p,
+.voucher-header p,.admin-reviews-header p,.admin-users-header p,.admin-barbers-header p,
+.category-header p,.admin-services-header p,.admin-appointments-header p,
+.admin-gallery-header p,.barber-dashboard-brand,.barber-profile-brand{
+  color:var(--thads-accent-strong)!important;font-weight:700!important;letter-spacing:3px!important
+}
+
+.admin-dashboard-header p,.admin-revenue-header span,.admin-payments-header span,
+.voucher-header span,.admin-reviews-header span,.admin-users-header span,
+.admin-barbers-header span,.category-header span,.admin-services-header span,
+.admin-appointments-header span,.admin-gallery-header span,
+.barber-dashboard-header p,.barber-profile-header p,.reception-main header p{
+  color:var(--thads-muted)!important
+}
+
+/* Cards and sections */
+.admin-dashboard-card,.admin-revenue-chart-card,.admin-revenue-summary article,
+.payments-summary article,.review-summary button,.admin-users-summary article,
+.admin-barbers-summary article,.admin-barber-card,.admin-content-card,
+.reception-stats article,.reception-schedule-list>section,
+.barber-dashboard-header,.barber-dashboard-date-banner,.barber-dashboard-statistics article,
+.barber-dashboard-next-card,.barber-dashboard-revenue-card,.barber-dashboard-appointment-card,
+.barber-profile-header,.barber-profile-section,.barber-week-grid article{
+  color:var(--thads-ink)!important;
+  background:var(--thads-surface)!important;
+  border:1px solid var(--thads-border)!important;
+  border-radius:0!important;
+  box-shadow:var(--thads-shadow)!important;
+}
+
+.admin-dashboard-card span,.admin-revenue-summary span,.payments-summary span,
+.review-summary span,.admin-users-summary span,.admin-barbers-summary span,
+.reception-stats span,.barber-dashboard-statistics span,.barber-profile-section label{
+  color:var(--thads-muted)!important
+}
+.admin-dashboard-card strong,.admin-revenue-summary strong,.payments-summary strong,
+.review-summary strong,.admin-users-summary strong,.admin-barbers-summary strong,
+.reception-stats b,.barber-dashboard-statistics strong{color:var(--thads-accent-strong)!important}
+
+/* Filters and forms */
+.appointment-filters,.service-filters,.review-filters,.admin-users-filters,
+.payments-filters,.admin-revenue-filters,.category-filters,.gallery-filters,
+.voucher-filters,.barber-view-filter{
+  padding:18px!important;background:var(--thads-surface)!important;
+  border:1px solid var(--thads-border)!important;box-shadow:0 8px 28px rgb(57 39 24 / 6%)!important
+}
+
+.admin-shell-content input,.admin-shell-content select,.admin-shell-content textarea,
+.reception-page input,.reception-page select,.reception-page textarea,
+.barber-dashboard-page input,.barber-profile-page input,.barber-profile-page select,
+.barber-profile-page textarea,.barber-view-page input{
+  color:var(--thads-ink)!important;background:#fffdf9!important;
+  border:1px solid #cdbba8!important;border-radius:0!important;outline:none!important
+}
+.admin-shell-content input:focus,.admin-shell-content select:focus,.admin-shell-content textarea:focus,
+.reception-page input:focus,.barber-profile-page input:focus{
+  border-color:var(--thads-accent)!important;box-shadow:0 0 0 3px rgb(170 128 77 / 14%)!important
+}
+.admin-shell-content input::placeholder,.admin-shell-content textarea::placeholder{color:#9a8f84!important}
+.admin-shell-content label,.reception-page label,.barber-profile-page label{color:#4c433b!important}
+
+/* Tables */
+.appointment-table-wrapper,.service-table-wrap,.review-table-wrap,.voucher-table-wrap,
+.payments-table-wrapper,.admin-users-table-wrapper,.category-table-wrap,
+.admin-dashboard-table-wrap,.reception-table,.barber-view-table{
+  overflow:auto!important;background:var(--thads-surface)!important;
+  border:1px solid var(--thads-border)!important;box-shadow:var(--thads-shadow)!important
+}
+.appointment-table,.service-table-wrap table,.review-table-wrap table,.voucher-table-wrap table,
+.payments-table,.admin-users-table,.category-table-wrap table,.admin-dashboard-table-wrap table,
+.reception-table table,.barber-view-table table{
+  color:var(--thads-ink)!important;background:var(--thads-surface)!important
+}
+.appointment-table th,.service-table-wrap th,.review-table-wrap th,.voucher-table-wrap th,
+.payments-table th,.admin-users-table th,.category-table-wrap th,.admin-dashboard-table-wrap th,
+.reception-table th,.barber-view-table th{
+  color:#f8eee2!important;background:var(--thads-dark-2)!important;
+  border-color:#463e35!important;font-size:12px!important;letter-spacing:.35px!important
+}
+.appointment-table td,.service-table-wrap td,.review-table-wrap td,.voucher-table-wrap td,
+.payments-table td,.admin-users-table td,.category-table-wrap td,.admin-dashboard-table-wrap td,
+.reception-table td,.barber-view-table td{
+  color:#302820!important;background:var(--thads-surface)!important;border-color:#e2d7cb!important
+}
+.appointment-table tbody tr:hover td,.service-table-wrap tbody tr:hover td,
+.review-table-wrap tbody tr:hover td,.voucher-table-wrap tbody tr:hover td,
+.payments-table tbody tr:hover td,.admin-users-table tbody tr:hover td{
+  background:#f3e9dc!important
+}
+.appointment-customer-name,.appointment-price,.appointment-time,
+.appointment-service-list span,.appointment-customer-contact{color:inherit!important}
+.appointment-price{color:var(--thads-accent-strong)!important}
+
+/* Buttons and links */
+.admin-shell-content button,.reception-page button,.barber-dashboard-page button,
+.barber-profile-page button,.barber-view-page button{
+  border-radius:0!important;font-family:inherit!important;transition:.18s ease!important
+}
+.appointment-search-button,.service-filters button,.review-filters button,
+.admin-users-filters button,.payments-filters button,.admin-revenue-filters button,
+.voucher-header button,.admin-services-header button,.category-header button,
+.admin-barbers-header-actions .primary,.modal-actions .primary,
+.voucher-modal-actions .primary,.category-modal-actions .primary{
+  color:#17120d!important;background:var(--thads-accent)!important;
+  border-color:var(--thads-accent)!important;font-weight:700!important
+}
+.appointment-search-button:hover,.service-filters button:hover,.review-filters button:hover,
+.admin-users-filters button:hover,.payments-filters button:hover{
+  color:#fff!important;background:var(--thads-accent-strong)!important
+}
+.admin-shell-content a{color:var(--thads-accent-strong)}
+
+/* Modals */
+.appointment-modal-backdrop,.service-modal-backdrop,.voucher-modal-bg,.review-modal-bg,
+.admin-user-modal-backdrop,.admin-barbers-modal-backdrop,.category-modal-bg,.gallery-modal-bg,
+.reception-modal-bg{background:rgb(24 19 15 / 72%)!important;backdrop-filter:blur(5px)}
+.appointment-modal,.service-modal,.voucher-modal,.review-modal,.admin-user-modal,
+.admin-barbers-modal,.category-modal,.gallery-modal,.reception-modal{
+  color:var(--thads-ink)!important;background:var(--thads-surface)!important;
+  border:1px solid var(--thads-border)!important;box-shadow:0 30px 80px rgb(32 23 15 / 28%)!important
+}
+.appointment-modal h2,.appointment-modal h3,.service-modal h2,.voucher-modal h2,
+.review-modal h2,.admin-user-modal h2,.admin-barbers-modal h2,.category-modal h2,.gallery-modal h2{
+  color:var(--thads-ink)!important
+}
+.appointment-detail-grid>div,.review-detail-grid>div,.review-comment,
+.review-service-list>div,.appointment-detail-note,.appointment-activity-item{
+  color:var(--thads-ink)!important;background:#fffdf9!important;border-color:#dfd2c4!important
+}
+
+/* Auth uses the same charcoal/gold identity */
+.login-page,.register-page{background:linear-gradient(rgb(29 26 23 / 76%),rgb(29 26 23 / 86%)),url('/img/slider/18.jpg') center/cover fixed!important}
+.login-card,.register-card{background:rgb(29 26 23 / 96%)!important;border:1px solid #5a4b3b!important;box-shadow:0 30px 90px #0007!important}
+.login-title,.register-title{color:#fffaf3!important}.login-subtitle,.register-subtitle{color:#c7bbb0!important}
+.login-input,.register-card input{color:#fff!important;background:#2a2521!important;border-color:#574b40!important}
+.login-button,.register-button{color:#17120d!important;background:#cda25f!important}
+
+/* Notifications and semantic messages */
+.appointment-alert-success,.service-alert.success,.review-alert.success,.admin-users-alert.success,
+.category-alert.success,.gallery-alert.success,.reception-alert.success{color:#215b3d!important;background:#ddf0e5!important;border-color:#83b99a!important}
+.appointment-alert-error,.service-alert.error,.review-alert.error,.admin-users-alert.error,
+.category-alert.error,.gallery-alert.error,.reception-alert.error{color:#812e2e!important;background:#f6dddd!important;border-color:#d59696!important}
+
+/* Preserve readable semantic badges on the light background */
+.appointment-status,.appointment-payment-status,.status,.voucher-status,.review-status,
+.payment-badge,.reception-status{box-shadow:none!important;font-weight:700!important}
+
+@media(max-width:760px){
+  .admin-dashboard-page,.admin-revenue-page,.admin-payments-page,.admin-vouchers-page,
+  .admin-reviews-page,.admin-users-page,.admin-barbers-page,.service-categories-page,
+  .admin-services-page,.admin-appointments-page,.admin-gallery-page{padding-right:14px!important;padding-left:14px!important}
+}

@@ -57,6 +57,9 @@ import StaffNotifications from "./pages/Admin/StaffNotifications";
 //VNpay
 import VnpayReturn from "./pages/Client/VnpayReturn";
 
+// Theme dùng chung, luôn import sau CSS riêng của từng module.
+import "./styles/ThadsTheme.css";
+
 function App() {
   return (
     <Router>

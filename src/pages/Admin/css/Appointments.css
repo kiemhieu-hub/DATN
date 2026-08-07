@@ -506,6 +506,8 @@
   color: #baf1cf;
 }
 
+.appointment-payment-unpaid{border-color:#765e27;background:#332c1d;color:#f0cf88}.appointment-payment-pending{border-color:#447c91;background:#1b3540;color:#bcecff}.appointment-payment-refunded{border-color:#80639b;background:#332540;color:#e2c7f5}
+
 .appointment-status-pending {
   border-color: #765e27;
   background: #3d3218;
@@ -542,13 +544,13 @@
 
 .appointment-actions {
   display: flex;
-  min-width: 210px;
+  min-width: 132px;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 6px;
 }
 
 .appointment-actions button {
-  min-height: 34px;
+  min-height: 32px;
   margin: 0;
   padding: 0 11px;
   border-radius: 4px;
@@ -558,6 +560,23 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.appointment-actions .appointment-icon-button {
+  display: inline-grid;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #5c5952;
+  border-radius: 7px;
+  color: #eee9df;
+  background: #252421;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.appointment-icon-detail{border-color:#737068!important;color:#eee!important}.appointment-icon-barber{border-color:#8b6d37!important;color:#e6bd69!important}.appointment-icon-reopen,.appointment-icon-reschedule{border-color:#447c91!important;color:#a8e4f7!important}.appointment-icon-services{border-color:#80639b!important;color:#dfc0f7!important}.appointment-icon-confirmed,.appointment-icon-checked_in,.appointment-icon-in_progress,.appointment-icon-completed{border-color:#3d8a60!important;color:#b7f1cf!important}.appointment-icon-no_show{border-color:#a47431!important;color:#ffd38d!important}.appointment-icon-cancel{border-color:#a64444!important;color:#ffaaaa!important;background:#3a2020!important;font-size:22px!important}.appointment-icon-cash,.appointment-icon-transfer{border-color:#3f8d61!important;color:#aeecc7!important}
 
 .appointment-action-detail {
   border: 1px solid #5c5952;

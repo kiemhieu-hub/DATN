@@ -39,6 +39,11 @@ export interface IAppointmentCancellation {
 
   reason: string;
   cancelledAt?: Date;
+  depositRefundStatus?: "NOT_APPLICABLE" | "ELIGIBLE" | "NOT_ELIGIBLE" | "REFUNDED";
+  depositRefundAmount?: number;
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountName?: string;
 }
 
 export interface IAppointment extends Document {
@@ -179,6 +184,15 @@ const cancellationSchema =
         type: Date,
         default: null,
       },
+      depositRefundStatus: {
+        type: String,
+        enum: ["NOT_APPLICABLE", "ELIGIBLE", "NOT_ELIGIBLE", "REFUNDED"],
+        default: "NOT_APPLICABLE",
+      },
+      depositRefundAmount: { type: Number, min: 0, default: 0 },
+      refundBankName: { type: String, trim: true, maxlength: 100, default: "" },
+      refundAccountNumber: { type: String, trim: true, maxlength: 40, default: "" },
+      refundAccountName: { type: String, trim: true, maxlength: 120, default: "" },
     },
     {
       _id: false,
