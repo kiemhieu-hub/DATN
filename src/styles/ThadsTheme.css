@@ -482,224 +482,230 @@ body{margin:0;letter-spacing:0;color:var(--thads-ink)}
 }
 
 /* =========================================================
-   BARBER + RECEPTION — tương phản, màu nút và bo góc đồng bộ
+   LỊCH HẸN ADMIN + LỄ TÂN
+   Nút vuông màu trầm như mẫu, bo góc nhẹ để không bị thô.
 ========================================================= */
-.barber-dashboard-page,
-.barber-view-page,
-.barber-profile-page{
-  color:var(--thads-ink)!important;
-  background:linear-gradient(135deg,#f6efe6 0%,#eee4d8 100%)!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions{
+  min-width:148px!important;
+  gap:7px!important;
 }
 
-.barber-dashboard-container,
-.barber-view-page main,
-.barber-profile-container{
-  width:min(1180px,100%)!important;
-  margin-inline:auto!important;
-}
-
-.barber-dashboard-header,
-.barber-dashboard-date-banner,
-.barber-dashboard-statistics article,
-.barber-dashboard-revenue-card,
-.barber-dashboard-next-card,
-.barber-dashboard-today-section,
-.barber-dashboard-next-content,
-.barber-dashboard-appointment-card,
-.barber-view-page header,
-.barber-view-filter,
-.barber-week-grid article,
-.barber-profile-header,
-.barber-profile-section{
-  color:var(--thads-ink)!important;
-  background:#fffaf4!important;
-  border:1px solid #dccbbb!important;
-  border-radius:16px!important;
-  box-shadow:0 14px 36px rgb(60 42 27 / 9%)!important;
-}
-
-.barber-dashboard-header h1,
-.barber-dashboard-section-heading h2,
-.barber-dashboard-client strong,
-.barber-dashboard-next-content strong,
-.barber-dashboard-today-section h2,
-.barber-view-page header h1,
-.barber-view-page h1,
-.barber-profile-page h1,
-.barber-profile-page h2{
-  color:#201912!important;
-}
-
-.barber-dashboard-header>div:first-child>p:last-child,
-.barber-dashboard-date-banner span,
-.barber-dashboard-statistics span,
-.barber-dashboard-revenue-card p,
-.barber-dashboard-client span,
-.barber-dashboard-next-content p,
-.barber-view-page header p,
-.barber-view-table small,
-.barber-week-grid article span,
-.barber-week-grid article small,
-.barber-profile-page p,
-.barber-profile-page small{
-  color:#76695e!important;
-}
-
-.barber-dashboard-date-banner strong,
-.barber-dashboard-revenue-card strong,
-.barber-dashboard-statistics strong,
-.barber-week-grid article b{
-  color:#9a6526!important;
-}
-
-.barber-dashboard-header-actions a,
-.barber-view-page nav a,
-.barber-profile-page nav a{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-button{
+  display:inline-grid!important;
+  width:42px!important;
+  min-width:42px!important;
+  height:42px!important;
   min-height:42px!important;
-  padding:10px 16px!important;
+  padding:0!important;
   color:#fff!important;
-  font-weight:700!important;
-  text-decoration:none!important;
-  background:var(--ui-primary)!important;
-  border:1px solid var(--ui-primary)!important;
-  border-radius:10px!important;
-  box-shadow:0 7px 16px rgb(37 99 235 / 16%)!important;
+  border-width:1px!important;
+  border-style:solid!important;
+  border-radius:8px!important;
+  box-shadow:0 3px 8px rgb(31 25 20 / 12%)!important;
+  place-items:center!important;
+  font-size:18px!important;
 }
 
-.barber-dashboard-header-actions a:hover,
-.barber-view-page nav a:hover,
-.barber-profile-page nav a:hover{
-  color:#fff!important;
-  background:var(--ui-primary-hover)!important;
-  border-color:var(--ui-primary-hover)!important;
+/* Xem chi tiết */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-detail{
+  color:#f4f1eb!important;
+  background:#24221f!important;
+  border-color:#3c3934!important;
 }
 
-.barber-dashboard-header-actions button,
-.barber-profile-page .logout-button{
-  color:#fff!important;
-  background:var(--ui-danger)!important;
-  border:1px solid var(--ui-danger)!important;
+/* Xác nhận, check-in, bắt đầu và hoàn thành */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-confirmed{
+  color:#dff4e7!important;
+  background:#526f5e!important;
+  border-color:#668772!important;
 }
 
-.barber-dashboard-header-actions button:hover,
-.barber-profile-page .logout-button:hover{
-  background:var(--ui-danger-hover)!important;
-  border-color:var(--ui-danger-hover)!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-checked_in,
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-in_progress,
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-completed,
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-payment{
+  color:#c7f0d7!important;
+  background:#103b29!important;
+  border-color:#225d43!important;
 }
 
-.barber-dashboard-date-banner button,
-.barber-dashboard-revenue-card a,
-.barber-dashboard-message button{
-  color:#fff!important;
-  background:var(--ui-info)!important;
-  border-color:var(--ui-info)!important;
-  border-radius:9px!important;
+/* Vắng mặt */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-no_show{
+  color:#ffd479!important;
+  background:#2b251b!important;
+  border-color:#9e7023!important;
 }
 
-.barber-view-page{
-  padding:44px 28px 64px!important;
+/* Hủy */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-cancel{
+  color:#ffc4c4!important;
+  background:#5a1d21!important;
+  border-color:#84343a!important;
+  font-size:21px!important;
 }
 
-.barber-view-page header{
-  align-items:center!important;
-  padding:26px 28px!important;
+/* Bật lại */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-reopen{
+  color:#c5ecf3!important;
+  background:#123842!important;
+  border-color:#28606c!important;
 }
 
-.barber-view-page header>div>span{
-  color:#a36c2b!important;
+/* Đổi thời gian */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-reschedule{
+  color:#bfe8f1!important;
+  background:#102f38!important;
+  border-color:#285763!important;
+}
+
+/* Thêm/bớt dịch vụ */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-services{
+  color:#ead7f5!important;
+  background:#34243f!important;
+  border-color:#604475!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-button:hover:not(:disabled){
+  filter:brightness(1.15)!important;
+  transform:translateY(-2px)!important;
+  box-shadow:0 7px 14px rgb(31 25 20 / 20%)!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-button:disabled{
+  opacity:.5!important;
+  filter:saturate(.65)!important;
+}
+
+/* Modal chi tiết: tăng tương phản trên nền sáng. */
+.admin-shell .admin-shell-content .admin-appointments-page .appointment-modal{
+  width:min(850px,100%)!important;
+  padding:32px!important;
+  color:#2b231c!important;
+  background:#fffaf4!important;
+  border:1px solid #d8c5b1!important;
+  border-radius:20px!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page .appointment-modal h2,
+.admin-shell .admin-shell-content .admin-appointments-page .appointment-modal h3{
+  color:#1f1812!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-grid>div{
+  min-height:92px!important;
+  padding:16px!important;
+  color:#2b231c!important;
+  background:#f8f0e7!important;
+  border:1px solid #ddcbb8!important;
+  border-radius:12px!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-grid span{
+  color:#75685c!important;
+  font-weight:600!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-grid strong{
+  color:#211a14!important;
+  font-size:15px!important;
   font-weight:800!important;
 }
 
-.barber-view-filter{
-  padding:18px 20px!important;
-}
-
-.barber-view-filter input{
-  min-height:44px!important;
-  color:#261f19!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-services{
+  overflow:hidden!important;
   background:#fff!important;
+  border:1px solid #e0d0bf!important;
+  border-radius:12px!important;
 }
 
-.barber-view-table{
-  border-radius:16px!important;
-  box-shadow:0 14px 36px rgb(60 42 27 / 9%)!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-services li{
+  padding:13px 16px!important;
+  border-color:#e8ddd2!important;
 }
 
-.barber-view-table td>span{
-  display:inline-flex!important;
-  padding:7px 11px!important;
-  color:#fff!important;
-  font-size:11px!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-services span{
+  color:#2e261f!important;
   font-weight:700!important;
-  background:var(--ui-info)!important;
-  border-radius:999px!important;
 }
 
-.barber-week-grid{
-  gap:16px!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-services small{
+  color:#817367!important;
 }
 
-.barber-week-grid article{
-  min-height:158px!important;
-  padding:24px!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-total{
+  color:#3c3128!important;
+  background:#f2e4d3!important;
+  border:1px solid #d8b98f!important;
+  border-radius:12px!important;
 }
 
-.barber-week-grid article.off{
-  background:#f0e7dd!important;
-  opacity:.72!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-note{
+  color:#332a22!important;
+  background:#fff!important;
+  border-color:#dfd0c0!important;
 }
 
-/* Lễ tân dùng cùng hệ card sáng nhưng nút nghiệp vụ có màu rõ ràng. */
-.admin-shell-content .reception-page,
-.admin-shell-content .admin-appointments-page{
-  background:linear-gradient(135deg,#f6efe6 0%,#eee4d8 100%)!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-section{
+  padding:21px!important;
+  background:#f7eee4!important;
+  border:1px solid #dfcfbf!important;
+  border-radius:14px!important;
 }
 
-.admin-shell-content .appointment-filters,
-.admin-shell-content .appointment-table-wrapper,
-.admin-shell-content .reception-schedule-list>section{
-  border-radius:16px!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-section h3,
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-item strong{
+  color:#2b221b!important;
 }
 
-.admin-shell-content .appointment-actions button,
-.admin-shell-content .appointment-icon-button{
-  border-radius:9px!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-item{
+  margin-bottom:7px!important;
+  padding:13px 14px 13px 4px!important;
+  color:#30271f!important;
+  background:#fffaf5!important;
+  border:1px solid #e2d3c3!important;
+  border-radius:10px!important;
 }
 
-.admin-shell-content .appointment-actions .primary,
-.admin-shell-content .appointment-icon-confirm,
-.admin-shell-content .appointment-icon-start,
-.admin-shell-content .appointment-icon-complete{
-  color:#fff!important;
-  background:var(--ui-success)!important;
-  border-color:var(--ui-success)!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-item p{
+  color:#796b5f!important;
 }
 
-.admin-shell-content .appointment-actions .danger,
-.admin-shell-content .appointment-icon-cancel{
-  color:#fff!important;
-  background:var(--ui-danger)!important;
-  border-color:var(--ui-danger)!important;
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-timeline::before{
+  background:#cda66b!important;
 }
 
-.admin-shell-content .appointment-actions button:not(.primary):not(.danger),
-.admin-shell-content .appointment-icon-detail,
-.admin-shell-content .appointment-icon-reschedule{
-  color:#fff!important;
-  background:var(--ui-info)!important;
-  border-color:var(--ui-info)!important;
-}
-
-@media(max-width:800px){
-  .barber-view-page{padding:74px 14px 40px!important}
-  .barber-view-page header{align-items:flex-start!important}
-  .barber-view-page nav{flex-wrap:wrap!important}
-  .barber-week-grid{grid-template-columns:1fr 1fr!important}
-}
-
-@media(max-width:520px){
-  .barber-week-grid{grid-template-columns:1fr!important}
+@media(max-width:760px){
+  .admin-shell .admin-shell-content .admin-appointments-page .appointment-modal{
+    padding:25px 17px!important;
+  }
 }
