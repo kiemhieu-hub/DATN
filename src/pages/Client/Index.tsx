@@ -82,7 +82,7 @@ function Index() {
               <li className="nav-item">
                 <Link
                   className="nav-link"
-                  to="/about.html"
+                  to="/about"
                 >
                   Giới thiệu
                 </Link>
@@ -91,7 +91,7 @@ function Index() {
               <li className="nav-item">
                 <Link
                   className="nav-link"
-                  to="/services.html"
+                  to="/services"
                 >
                   Dịch vụ
                 </Link>
@@ -100,7 +100,7 @@ function Index() {
               <li className="nav-item">
                 <Link
                   className="nav-link"
-                  to="/pricing.html"
+                  to="/pricing"
                 >
                   Bảng giá
                 </Link>
@@ -148,7 +148,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/services-page.html"
+                      to="/services-page"
                       className="dropdown-item"
                     >
                       <span>Chi tiết dịch vụ</span>
@@ -518,7 +518,7 @@ function Index() {
       <section className="testimonials">
         <div
           className="background bg-img bg-fixed section-padding pb-0"
-          data-background="img/slider/20.jpg"
+          data-background="img/slider/18.jpg"
           data-overlay-dark={6}
         >
           <div className="container">

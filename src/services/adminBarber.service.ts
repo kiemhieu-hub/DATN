@@ -89,3 +89,6 @@ export const resetAdminBarberPassword =
 
     return response.data;
   };
+
+export const deleteAdminBarber = async (barberId: string) =>
+  (await api.delete<{ success: boolean; message: string }>(`/admin/barbers/${barberId}`)).data;

@@ -55,6 +55,7 @@ interface BarberDashboardResult {
 const ACTIVE_NEXT_APPOINTMENT_STATUSES: AppointmentStatus[] = [
   "PENDING",
   "CONFIRMED",
+  "CHECKED_IN",
   "IN_PROGRESS",
 ];
 
@@ -130,7 +131,8 @@ const validateBarberAccount = async (
 };
 
 const normalizeAppointment = (
-  appointment: any
+  appointment: any,
+  barberId: string
 ): DashboardAppointment => {
   const populatedClient =
     appointment.client &&
@@ -150,6 +152,10 @@ const normalizeAppointment = (
             appointment.client.phone,
         }
       : null;
+
+  const assignment = appointment.staffAssignments?.find(
+    (item: any) => String(item.barber?._id ?? item.barber) === barberId
+  );
 
   return {
     _id: String(appointment._id),
@@ -178,10 +184,10 @@ const normalizeAppointment = (
       appointment.appointmentDate,
 
     startTime:
-      appointment.startTime,
+      assignment?.startTime ?? appointment.startTime,
 
     endTime:
-      appointment.endTime,
+      assignment?.endTime ?? appointment.endTime,
 
     durationMinutes:
       appointment.durationMinutes,
@@ -209,12 +215,19 @@ export const getBarberDashboard =
 
     const appointments =
       await Appointment.find({
-        barber: barberId,
+        $or: [
+          { barber: barberId },
+          { "staffAssignments.barber": barberId },
+        ],
         appointmentDate: today,
       })
         .populate(
           "client",
           "_id fullName email phone"
+        )
+        .populate(
+          "staffAssignments.barber",
+          "_id fullName"
         )
         .sort({
           startTime: 1,
@@ -307,13 +320,14 @@ export const getBarberDashboard =
       nextAppointment:
         nextAppointment
           ? normalizeAppointment(
-              nextAppointment
+              nextAppointment,
+              barberId
             )
           : null,
 
       todayAppointments:
-        appointments.map(
-          normalizeAppointment
+        appointments.map((appointment) =>
+          normalizeAppointment(appointment, barberId)
         ),
     };
   };

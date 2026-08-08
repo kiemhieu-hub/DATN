@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 
 import Index from './pages/Client/Index';
 import About from './pages/Client/About';
@@ -17,6 +22,8 @@ import Blog2 from './pages/Client/Blog2';
 import Blog3 from './pages/Client/Blog3';
 import Booking from "./pages/Client/Booking";
 import BookingHistory from "./pages/Client/BookingHistory";
+import ClientProfile from "./pages/Client/Profile";
+import Favorites from "./pages/Client/Favorites";
 import Schedule from "./pages/barber/Schedule";
 import WorkingSchedule from "./pages/barber/WorkingSchedule";
 import Dashboard from "./pages/barber/Dashboard";
@@ -26,67 +33,121 @@ import Profile from "./pages/barber/Profile";
 import Login from './pages/Auth/Login';
 import Register from "./pages/Auth/Register";
 
+import AdminLogin from "./pages/Auth/AdminLogin";
+import BarberLogin from "./pages/Auth/BarberLogin";
+import ReceptionistLogin from "./pages/Auth/ReceptionistLogin";
+import ReceptionistDashboard from "./pages/Receptionist/Dashboard";
+import ReceptionistBarberSchedules from "./pages/Receptionist/BarberSchedules";
+import AdminLayout from "./layouts/AdminLayout";
+import ReceptionistLayout from "./layouts/ReceptionistLayout";
+
+
 //Admin
 import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminRevenue from "./pages/Admin/Revenue";
 import Barbers from "./pages/Admin/Barbers";
-import BookingList from './pages/Admin/Booking/BookingList';
+import AdminServices from "./pages/Admin/Services";
+import AdminAppointments from "./pages/Admin/Appointments";
+import AdminPayments from "./pages/Admin/Payments";
+import AdminUsers from "./pages/Admin/Users";
+import AdminVouchers from "./pages/Admin/Vouchers";
+import AdminServiceCategories from "./pages/Admin/ServiceCategories";
+import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
+import AdminReviews from "./pages/Admin/Reviews";
+import StaffNotifications from "./pages/Admin/StaffNotifications";
 
+//VNpay
+import VnpayReturn from "./pages/Client/VnpayReturn";
+
+// Theme dùng chung, luôn import sau CSS riêng của từng module.
+import "./styles/ThadsTheme.css";
 
 function App() {
   return (
     <Router>
       <Routes>
         {/* ================= ADMIN ================= */}
-        <Route path="/admin/dashboard"element={<AdminDashboard />}/>
-        <Route path="/admin/barbers"element={<Barbers />}/>
-        <Route path="/admin/booking"element={<BookingList />}/>
-
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="revenue" element={<AdminRevenue />} />
+          <Route path="invoices" element={<AdminPayments />}/>
+          <Route path="vouchers" element={<AdminVouchers />}/>
+          <Route path="service-categories" element={<AdminServiceCategories />}/>
+          <Route path="barbers" element={<Barbers />}/>
+          <Route path="barber-schedules" element={<ReceptionistBarberSchedules />}/>
+          <Route path="services" element={<AdminServices />}/>
+          <Route path="appointments" element={<AdminAppointments />}/>
+          <Route path="operations" element={<ReceptionistDashboard />}/>
+          <Route path="payments" element={<AdminPayments />}/>
+          <Route path="users" element={<AdminUsers />}/>
+          <Route path="hairstyle-gallery" element={<AdminHairstyleGallery />}/>
+          <Route path="reviews" element={<AdminReviews />}/>
+          <Route path="notifications" element={<StaffNotifications />}/>
+        </Route>
 
         {/* ================= AUTH ================= */}
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/receptionist/login" element={<ReceptionistLogin />} />
+        <Route path="/receptionist" element={<ReceptionistLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<ReceptionistDashboard />} />
+          <Route path="barbers" element={<ReceptionistBarberSchedules />} />
+        </Route>
 
         {/* ================= CLIENT ================= */}
 
         <Route path="/" element={<Index />} />
-        <Route path="/index.html" element={<Index />} />
-        <Route path="/about.html" element={<About />} />
-        <Route path="/services.html" element={<Services />} />
-        <Route path="/pricing.html" element={<Pricing />} />
-        <Route path="/contact.html" element={<Contact />} />
-        <Route path="/services-page.html" element={<ServicesPage />} />
-        <Route path="/team.html" element={<Team />} />
-        <Route path="/team-details.html" element={<TeamDetails />} />
-        <Route path="/portfolio.html" element={<Portfolio />} />
-        <Route path="/faq.html" element={<Faq />} />
-        <Route path="/404.html" element={<NotFound />} />
-        <Route path="/post.html" element={<Post />} />
-        <Route path="/blog.html" element={<Blog />} />
-        <Route path="/blog2.html" element={<Blog2 />} />
-        <Route path="/blog3.html" element={<Blog3 />} />
+        <Route path="/index" element={<Index />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/services-page" element={<ServicesPage />} />
+        <Route path="/team" element={<Team />} />
+        <Route path="/team-details" element={<TeamDetails />} />
+        <Route path="/portfolio" element={<Portfolio />} />
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/404" element={<NotFound />} />
+        <Route path="/post" element={<Post />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog2" element={<Blog2 />} />
+        <Route path="/blog3" element={<Blog3 />} />
         <Route path="/booking"element={<Booking />}/>
         <Route path="/booking-history"element={<BookingHistory />}/>
+        <Route path="/profile" element={<ClientProfile />} />
+        <Route path="/favorites" element={<Favorites />} />
+        <Route path="/index.html" element={<Navigate to="/" replace />} />
+        <Route path="/about.html" element={<Navigate to="/about" replace />} />
+        <Route path="/services.html" element={<Navigate to="/services" replace />} />
+        <Route path="/pricing.html" element={<Navigate to="/pricing" replace />} />
+        <Route path="/contact.html" element={<Navigate to="/contact" replace />} />
+        <Route path="/services-page.html" element={<Navigate to="/services-page" replace />} />
+        <Route path="/team.html" element={<Navigate to="/team" replace />} />
+        <Route path="/team-details.html" element={<Navigate to="/team-details" replace />} />
+        <Route path="/portfolio.html" element={<Navigate to="/portfolio" replace />} />
+        <Route path="/faq.html" element={<Navigate to="/faq" replace />} />
+        <Route path="/404.html" element={<Navigate to="/404" replace />} />
+        <Route path="/post.html" element={<Navigate to="/post" replace />} />
+        <Route path="/blog.html" element={<Navigate to="/blog" replace />} />
+        <Route path="/blog2.html" element={<Navigate to="/blog2" replace />} />
+        <Route path="/blog3.html" element={<Navigate to="/blog3" replace />} />
 
         {/* ================= BARBER ================= */}
+        <Route path="/barber/login" element={<BarberLogin />} />
         <Route path="/barber/schedule"element={<Schedule />}/>
         <Route path="/barber/working-schedule"element={<WorkingSchedule />}/>
-        <Route path="/barber/dashboard"element={<Dashboard />}/>
+        <Route path="/barber/dashboard" element={<Dashboard />}/>
         <Route path="/barber/profile"element={<Profile />}/>
 
+        {/* ================= VNpay ================= */}
+        <Route path="/payment/vnpay-return"element={<VnpayReturn />}/>
 
-        <Route path="*"element={
-            <div
-              style={{
-                color: '#fff',
-                padding: '50px',
-                textAlign: 'center',
-              }}
-            >
-              <h2>404 - Không tìm thấy trang</h2>
-            </div>
-          }
-        />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

@@ -24,6 +24,7 @@ import type {
   VoucherCalculation,
 } from "../../types/Voucher";
 import { createVnpayPayment } from "../../services/vnpay.service";
+import ClientHeader from "../../components/ClientHeader";
 import "./css/Booking.css";
 import "./css/BookingDeposit.css";
 
@@ -289,7 +290,7 @@ function Booking() {
   };
 
   return (
-    <div className="booking-page">
+    <><ClientHeader /><div className="booking-page">
       <form className="booking-layout" onSubmit={submit}>
         <main className="booking-main">
           <header className="booking-header"><span>THADS BARBER</span><h1>Đặt lịch dịch vụ</h1><p>Chọn dịch vụ trước, hệ thống sẽ hiển thị đúng nhân viên có chuyên môn.</p></header>
@@ -334,7 +335,7 @@ function Booking() {
         <aside className="booking-summary">
           <div className="booking-summary-header">
             <div><span>ĐƠN ĐẶT LỊCH</span><h2>Dịch vụ đã chọn</h2></div>
-            <strong>{formatDuration(totalDuration)}</strong>
+            <strong title="Thời gian Barber làm tóc, không tính dịch vụ chăm sóc">{formatDuration(hairDuration)}</strong>
           </div>
 
           <div className="booking-summary-services">
@@ -401,7 +402,7 @@ function Booking() {
           </section>
         </div>
       )}
-    </div>
+    </div></>
   );
 }
 

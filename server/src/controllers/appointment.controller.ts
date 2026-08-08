@@ -1,11 +1,5 @@
-import {
-  type NextFunction,
-  type Request,
-  type Response,
-} from "express";
-
+import {type NextFunction,type Request,type Response,} from "express";
 import type { AuthenticatedRequest } from "../middleware/authenticate";
-
 import {
   cancelMyAppointment,
   createAppointment,
@@ -139,6 +133,9 @@ export const cancelMine = async (
         userId: req.user.userId,
         role: "CLIENT",
         reason: req.body.reason,
+        refundBankName: req.body.refundBankName,
+        refundAccountNumber: req.body.refundAccountNumber,
+        refundAccountName: req.body.refundAccountName,
       });
 
     res.status(200).json({

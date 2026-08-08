@@ -17,6 +17,8 @@ interface LoginInput {
   password: string;
 }
 
+type UserRole = "CLIENT" | "BARBER" | "RECEPTIONIST" | "ADMIN";
+
 export const registerClient = async (input: RegisterInput) => {
   const {
     fullName,
@@ -63,7 +65,10 @@ export const registerClient = async (input: RegisterInput) => {
   };
 };
 
-export const loginUser = async (input: LoginInput) => {
+export const loginUser = async (
+  input: LoginInput,
+  expectedRole: UserRole
+) => {
   const { email, password } = input;
 
   const user = await User.findOne({
@@ -72,6 +77,17 @@ export const loginUser = async (input: LoginInput) => {
 
   if (!user) {
     throw new AppError("Email hoặc mật khẩu không chính xác", 401);
+  }
+
+  if (user.role !== expectedRole) {
+    throw new AppError(
+      `Tài khoản này không thuộc quyền ${expectedRole}`,
+      403
+    );
+  }
+
+  if (user.status !== "ACTIVE") {
+    throw new AppError("Tài khoản hiện không hoạt động", 403);
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
@@ -110,7 +126,44 @@ export const getCurrentUser = async (userId: string) => {
     fullName: user.fullName,
     email: user.email,
     phone: user.phone,
+    avatar: user.avatar,
     role: user.role,
     status: user.status,
   };
+};
+
+interface UpdateClientProfileInput {
+  fullName?: string;
+  phone?: string;
+  avatar?: string;
+}
+
+export const updateClientProfile = async (
+  userId: string,
+  input: UpdateClientProfileInput
+) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError("Không tìm thấy tài khoản", 404);
+  }
+
+  if (user.role !== "CLIENT") {
+    throw new AppError("Chỉ khách hàng được cập nhật hồ sơ tại đây", 403);
+  }
+
+  if (typeof input.fullName === "string") {
+    user.fullName = input.fullName.trim();
+  }
+
+  if (typeof input.phone === "string") {
+    user.phone = input.phone.trim();
+  }
+
+  if (typeof input.avatar === "string") {
+    user.avatar = input.avatar.trim();
+  }
+
+  await user.save();
+  return getCurrentUser(userId);
 };

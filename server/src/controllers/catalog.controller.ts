@@ -12,10 +12,7 @@ import {
 
 import AppError from "../utils/AppError";
 
-/**
- * GET /api/catalog/services
- * Lấy danh sách dịch vụ đang hoạt động.
- */
+
 export const getServices = async (
   _req: Request,
   res: Response,
@@ -34,10 +31,7 @@ export const getServices = async (
   }
 };
 
-/**
- * GET /api/catalog/barbers
- * Lấy danh sách Barber đang hoạt động.
- */
+
 export const getBarbers = async (
   _req: Request,
   res: Response,

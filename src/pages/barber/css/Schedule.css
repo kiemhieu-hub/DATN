@@ -6,7 +6,7 @@
       rgba(18, 16, 14, 0.93),
       rgba(18, 16, 14, 0.98)
     ),
-    url("/img/slider/20.jpg") center / cover fixed;
+    url("/img/slider/18.jpg") center / cover fixed;
 }
 
 .barber-schedule-container {
@@ -587,3 +587,4 @@
     width: 100%;
   }
 }
+.barber-view-page{min-height:100vh;background:#10100f;color:#eee;padding:34px;font-family:"Be Vietnam Pro",sans-serif}.barber-view-page main{max-width:1250px;margin:auto}.barber-view-page header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:26px}.barber-view-page header span{color:#c6a15b;letter-spacing:3px}.barber-view-page header h1{font-size:36px;margin:5px 0}.barber-view-page header p{color:#999}.barber-view-page nav{display:flex;gap:8px}.barber-view-page nav a{color:#eee;border:1px solid #4a4740;padding:10px;text-decoration:none}.barber-view-filter{display:flex;align-items:center;gap:10px;margin-bottom:15px}.barber-view-filter input{background:#171716;color:#eee;border:1px solid #48453e;padding:10px}.barber-view-table{overflow:auto;border:1px solid #34322d}.barber-view-table table{width:100%;border-collapse:collapse;background:#191918}.barber-view-table th,.barber-view-table td{text-align:left;padding:14px;border-bottom:1px solid #34322d}.barber-view-table th{color:#c6a15b}.barber-view-table small{display:block;color:#999;margin-top:4px}.barber-view-error{background:#4a2020;padding:12px;margin-bottom:12px}.barber-week-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.barber-week-grid article{background:#1d1d1b;border:1px solid #39362f;padding:20px}.barber-week-grid article span,.barber-week-grid article small{display:block;color:#999}.barber-week-grid article b{display:block;font-size:19px;margin:8px 0;color:#c6a15b}.barber-week-grid article.off{opacity:.5}@media(max-width:800px){.barber-view-page{padding:18px}.barber-view-page header{align-items:flex-start;flex-direction:column}.barber-week-grid{grid-template-columns:1fr 1fr}}

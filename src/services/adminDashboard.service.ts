@@ -5,10 +5,10 @@ import type {
 } from "../types/AdminDashboard";
 
 export const getAdminDashboard =
-  async (): Promise<GetAdminDashboardResponse> => {
+  async (params: { period?: "DAY" | "MONTH" | "YEAR"; date?: string; barberId?: string } = {}): Promise<GetAdminDashboardResponse> => {
     const response =
       await api.get<GetAdminDashboardResponse>(
-        "/admin/dashboard"
+        "/admin/dashboard", { params }
       );
 
     return response.data;

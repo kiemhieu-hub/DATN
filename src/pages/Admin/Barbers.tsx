@@ -144,7 +144,7 @@ function Barbers() {
     user,
     isAuthenticated,
     isLoading: authLoading,
-  } = useAuth();
+  } = useAuth("ADMIN");
 
   const [barbers, setBarbers] =
     useState<AdminBarber[]>([]);
@@ -257,7 +257,7 @@ function Barbers() {
     }
 
     if (!isAuthenticated || !user) {
-      navigate("/login", {
+      navigate("/admin/login", {
         replace: true,
         state: {
           message:
@@ -268,7 +268,7 @@ function Barbers() {
     }
 
     if (user.role !== "ADMIN") {
-      navigate("/", {
+      navigate("/admin/login", {
         replace: true,
       });
       return;
@@ -1013,6 +1013,7 @@ function Barbers() {
                       Mở khóa
                     </button>
                   )}
+
                 </footer>
               </article>
             ))}

@@ -1,5 +1,3 @@
-// Dùng require để dự án vẫn type-check trước khi cài package nodemailer mới.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const nodemailer = require("nodemailer") as {
   createTransport: (options: Record<string, unknown>) => {
     sendMail: (options: Record<string, unknown>) => Promise<unknown>;

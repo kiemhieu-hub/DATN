@@ -1,4 +1,4 @@
-export type UserRole = "CLIENT" | "BARBER" | "ADMIN";
+export type UserRole = "CLIENT" | "BARBER" | "RECEPTIONIST" | "ADMIN";
 
 export type UserStatus =
   | "ACTIVE"
@@ -10,8 +10,15 @@ export interface AuthUser {
   fullName: string;
   email: string;
   phone: string;
+  avatar?: string;
   role: UserRole;
   status: UserStatus;
+}
+
+export interface UpdateProfilePayload {
+  fullName: string;
+  phone: string;
+  avatar?: string;
 }
 
 export interface LoginPayload {

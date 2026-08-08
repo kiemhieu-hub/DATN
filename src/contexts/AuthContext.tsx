@@ -10,125 +10,185 @@ import {
   getMe,
   login as loginApi,
 } from "../services/authService";
-
 import type {
   AuthUser,
   LoginPayload,
+  UserRole,
 } from "../types/Auth";
 
+type AuthSessions = Record<UserRole, AuthUser | null>;
+
 interface AuthContextValue {
+  sessions: AuthSessions;
+  isLoading: boolean;
+  login: (
+    role: UserRole,
+    data: LoginPayload
+  ) => Promise<AuthUser>;
+  logout: (role: UserRole) => void;
+  updateSession: (role: UserRole, user: AuthUser) => void;
+}
+
+interface RoleAuthValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (data: LoginPayload) => Promise<AuthUser>;
   logout: () => void;
+  updateUser: (user: AuthUser) => void;
 }
 
-const AuthContext = createContext<
-  AuthContextValue | undefined
->(undefined);
+const emptySessions: AuthSessions = {
+  CLIENT: null,
+  BARBER: null,
+  RECEPTIONIST: null,
+  ADMIN: null,
+};
 
-interface AuthProviderProps {
-  children: ReactNode;
+const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined
+);
+
+const storagePrefix: Record<UserRole, string> = {
+  CLIENT: "client",
+  BARBER: "barber",
+  RECEPTIONIST: "receptionist",
+  ADMIN: "admin",
+};
+
+function tokenKey(role: UserRole): string {
+  return `${storagePrefix[role]}AccessToken`;
+}
+
+function userKey(role: UserRole): string {
+  return `${storagePrefix[role]}User`;
 }
 
 export function AuthProvider({
   children,
-}: AuthProviderProps) {
-  const [user, setUser] =
-    useState<AuthUser | null>(null);
-
-  const [isLoading, setIsLoading] =
-    useState(true);
+}: {
+  children: ReactNode;
+}) {
+  const [sessions, setSessions] =
+    useState<AuthSessions>(emptySessions);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const restoreLogin = async () => {
-      const token =
-        localStorage.getItem("accessToken");
+    const restoreSessions = async () => {
+      const roles: UserRole[] = [
+        "CLIENT",
+        "BARBER",
+        "RECEPTIONIST",
+        "ADMIN",
+      ];
 
-      if (!token) {
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
+      const restored = await Promise.all(
+        roles.map(async (role) => {
+          const accessToken = localStorage.getItem(
+            tokenKey(role)
+          );
 
-      try {
-        const currentUser = await getMe();
+          if (!accessToken) {
+            return [role, null] as const;
+          }
 
-        setUser(currentUser);
+          try {
+            const currentUser = await getMe(accessToken);
 
-        localStorage.setItem(
-          "user",
-          JSON.stringify(currentUser)
-        );
-      } catch (error) {
-        console.error(
-          "Không thể khôi phục đăng nhập:",
-          error
-        );
+            if (currentUser.role !== role) {
+              throw new Error("Phiên đăng nhập sai quyền");
+            }
 
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("user");
+            localStorage.setItem(
+              userKey(role),
+              JSON.stringify(currentUser)
+            );
 
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
+            return [role, currentUser] as const;
+          } catch {
+            localStorage.removeItem(tokenKey(role));
+            localStorage.removeItem(userKey(role));
+            return [role, null] as const;
+          }
+        })
+      );
+
+      setSessions({
+        CLIENT: restored.find(([role]) => role === "CLIENT")?.[1] ?? null,
+        BARBER: restored.find(([role]) => role === "BARBER")?.[1] ?? null,
+        RECEPTIONIST: restored.find(([role]) => role === "RECEPTIONIST")?.[1] ?? null,
+        ADMIN: restored.find(([role]) => role === "ADMIN")?.[1] ?? null,
+      });
+      setIsLoading(false);
     };
 
-    void restoreLogin();
+    void restoreSessions();
   }, []);
 
   const login = async (
+    role: UserRole,
     data: LoginPayload
   ): Promise<AuthUser> => {
-    const result = await loginApi(data);
+    const result = await loginApi(data, role);
 
     localStorage.setItem(
-      "accessToken",
+      tokenKey(role),
       result.accessToken
     );
-
     localStorage.setItem(
-      "user",
+      userKey(role),
       JSON.stringify(result.user)
     );
 
-    setUser(result.user);
+    setSessions((current) => ({
+      ...current,
+      [role]: result.user,
+    }));
 
     return result.user;
   };
 
-  const logout = (): void => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
+  const logout = (role: UserRole): void => {
+    localStorage.removeItem(tokenKey(role));
+    localStorage.removeItem(userKey(role));
 
-    setUser(null);
+    setSessions((current) => ({
+      ...current,
+      [role]: null,
+    }));
+  };
+
+  const updateSession = (role: UserRole, user: AuthUser): void => {
+    localStorage.setItem(userKey(role), JSON.stringify(user));
+    setSessions((current) => ({ ...current, [role]: user }));
   };
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: Boolean(user),
-        isLoading,
-        login,
-        logout,
-      }}
+      value={{ sessions, isLoading, login, logout, updateSession }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth(): AuthContextValue {
+export function useAuth(
+  role: UserRole = "CLIENT"
+): RoleAuthValue {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error(
-      "useAuth phải nằm bên trong AuthProvider"
-    );
+    throw new Error("useAuth phải nằm bên trong AuthProvider");
   }
 
-  return context;
+  const user = context.sessions[role];
+
+  return {
+    user,
+    isAuthenticated: Boolean(user),
+    isLoading: context.isLoading,
+    login: (data) => context.login(role, data),
+    logout: () => context.logout(role),
+    updateUser: (nextUser) => context.updateSession(role, nextUser),
+  };
 }

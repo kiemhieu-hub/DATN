@@ -115,7 +115,7 @@ function Profile() {
     user,
     isAuthenticated,
     isLoading: authLoading,
-  } = useAuth();
+  } = useAuth("BARBER");
 
   const [
     profileData,
@@ -196,7 +196,7 @@ function Profile() {
     }
 
     if (!isAuthenticated || !user) {
-      navigate("/login", {
+      navigate("/barber/login", {
         replace: true,
         state: {
           message:
@@ -208,7 +208,7 @@ function Profile() {
     }
 
     if (user.role !== "BARBER") {
-      navigate("/", {
+      navigate("/barber/login", {
         replace: true,
       });
 

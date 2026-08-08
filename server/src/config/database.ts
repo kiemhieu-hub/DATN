@@ -1,4 +1,8 @@
 import mongoose from "mongoose";
+import { setServers } from "node:dns";
+import Payment from "../models/Payment";
+
+setServers(["1.1.1.1", "8.8.8.8"]);
 
 export const connectDatabase = async (): Promise<void> => {
   try {
@@ -9,19 +13,13 @@ export const connectDatabase = async (): Promise<void> => {
     }
 
     await mongoose.connect(mongoUri);
+    
+    await Payment.syncIndexes();
 
     console.log("MongoDB Atlas connected successfully");
-     console.log("Database:", mongoose.connection.db?.databaseName);
-
-    const docs = await mongoose.connection.db!
-      .collection("Bookings")
-      .find({})
-      .toArray();
-      console.log("Số document:", docs.length);
-    console.log(docs);
   } catch (error) {
     console.error("MongoDB connection error:", error);
-
+    
     process.exit(1);
   }
 };

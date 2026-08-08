@@ -5,6 +5,7 @@ import {
 } from "express";
 
 import type { UserStatus } from "../models/User";
+import AppError from "../utils/AppError";
 
 import * as adminBarberService from "../services/adminBarber.service";
 
@@ -51,9 +52,7 @@ const getRouteParam = (
   const normalizedValue = value.trim();
 
   if (!normalizedValue) {
-    throw new Error(
-      `${fieldName} không hợp lệ`
-    );
+    throw new AppError(`${fieldName} không hợp lệ`, 400);
   }
 
   return normalizedValue;
@@ -281,6 +280,25 @@ export const resetBarberPassword = async (
       success: true,
       message:
         "Đặt lại mật khẩu Barber thành công",
+      barber,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteBarber = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const barber = await adminBarberService.deleteAdminBarber(
+      getRouteParam(req.params.id, "Mã Barber")
+    );
+    res.status(200).json({
+      success: true,
+      message: "Xóa Barber thành công",
       barber,
     });
   } catch (error) {

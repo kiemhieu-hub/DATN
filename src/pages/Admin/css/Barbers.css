@@ -1,56 +1,61 @@
 .admin-barbers-page {
   min-height: 100vh;
-  padding: 110px 20px 60px;
+  padding: 40px 24px 60px;
   background:
-    linear-gradient(
-      rgba(15, 14, 13, 0.95),
-      rgba(15, 14, 13, 0.99)
+    radial-gradient(
+      circle at top right,
+      rgba(198, 161, 91, 0.1),
+      transparent 30%
     ),
-    url("/img/slider/20.jpg") center / cover fixed;
+    #10100f;
+  color: #eeeae3;
+  font-family: "Be Vietnam Pro", sans-serif;
+}
+
+.admin-barbers-page * {
+  box-sizing: border-box;
 }
 
 .admin-barbers-container {
-  width: min(1320px, 100%);
+  width: min(1420px, 100%);
   margin: 0 auto;
 }
 
 .admin-barbers-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 24px;
-  margin-bottom: 24px;
-  padding: 30px;
-  background: rgba(31, 28, 25, 0.98);
-  border: 1px solid #403a34;
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.35);
+  margin-bottom: 28px;
 }
 
 .admin-barbers-brand {
   margin: 0 0 8px;
-  color: #c89b63;
-  font-size: 12px;
-  font-weight: 800;
+  color: #c6a15b;
+  font-size: 13px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
 }
 
 .admin-barbers-header h1 {
   margin: 0;
   color: #fff;
-  font-size: clamp(31px, 4vw, 42px);
-  text-transform: uppercase;
+  font-size: clamp(32px, 4vw, 48px);
+  text-transform: none;
 }
 
 .admin-barbers-header > div:first-child > p:last-child {
   margin: 10px 0 0;
-  color: #aaa39c;
-  font-size: 14px;
+  color: #aaa69e;
+  font-size: 16px;
 }
 
 .admin-barbers-header-actions {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 9px;
 }
 
 .admin-barbers-header-actions a,
@@ -59,53 +64,55 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 16px;
+  padding: 0 14px;
+  border-radius: 5px;
   font: inherit;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 600;
   text-decoration: none;
-  text-transform: uppercase;
+  text-transform: none;
   cursor: pointer;
 }
 
 .admin-barbers-header-actions a {
-  color: #fff;
-  background: transparent;
-  border: 1px solid #5a5149;
+  color: #eeeae3;
+  background: #1b1b19;
+  border: 1px solid #4a463e;
 }
 
 .admin-barbers-header-actions button {
-  color: #1d1915;
-  background: #fff;
-  border: 1px solid #fff;
+  color: #11110f;
+  background: #c6a15b;
+  border: 1px solid #c6a15b;
 }
 
 .admin-barbers-header-actions a:hover,
 .admin-barbers-header-actions button:hover {
   color: #fff;
-  background: #c89b63;
-  border-color: #c89b63;
+  background: #d9b66e;
+  border-color: #d9b66e;
 }
 
 .admin-barbers-message {
   margin: 0 0 20px;
   padding: 14px 16px;
-  font-size: 13px;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 .admin-barbers-success {
-  color: #d8f5df;
-  background: rgba(52, 144, 77, 0.2);
-  border-left: 3px solid #5cac70;
+  color: #c7f3d8;
+  background: #193a29;
+  border: 1px solid #35684a;
 }
 
 .admin-barbers-error {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  color: #ffd1d1;
-  background: rgba(177, 45, 45, 0.2);
-  border-left: 3px solid #d95f5f;
+  color: #ffd0d0;
+  background: #3c2020;
+  border: 1px solid #7d4141;
 }
 
 .admin-barbers-error button {
@@ -122,8 +129,9 @@
   align-items: end;
   margin-bottom: 18px;
   padding: 20px;
-  background: rgba(31, 28, 25, 0.98);
-  border: 1px solid #403a34;
+  background: #1a1a18;
+  border: 1px solid #34312b;
+  border-radius: 7px;
 }
 
 .admin-barbers-search {
@@ -138,37 +146,39 @@
   height: 48px;
   box-sizing: border-box;
   padding: 0 14px;
-  color: #fff;
-  background: #302b26;
-  border: 1px solid #4a433c;
+  color: #eeeae3;
+  background: #11110f;
+  border: 1px solid #49453d;
+  border-radius: 4px;
   outline: none;
   font: inherit;
 }
 
 .admin-barbers-search input:focus,
 .admin-barbers-filter select:focus {
-  border-color: #c89b63;
-  box-shadow: 0 0 0 3px rgba(200, 155, 99, 0.12);
+  border-color: #c6a15b;
+  box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.12);
 }
 
 .admin-barbers-search button,
 .admin-barbers-toolbar button {
   min-height: 48px;
   padding: 0 17px;
-  color: #1d1915;
-  background: #fff;
-  border: 1px solid #fff;
+  color: #11110f;
+  background: #c6a15b;
+  border: 1px solid #c6a15b;
+  border-radius: 4px;
   font: inherit;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
   cursor: pointer;
 }
 
 .admin-barbers-search button:hover {
   color: #fff;
-  background: #c89b63;
-  border-color: #c89b63;
+  background: #d9b66e;
+  border-color: #d9b66e;
 }
 
 .admin-barbers-filter {
@@ -178,15 +188,14 @@
 }
 
 .admin-barbers-filter label {
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
+  color: #c8c2b8;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .admin-barbers-filter select option {
   color: #fff;
-  background: #302b26;
+  background: #11110f;
 }
 
 .admin-barbers-summary {
@@ -203,18 +212,18 @@
   justify-content: center;
   gap: 7px;
   padding: 17px;
-  background: rgba(31, 28, 25, 0.98);
-  border: 1px solid #403a34;
+  background: #1a1a18;
+  border: 1px solid #34312b;
+  border-radius: 7px;
 }
 
 .admin-barbers-summary span {
-  color: #908880;
-  font-size: 10px;
-  text-transform: uppercase;
+  color: #99958d;
+  font-size: 12px;
 }
 
 .admin-barbers-summary strong {
-  color: #c89b63;
+  color: #e5c27c;
   font-size: 25px;
 }
 
@@ -226,8 +235,9 @@
 
 .admin-barber-card {
   padding: 22px;
-  background: rgba(31, 28, 25, 0.98);
-  border: 1px solid #403a34;
+  background: #1a1a18;
+  border: 1px solid #34312b;
+  border-radius: 8px;
   box-shadow: 0 14px 35px rgba(0, 0, 0, 0.22);
 }
 
@@ -236,7 +246,7 @@
   align-items: center;
   gap: 15px;
   padding-bottom: 17px;
-  border-bottom: 1px solid #403a34;
+  border-bottom: 1px solid #34312b;
 }
 
 .admin-barber-avatar {
@@ -246,8 +256,8 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  color: #1d1915;
-  background: #c89b63;
+  color: #11110f;
+  background: #c6a15b;
   border-radius: 50%;
   font-size: 23px;
   font-weight: 900;
@@ -276,25 +286,25 @@
 
 .admin-barber-status {
   padding: 7px 9px;
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .status-active {
   color: #afe8ba;
-  background: rgba(52, 144, 77, 0.24);
+  background: #193d2a;
 }
 
 .status-inactive {
   color: #f4d38e;
-  background: rgba(190, 134, 42, 0.22);
+  background: #3d3218;
 }
 
 .status-blocked {
   color: #ffb1b1;
-  background: rgba(177, 45, 45, 0.24);
+  background: #422323;
 }
 
 .admin-barber-contact,
@@ -318,23 +328,23 @@
   flex-direction: column;
   gap: 6px;
   padding: 12px;
-  background: #292520;
-  border: 1px solid #403a34;
+  background: #131311;
+  border: 1px solid #34312b;
+  border-radius: 5px;
 }
 
 .admin-barber-contact span,
 .admin-barber-metrics span,
 .admin-barber-bio > span,
 .admin-barber-specialties > span {
-  color: #8f8780;
-  font-size: 9px;
-  text-transform: uppercase;
+  color: #918d85;
+  font-size: 11px;
 }
 
 .admin-barber-contact strong,
 .admin-barber-metrics strong {
   color: #fff;
-  font-size: 12px;
+  font-size: 13px;
   word-break: break-word;
 }
 
@@ -346,8 +356,8 @@
 .admin-barber-bio p,
 .admin-barber-specialties p {
   margin: 7px 0 0;
-  color: #b3aaa2;
-  font-size: 12px;
+  color: #b8b2a9;
+  font-size: 13px;
   line-height: 1.55;
 }
 
@@ -361,9 +371,10 @@
 .admin-barber-specialties small {
   padding: 6px 8px;
   color: #ded7d0;
-  background: #302b26;
-  border: 1px solid #4a433c;
-  font-size: 9px;
+  background: #25231f;
+  border: 1px solid #454138;
+  border-radius: 3px;
+  font-size: 11px;
 }
 
 .admin-barber-meta {
@@ -372,12 +383,12 @@
   gap: 12px;
   margin-top: 16px;
   padding-top: 15px;
-  border-top: 1px solid #403a34;
+  border-top: 1px solid #34312b;
 }
 
 .admin-barber-meta small {
   color: #847c74;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .admin-barber-actions {
@@ -392,16 +403,17 @@
   padding: 0 13px;
   color: #fff;
   background: transparent;
-  border: 1px solid #62584f;
+  border: 1px solid #514d45;
+  border-radius: 4px;
   font: inherit;
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
   cursor: pointer;
 }
 
 .admin-barber-actions button:hover:not(:disabled) {
-  border-color: #c89b63;
+  border-color: #c6a15b;
 }
 
 .admin-barber-actions button.danger {
@@ -432,8 +444,9 @@
   gap: 15px;
   margin-top: 24px;
   padding: 18px;
-  background: rgba(31, 28, 25, 0.98);
-  border: 1px solid #403a34;
+  background: #1a1a18;
+  border: 1px solid #34312b;
+  border-radius: 7px;
 }
 
 .admin-barbers-pagination span {
@@ -445,8 +458,9 @@
   min-height: 39px;
   padding: 0 15px;
   color: #fff;
-  background: #302b26;
-  border: 1px solid #4a433c;
+  background: #1d1d1b;
+  border: 1px solid #4b473f;
+  border-radius: 4px;
   font: inherit;
   font-size: 10px;
   font-weight: 800;
@@ -467,8 +481,9 @@
   padding: 55px 25px;
   color: #fff;
   text-align: center;
-  background: rgba(31, 28, 25, 0.98);
-  border: 1px solid #403a34;
+  background: #1a1a18;
+  border: 1px solid #34312b;
+  border-radius: 7px;
 }
 
 .admin-barbers-empty h2 {
@@ -487,7 +502,8 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
   overflow-y: auto;
 }
 
@@ -495,8 +511,9 @@
   width: min(900px, 100%);
   max-height: calc(100vh - 40px);
   overflow-y: auto;
-  background: #1f1c19;
-  border: 1px solid #4a433c;
+  background: #1a1a18;
+  border: 1px solid #4e493f;
+  border-radius: 9px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
 }
 
@@ -508,12 +525,12 @@
   justify-content: space-between;
   gap: 15px;
   padding: 21px 23px;
-  background: #26211d;
-  border-bottom: 1px solid #4a433c;
+  background: #22221f;
+  border-bottom: 1px solid #3b3832;
 }
 
 .admin-barbers-modal > header span {
-  color: #c89b63;
+  color: #c6a15b;
   font-size: 10px;
   text-transform: uppercase;
 }
@@ -563,9 +580,10 @@
 .admin-barbers-field textarea {
   width: 100%;
   box-sizing: border-box;
-  color: #fff;
-  background: #302b26;
-  border: 1px solid #4a433c;
+  color: #eeeae3;
+  background: #11110f;
+  border: 1px solid #49453d;
+  border-radius: 4px;
   outline: none;
   font: inherit;
 }
@@ -582,8 +600,8 @@
 
 .admin-barbers-field input:focus,
 .admin-barbers-field textarea:focus {
-  border-color: #c89b63;
-  box-shadow: 0 0 0 3px rgba(200, 155, 99, 0.11);
+  border-color: #c6a15b;
+  box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.11);
 }
 
 .admin-barbers-field input[readonly] {
@@ -609,7 +627,7 @@
 }
 
 .admin-barbers-specialty-picker > div > small {
-  color: #c89b63;
+  color: #c6a15b;
   font-size: 10px;
 }
 
@@ -620,8 +638,9 @@
   max-height: 290px;
   overflow-y: auto;
   padding: 12px;
-  background: #292520;
-  border: 1px solid #403a34;
+  background: #131311;
+  border: 1px solid #34312b;
+  border-radius: 5px;
 }
 
 .admin-barbers-specialty-picker section button {
@@ -632,14 +651,15 @@
   padding: 11px;
   color: inherit;
   text-align: left;
-  background: #302b26;
-  border: 1px solid #4a433c;
+  background: #1d1d1b;
+  border: 1px solid #454138;
+  border-radius: 4px;
   cursor: pointer;
 }
 
 .admin-barbers-specialty-picker section button.selected {
-  background: rgba(200, 155, 99, 0.14);
-  border-color: #c89b63;
+  background: rgba(198, 161, 91, 0.14);
+  border-color: #c6a15b;
 }
 
 .admin-barbers-specialty-picker section button > span {
@@ -655,7 +675,7 @@
 }
 
 .admin-barbers-specialty-picker section button.selected > span {
-  background: #c89b63;
+  background: #c6a15b;
 }
 
 .admin-barbers-specialty-picker section button > div {
@@ -670,7 +690,7 @@
 }
 
 .admin-barbers-specialty-picker section small {
-  color: #c89b63;
+  color: #c6a15b;
   font-size: 10px;
 }
 
@@ -680,16 +700,17 @@
   gap: 10px;
   margin-top: 20px;
   padding-top: 18px;
-  border-top: 1px solid #403a34;
+  border-top: 1px solid #34312b;
 }
 
 .admin-barbers-modal form > footer button {
   min-height: 43px;
   padding: 0 17px;
   font: inherit;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
   cursor: pointer;
 }
 
@@ -700,15 +721,15 @@
 }
 
 .admin-barbers-modal form > footer button:last-child {
-  color: #1d1915;
-  background: #fff;
-  border: 1px solid #fff;
+  color: #11110f;
+  background: #c6a15b;
+  border: 1px solid #c6a15b;
 }
 
 .admin-barbers-modal form > footer button:last-child:hover:not(:disabled) {
   color: #fff;
-  background: #c89b63;
-  border-color: #c89b63;
+  background: #d9b66e;
+  border-color: #d9b66e;
 }
 
 .admin-barbers-modal form > footer button:disabled {
@@ -724,12 +745,12 @@
 
 @media (max-width: 760px) {
   .admin-barbers-page {
-    padding: 80px 13px 35px;
+    padding: 24px 14px 40px;
   }
 
   .admin-barbers-header {
     flex-direction: column;
-    padding: 22px 17px;
+    align-items: flex-start;
   }
 
   .admin-barbers-header-actions {

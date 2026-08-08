@@ -2,7 +2,6 @@ import { Router } from "express";
 
 import {
   getBarberMine,
-  updateBarberStatus,
 } from "../controllers/appointment.controller";
 
 import { authenticate } from "../middleware/authenticate";
@@ -15,13 +14,6 @@ router.get(
   authenticate,
   authorize("BARBER"),
   getBarberMine
-);
-
-router.patch(
-  "/appointments/:id/status",
-  authenticate,
-  authorize("BARBER"),
-  updateBarberStatus
 );
 
 export default router;

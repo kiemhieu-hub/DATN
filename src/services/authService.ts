@@ -1,5 +1,8 @@
 import api from "./api";
-import type {AuthUser,LoginPayload,LoginResponse,RegisterPayload,RegisterResponse,} from "../types/Auth";
+import axios from "axios";
+import type { AuthUser, LoginPayload, LoginResponse, RegisterPayload, RegisterResponse, UpdateProfilePayload, UserRole } from "../types/Auth";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export const register = async (
   data: RegisterPayload
@@ -13,21 +16,38 @@ export const register = async (
 };
 
 export const login = async (
-  data: LoginPayload
+  data: LoginPayload,
+  role: UserRole
 ): Promise<LoginResponse> => {
+  const rolePath = role.toLowerCase();
   const response = await api.post<LoginResponse>(
-    "/auth/login",
+    `/auth/${rolePath}/login`,
     data
   );
 
   return response.data;
 };
 
-export const getMe = async (): Promise<AuthUser> => {
-  const response = await api.get<{
+export const getMe = async (
+  accessToken: string
+): Promise<AuthUser> => {
+  const response = await axios.get<{
     success: boolean;
     user: AuthUser;
-  }>("/auth/me");
+  }>(`${API_URL}/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 
   return response.data.user;
+};
+
+export const updateMyProfile = async (data: UpdateProfilePayload) => {
+  const response = await api.patch<{
+    success: boolean;
+    message: string;
+    user: AuthUser;
+  }>("/auth/me", data);
+  return response.data;
 };

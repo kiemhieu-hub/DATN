@@ -84,6 +84,17 @@ export interface AdminDashboardData {
 
   recentAppointments:
     AdminDashboardAppointment[];
+  revenueByBarber: Array<{
+    barberId: string;
+    barberName: string;
+    revenue: number;
+    appointments: number;
+  }>;
+  revenueFilter: {
+    period: "DAY" | "MONTH" | "YEAR";
+    date: string;
+    barberId: string;
+  };
 }
 
 export interface GetAdminDashboardResponse {

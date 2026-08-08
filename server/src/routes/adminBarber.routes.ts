@@ -44,7 +44,6 @@ router.patch(
   updateBarberStatus
 );
 
-
 router.patch(
   "/:id/reset-password",
   resetBarberPassword
