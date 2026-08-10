@@ -7,6 +7,7 @@ import Appointment, {
 
 import BarberProfile from "../models/BarberProfile";
 import BarberSchedule from "../models/BarberSchedule";
+import BarberScheduleOverride from "../models/BarberScheduleOverride";
 
 import Service, {
   type IService,
@@ -535,11 +536,11 @@ const validateBarberSchedule = async (
   const dayOfWeek =
     getDayOfWeek(appointmentDate);
 
-  const schedule =
-    await BarberSchedule.findOne({
-      barber: barberId,
-      dayOfWeek,
-    }).lean();
+  const [weeklySchedule, dateOverride] = await Promise.all([
+    BarberSchedule.findOne({ barber: barberId, dayOfWeek }).lean(),
+    BarberScheduleOverride.findOne({ barber: barberId, date: appointmentDate }).lean(),
+  ]);
+  const schedule = dateOverride || weeklySchedule;
 
   if (
     !schedule ||
@@ -1597,11 +1598,14 @@ export const getAvailableSlots =
     const relevantBarberIds = [barberId, ...careBarberIds].filter(
       (id): id is string => Boolean(id)
     );
-    const schedules = await BarberSchedule.find({
-      barber: { $in: relevantBarberIds },
-      dayOfWeek,
-      isWorking: true,
-    }).lean();
+    const [weeklySchedules, dateOverrides] = await Promise.all([
+      BarberSchedule.find({ barber: { $in: relevantBarberIds }, dayOfWeek }).lean(),
+      BarberScheduleOverride.find({ barber: { $in: relevantBarberIds }, date: appointmentDate }).lean(),
+    ]);
+    const overridesByBarber = new Map(dateOverrides.map((item) => [String(item.barber), item]));
+    const schedules = relevantBarberIds.map((id) =>
+      overridesByBarber.get(id) || weeklySchedules.find((item) => String(item.barber) === id)
+    ).filter((item): item is NonNullable<typeof item> => Boolean(item?.isWorking));
     const scheduleByBarber = new Map(
       schedules.map((schedule) => [String(schedule.barber), schedule])
     );

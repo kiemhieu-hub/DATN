@@ -1,9 +1,12 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
-import { list, update } from "../controllers/receptionistSchedule.controller";
+import { dayDetail, list, removeOverride, saveOverride, update } from "../controllers/receptionistSchedule.controller";
 const router=Router();
 router.use(authenticate,authorize("RECEPTIONIST","ADMIN"));
 router.get("/barbers",list);
 router.put("/barbers/:id/schedule",update);
+router.get("/barbers/:id/day-detail", dayDetail);
+router.put("/barbers/:id/date-override", saveOverride);
+router.delete("/barbers/:id/date-override", removeOverride);
 export default router;

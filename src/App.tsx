@@ -22,8 +22,6 @@ import Blog2 from './pages/Client/Blog2';
 import Blog3 from './pages/Client/Blog3';
 import Booking from "./pages/Client/Booking";
 import BookingHistory from "./pages/Client/BookingHistory";
-import ClientProfile from "./pages/Client/Profile";
-import Favorites from "./pages/Client/Favorites";
 import Schedule from "./pages/barber/Schedule";
 import WorkingSchedule from "./pages/barber/WorkingSchedule";
 import Dashboard from "./pages/barber/Dashboard";
@@ -38,6 +36,7 @@ import BarberLogin from "./pages/Auth/BarberLogin";
 import ReceptionistLogin from "./pages/Auth/ReceptionistLogin";
 import ReceptionistDashboard from "./pages/Receptionist/Dashboard";
 import ReceptionistBarberSchedules from "./pages/Receptionist/BarberSchedules";
+import BarberDaySchedule from "./pages/Receptionist/BarberDaySchedule";
 import AdminLayout from "./layouts/AdminLayout";
 import ReceptionistLayout from "./layouts/ReceptionistLayout";
 
@@ -77,6 +76,7 @@ function App() {
           <Route path="service-categories" element={<AdminServiceCategories />}/>
           <Route path="barbers" element={<Barbers />}/>
           <Route path="barber-schedules" element={<ReceptionistBarberSchedules />}/>
+          <Route path="barber-day-schedule" element={<BarberDaySchedule />}/>
           <Route path="services" element={<AdminServices />}/>
           <Route path="appointments" element={<AdminAppointments />}/>
           <Route path="operations" element={<ReceptionistDashboard />}/>
@@ -96,6 +96,7 @@ function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<ReceptionistDashboard />} />
           <Route path="barbers" element={<ReceptionistBarberSchedules />} />
+          <Route path="barber-day-schedule" element={<BarberDaySchedule />} />
         </Route>
 
         {/* ================= CLIENT ================= */}
@@ -118,23 +119,6 @@ function App() {
         <Route path="/blog3" element={<Blog3 />} />
         <Route path="/booking"element={<Booking />}/>
         <Route path="/booking-history"element={<BookingHistory />}/>
-        <Route path="/profile" element={<ClientProfile />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/index.html" element={<Navigate to="/" replace />} />
-        <Route path="/about.html" element={<Navigate to="/about" replace />} />
-        <Route path="/services.html" element={<Navigate to="/services" replace />} />
-        <Route path="/pricing.html" element={<Navigate to="/pricing" replace />} />
-        <Route path="/contact.html" element={<Navigate to="/contact" replace />} />
-        <Route path="/services-page.html" element={<Navigate to="/services-page" replace />} />
-        <Route path="/team.html" element={<Navigate to="/team" replace />} />
-        <Route path="/team-details.html" element={<Navigate to="/team-details" replace />} />
-        <Route path="/portfolio.html" element={<Navigate to="/portfolio" replace />} />
-        <Route path="/faq.html" element={<Navigate to="/faq" replace />} />
-        <Route path="/404.html" element={<Navigate to="/404" replace />} />
-        <Route path="/post.html" element={<Navigate to="/post" replace />} />
-        <Route path="/blog.html" element={<Navigate to="/blog" replace />} />
-        <Route path="/blog2.html" element={<Navigate to="/blog2" replace />} />
-        <Route path="/blog3.html" element={<Navigate to="/blog3" replace />} />
 
         {/* ================= BARBER ================= */}
         <Route path="/barber/login" element={<BarberLogin />} />
@@ -147,7 +131,18 @@ function App() {
         <Route path="/payment/vnpay-return"element={<VnpayReturn />}/>
 
 
-        <Route path="*" element={<NotFound />} />
+        <Route path="*"element={
+            <div
+              style={{
+                color: '#fff',
+                padding: '50px',
+                textAlign: 'center',
+              }}
+            >
+              <h2>404 - Không tìm thấy trang</h2>
+            </div>
+          }
+        />
       </Routes>
     </Router>
   );
