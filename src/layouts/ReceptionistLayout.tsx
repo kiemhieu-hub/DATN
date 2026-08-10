@@ -60,15 +60,6 @@ function ReceptionistLayout() {
           {collapsed ? "›" : "‹"}
         </button>
         <nav className="admin-shell-navigation">
-          <NavLink to="/receptionist/notifications" className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
-            <span className="admin-nav-icon">TB</span>
-            <span className="admin-nav-label">Thông báo</span>
-            {notificationCount > 0 && (
-              <span className="admin-nav-badge">
-                {notificationCount > 99 ? "99+" : notificationCount}
-              </span>
-            )}
-          </NavLink>
           <NavLink to="/receptionist/dashboard" className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
             <span className="admin-nav-icon">LH</span><span className="admin-nav-label">Quản lý lịch hẹn</span>
           </NavLink>
@@ -88,6 +79,10 @@ function ReceptionistLayout() {
           </button>
         </div>
       </aside>
+      <NavLink className="reception-floating-bell" to="/receptionist/notifications" title="Thông báo">
+        <span aria-hidden="true">🔔</span>
+        {notificationCount > 0 && <b>{notificationCount > 99 ? "99+" : notificationCount}</b>}
+      </NavLink>
       <main className="admin-shell-content"><Outlet /></main>
     </div>
   );

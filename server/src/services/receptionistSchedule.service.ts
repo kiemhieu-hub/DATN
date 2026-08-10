@@ -4,6 +4,8 @@ import User from "../models/User";
 import AppError from "../utils/AppError";
 import Appointment from "../models/Appointment";
 import BarberScheduleOverride from "../models/BarberScheduleOverride";
+import BarberProfile from "../models/BarberProfile";
+import BarberScheduleChangeLog from "../models/BarberScheduleChangeLog";
 
 const ACTIVE_STATUSES = ["PENDING", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"];
 const timeToMinutes = (value: string) => {
@@ -29,28 +31,68 @@ const assertTimes = (startTime: string, endTime: string, isWorking: boolean) => 
 };
 
 export const listBarberSchedules = async () => {
+  const today = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+
+  // Lịch riêng đã qua không còn giá trị sử dụng nên được dọn tự động.
+  await BarberScheduleOverride.deleteMany({ date: { $lt: today } });
+
   const barbers = await User.find({ role: "BARBER", status: "ACTIVE" }).select("fullName email phone").lean();
-  const schedules = await BarberSchedule.find({ barber: { $in: barbers.map((b) => b._id) } }).lean();
+  const profiles = await BarberProfile.find({ user: { $in: barbers.map((b) => b._id) }, isActive: true }).select("user staffType").lean();
+  const staffTypeByUser = new Map(profiles.map((profile) => [String(profile.user), profile.staffType]));
+  const barberIds = barbers.map((barber) => barber._id);
+  const [schedules, dateOverrides] = await Promise.all([
+    BarberSchedule.find({ barber: { $in: barberIds } }).lean(),
+    BarberScheduleOverride.find({
+      barber: { $in: barberIds },
+      date: { $gte: today },
+    })
+      .sort({ date: 1 })
+      .lean(),
+  ]);
+
   return barbers.map((barber) => ({
-    barber,
+    barber: { ...barber, staffType: staffTypeByUser.get(String(barber._id)) || "HAIR" },
     schedules: schedules.filter((schedule) => String(schedule.barber) === String(barber._id)),
+    dateOverrides: dateOverrides.filter(
+      (override) => String(override.barber) === String(barber._id)
+    ),
   }));
 };
 
 export const updateBarberSchedule = async (
   barberId: string,
-  schedules: Array<{ dayOfWeek: number; startTime: string; endTime: string; isWorking: boolean }>
+  schedules: Array<{ dayOfWeek: number; startTime: string; endTime: string; isWorking: boolean }>,
+  actorId: string
 ) => {
   if (!mongoose.Types.ObjectId.isValid(barberId)) throw new AppError("Mã Barber không hợp lệ", 400);
   const barber = await User.findOne({ _id: barberId, role: "BARBER" });
   if (!barber) throw new AppError("Không tìm thấy Barber", 404);
   if (!Array.isArray(schedules) || schedules.length !== 7) throw new AppError("Cần gửi đủ lịch 7 ngày", 400);
+  const previousSchedules = await BarberSchedule.find({ barber: barberId })
+    .sort({ dayOfWeek: 1 })
+    .lean();
+
   await Promise.all(schedules.map((item) => BarberSchedule.findOneAndUpdate(
     { barber: barberId, dayOfWeek: item.dayOfWeek },
     { $set: { barber: barberId, dayOfWeek: item.dayOfWeek, startTime: item.startTime, endTime: item.endTime, isWorking: item.isWorking, breaks: [] } },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   )));
-  return BarberSchedule.find({ barber: barberId }).sort({ dayOfWeek: 1 }).lean();
+  const updatedSchedules = await BarberSchedule.find({ barber: barberId })
+    .sort({ dayOfWeek: 1 })
+    .lean();
+
+  await BarberScheduleChangeLog.create({
+    barber: barberId,
+    actor: actorId,
+    changeType: "WEEKLY_UPDATED",
+    before: previousSchedules,
+    after: updatedSchedules,
+    note: "Cập nhật lịch làm việc lặp hằng tuần",
+  });
+
+  return updatedSchedules;
 };
 
 export const getBarberDayDetail = async (barberId: string, date: string) => {
@@ -118,7 +160,8 @@ export const getBarberDayDetail = async (barberId: string, date: string) => {
 
 export const saveDateOverride = async (
   barberId: string,
-  payload: { date: string; startTime: string; endTime: string; isWorking: boolean; note?: string }
+  payload: { date: string; startTime: string; endTime: string; isWorking: boolean; note?: string },
+  actorId: string
 ) => {
   if (!mongoose.Types.ObjectId.isValid(barberId)) throw new AppError("Mã Barber không hợp lệ", 400);
   assertDate(payload.date);
@@ -143,15 +186,68 @@ export const saveDateOverride = async (
   if (conflicting) {
     throw new AppError(`Không thể đổi ca vì lịch ${conflicting.code} nằm ngoài khung giờ mới. Hãy đổi lịch hẹn trước.`, 409);
   }
-  return BarberScheduleOverride.findOneAndUpdate(
+  const previousOverride = await BarberScheduleOverride.findOne({
+    barber: barberId,
+    date: payload.date,
+  }).lean();
+
+  const savedOverride = await BarberScheduleOverride.findOneAndUpdate(
     { barber: barberId, date: payload.date },
     { $set: { barber: barberId, date: payload.date, startTime: payload.startTime, endTime: payload.endTime, isWorking: payload.isWorking, note: payload.note?.trim() || "" } },
     { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
   ).lean();
+
+  await BarberScheduleChangeLog.create({
+    barber: barberId,
+    actor: actorId,
+    changeType: "DATE_OVERRIDE_SAVED",
+    effectiveDate: payload.date,
+    before: previousOverride,
+    after: savedOverride,
+    note: payload.note?.trim() || "Cập nhật lịch làm việc theo ngày",
+  });
+
+  return savedOverride;
 };
 
-export const deleteDateOverride = async (barberId: string, date: string) => {
+export const deleteDateOverride = async (
+  barberId: string,
+  date: string,
+  actorId: string
+) => {
   if (!mongoose.Types.ObjectId.isValid(barberId)) throw new AppError("Mã Barber không hợp lệ", 400);
   assertDate(date);
+  const previousOverride = await BarberScheduleOverride.findOne({
+    barber: barberId,
+    date,
+  }).lean();
+
   await BarberScheduleOverride.deleteOne({ barber: barberId, date });
+
+  if (previousOverride) {
+    await BarberScheduleChangeLog.create({
+      barber: barberId,
+      actor: actorId,
+      changeType: "DATE_OVERRIDE_REMOVED",
+      effectiveDate: date,
+      before: previousOverride,
+      after: null,
+      note: "Hủy lịch điều chỉnh theo ngày",
+    });
+  }
+};
+
+export const getScheduleChangeHistory = async (barberId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(barberId)) {
+    throw new AppError("Mã Barber không hợp lệ", 400);
+  }
+
+  const barber = await User.exists({ _id: barberId, role: "BARBER" });
+  if (!barber) throw new AppError("Không tìm thấy Barber", 404);
+
+  return BarberScheduleChangeLog.find({ barber: barberId })
+    .populate("actor", "fullName role")
+    .sort({ createdAt: -1 })
+    .limit(100)
+    .lean();
 };

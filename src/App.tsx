@@ -97,6 +97,7 @@ function App() {
           <Route path="dashboard" element={<ReceptionistDashboard />} />
           <Route path="barbers" element={<ReceptionistBarberSchedules />} />
           <Route path="barber-day-schedule" element={<BarberDaySchedule />} />
+          <Route path="notifications" element={<StaffNotifications />} />
         </Route>
 
         {/* ================= CLIENT ================= */}
