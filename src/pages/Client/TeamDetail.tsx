@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function TeamDetails() {
   return (
@@ -30,7 +31,14 @@ function TeamDetails() {
           {/* Menu */}
           <div className="collapse navbar-collapse" id="navbar">
             <ul className="navbar-nav ms-auto">
-              <li className="nav-item"><a className="nav-link" href="index.html">Home</a></li>
+              <li className="nav-item">
+                <Link
+                  className="nav-link"
+                  to="/index"
+                >
+                  Home
+                </Link>
+              </li>
               <li className="nav-item"><a className="nav-link" href="about.html">About</a></li>
               <li className="nav-item"><a className="nav-link" href="services.html">Services</a></li>
               <li className="nav-item"><a className="nav-link" href="pricing.html">Pricing</a></li>

@@ -121,7 +121,7 @@ function Index() {
                 <ul className="dropdown-menu">
                   <li>
                     <Link
-                      to="/portfolio.html"
+                      to="/portfolio"
                       className="dropdown-item"
                     >
                       <span>Thư viện kiểu tóc</span>
@@ -157,7 +157,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/team-details.html"
+                      to="/team-details"
                       className="dropdown-item"
                     >
                       <span>Thông tin Barber</span>

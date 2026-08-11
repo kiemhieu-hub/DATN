@@ -1,12 +1,10 @@
 .history-page {
   min-height: 100vh;
-  padding: 110px 20px 60px;
+  padding: 70px 24px;
+  font-family: "Be Vietnam Pro", sans-serif;
   background:
-    linear-gradient(
-      rgba(20, 18, 16, 0.91),
-      rgba(20, 18, 16, 0.97)
-    ),
-    url("/img/slider/18.jpg") center / cover fixed;
+    radial-gradient(circle at 15% 0%, #2b251a 0, transparent 28%),
+    #10100f;
 }
 
 .history-container {
@@ -17,7 +15,7 @@
 
 .history-heading {
   margin-bottom: 30px;
-  text-align: center;
+  text-align: left;
 }
 
 .history-brand {
@@ -32,9 +30,9 @@
 .history-heading h1 {
   margin: 0;
   color: #ffffff;
-  font-size: 40px;
+  font-size: clamp(34px, 4vw, 52px);
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .history-heading > p:last-child {
@@ -58,8 +56,8 @@
   align-items: center;
   padding: 0 24px;
   color: #1d1915;
-  background: #ffffff;
-  border: 1px solid #ffffff;
+  background: #d2aa5c;
+  border: 1px solid #d2aa5c;
   font-size: 12px;
   font-weight: 800;
   text-decoration: none;
@@ -128,9 +126,10 @@
 
 .history-card {
   padding: 27px;
-  background: rgba(31, 28, 25, 0.98);
-  border: 1px solid #403a34;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.3);
+  background: #191918;
+  border: 1px solid #35332e;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+  border-radius: 18px;
 }
 
 .history-card-header {
@@ -163,6 +162,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  border-radius: 999px;
 }
 
 .status-pending {
@@ -203,13 +203,9 @@
   gap: 18px;
   margin: 22px 0;
   padding: 20px;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(200, 155, 99, 0.17),
-      rgba(47, 42, 37, 0.96)
-    );
-  border: 1px solid #66513b;
+  background: #24231f;
+  border: 1px solid #4b4539;
+  border-radius: 14px;
 }
 
 .history-time-banner > div:not(
@@ -253,8 +249,9 @@
 .history-services {
   margin-bottom: 20px;
   padding: 19px;
-  background: #292520;
-  border: 1px solid #3f3933;
+  background: #20201e;
+  border: 1px solid #393731;
+  border-radius: 14px;
 }
 
 .history-section-title {
@@ -355,8 +352,25 @@
   justify-content: center;
   gap: 7px;
   padding: 15px;
-  background: #292520;
-  border: 1px solid #3f3933;
+  background: #20201e;
+  border: 1px solid #393731;
+  border-radius: 12px;
+}
+
+.history-details > .history-voucher-card {
+  border-color: #806431;
+  background: linear-gradient(135deg, #302817, #20201e);
+}
+
+.history-voucher-card strong {
+  color: #e5b95f;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.history-voucher-card small {
+  color: #cfc6b8;
+  font-size: 12px;
 }
 
 .history-details span,
@@ -383,6 +397,7 @@
   margin-bottom: 18px;
   padding: 15px 17px;
   background: #292520;
+  border-radius: 10px;
 }
 
 .history-note {
@@ -425,6 +440,7 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: 0.2s ease;
+  border-radius: 10px;
 }
 
 .history-cancel-button:hover:not(:disabled) {
@@ -436,6 +452,54 @@
   cursor: not-allowed;
 }
 
+.history-review-button {
+  min-height: 41px;
+  padding: 0 19px;
+  color: #1d1915;
+  background: #c89b63;
+  border: 1px solid #c89b63;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.history-review-button:hover {
+  color: #fff;
+  background: transparent;
+}
+
+.history-payment-button {
+  min-height: 41px;
+  padding: 0 19px;
+  color: #17140f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: #d2aa5c;
+  border: 1px solid #d2aa5c;
+  border-radius: 10px;
+}
+
+.history-payment-button:hover:not(:disabled) {
+  color: #f5f1e8;
+  background: transparent;
+}
+
+.history-payment-button:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+.history-reviewed-label {
+  color: #afe8ba;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 /* Trống và loading */
 
 .history-empty {
@@ -443,6 +507,7 @@
   text-align: center;
   background: rgba(31, 28, 25, 0.98);
   border: 1px solid #403a34;
+  border-radius: 18px;
 }
 
 .history-empty-icon {
@@ -476,6 +541,7 @@
   text-align: center;
   background: rgba(31, 28, 25, 0.98);
   border: 1px solid #403a34;
+  border-radius: 18px;
 }
 
 .history-spinner {
@@ -594,3 +660,4 @@
     flex-direction: column;
   }
 }
+.history-cancel-modal-bg{position:fixed;inset:0;background:#000b;display:grid;place-items:center;padding:20px;z-index:2000}.history-cancel-modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#1f1c19;border:1px solid #66513b;padding:28px;color:#eee}.history-cancel-modal h2{margin-top:0}.history-cancel-modal label{display:grid;gap:8px;margin:14px 0}.history-cancel-modal textarea,.history-cancel-modal input{width:100%;box-sizing:border-box;background:#121110;border:1px solid #514a43;color:#fff;padding:12px;font:inherit}.history-cancel-modal textarea{min-height:110px;resize:vertical}.history-cancel-modal fieldset{margin:16px 0;border:1px solid #514a43}.history-cancel-modal legend{padding:0 8px;color:#d8b272}.history-cancel-modal>small{color:#d8b272}.history-cancel-modal>div{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.history-cancel-modal button{padding:10px 15px;background:#292622;color:#fff;border:1px solid #555;cursor:pointer}.history-cancel-modal button[type=submit]{background:#b84e4e;border-color:#b84e4e}
