@@ -57,7 +57,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/hairstyle-gallery", hairstyleGalleryRoutes);
-app.use("/api/favorites", favoriteHairstyleRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/catalog",catalogRoutes);
 app.use("/api/barber", barberRoutes);
@@ -78,6 +77,7 @@ app.use("/api/admin", adminContentRoutes);
 app.use("/api/receptionist", receptionistRoutes);
 app.use("/api/staff/notifications", staffNotificationRoutes);
 app.use("/api/payments/vnpay", vnpayRoutes);
+app.use("/api/favorites", favoriteHairstyleRoutes);
 
 
 

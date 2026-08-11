@@ -22,6 +22,7 @@ import Blog2 from './pages/Client/Blog2';
 import Blog3 from './pages/Client/Blog3';
 import Booking from "./pages/Client/Booking";
 import BookingHistory from "./pages/Client/BookingHistory";
+import Favorites from "./pages/Client/Favorites";
 import Schedule from "./pages/barber/Schedule";
 import WorkingSchedule from "./pages/barber/WorkingSchedule";
 import Dashboard from "./pages/barber/Dashboard";
@@ -120,6 +121,7 @@ function App() {
         <Route path="/blog3" element={<Blog3 />} />
         <Route path="/booking"element={<Booking />}/>
         <Route path="/booking-history"element={<BookingHistory />}/>
+        <Route path="/favorites" element={<Favorites />} />
 
         {/* ================= BARBER ================= */}
         <Route path="/barber/login" element={<BarberLogin />} />

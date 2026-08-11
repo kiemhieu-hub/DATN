@@ -35,7 +35,7 @@ function NotFound() {
             </div>
             <div className="row mt-20">
               <div className="col-md-12">
-                <a href="index.html" className="link-btn">
+                <a href="/" className="link-btn">
                   <span className="ti-arrow-left"></span> Home Page
                 </a>
               </div>
