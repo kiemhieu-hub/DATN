@@ -16,6 +16,7 @@ export interface AdminBarberProfile {
   reviewCount: number;
   specialties: CatalogService[];
   isActive: boolean;
+  staffType: "HAIR" | "CARE";
   createdAt?: string;
   updatedAt?: string;
 }
@@ -70,6 +71,7 @@ export interface CreateAdminBarberPayload {
   bio?: string;
   experienceYears?: number;
   specialtyIds?: string[];
+  staffType?: "HAIR" | "CARE";
 }
 
 export interface UpdateAdminBarberPayload {
@@ -79,6 +81,7 @@ export interface UpdateAdminBarberPayload {
   bio?: string;
   experienceYears?: number;
   specialtyIds?: string[];
+  staffType?: "HAIR" | "CARE";
 }
 
 export interface UpdateAdminBarberStatusPayload {

@@ -1,5 +1,5 @@
 import api from "./api";
-import type { AppointmentStatus } from "../types/Appointment";
+import type { AppointmentStatus } from "../types/Appoinment";
 import type { AdminAppointmentMutationResponse, AdminAppointmentParams, GetAdminAppointmentResponse, GetAdminAppointmentsResponse } from "../types/AdminAppointment";
 
 export const getAdminAppointments = async (params: AdminAppointmentParams = {}) =>

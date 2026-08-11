@@ -1,6 +1,8 @@
 import api from "./api";
 import axios from "axios";
-import type {AuthUser,LoginPayload,LoginResponse,RegisterPayload,RegisterResponse,UserRole,} from "../types/Auth";
+import type { AuthUser, LoginPayload, LoginResponse, RegisterPayload, RegisterResponse, UpdateProfilePayload, UserRole } from "../types/Auth";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export const register = async (
   data: RegisterPayload
@@ -32,11 +34,20 @@ export const getMe = async (
   const response = await axios.get<{
     success: boolean;
     user: AuthUser;
-  }>("http://localhost:5000/api/auth/me", {
+  }>(`${API_URL}/auth/me`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
 
   return response.data.user;
+};
+
+export const updateMyProfile = async (data: UpdateProfilePayload) => {
+  const response = await api.patch<{
+    success: boolean;
+    message: string;
+    user: AuthUser;
+  }>("/auth/me", data);
+  return response.data;
 };

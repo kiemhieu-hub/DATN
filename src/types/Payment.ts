@@ -3,6 +3,7 @@ import type { Appointment } from "./Appoinment";
 export type PaymentMethod =| "CASH"| "VNPAY"| "MOMO"| "BANK_TRANSFER";
 
 export type PaymentTransactionStatus =| "PENDING"| "PAID"| "FAILED"| "CANCELLED"| "REFUNDED";
+export type PaymentPurpose = "DEPOSIT" | "BALANCE" | "FULL";
 
 export interface PaymentClient {
   _id: string;
@@ -16,6 +17,7 @@ export interface Payment {
   appointment: string | Appointment;
   client: string | PaymentClient;
   amount: number;
+  purpose: PaymentPurpose;
   method: PaymentMethod;
   status: PaymentTransactionStatus;
   transactionCode: string;

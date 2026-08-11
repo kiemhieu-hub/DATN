@@ -1,4 +1,4 @@
-import type { Appointment, AppointmentStatus } from "./Appoinment";
+import type { AppointmentStatus } from "./Appoinment";
 
 export interface BarberDashboardStatistics {
   total: number;

@@ -25,7 +25,7 @@ import BookingHistory from "./pages/Client/BookingHistory";
 import Schedule from "./pages/Barber/Schedule";
 import WorkingSchedule from "./pages/Barber/WorkingSchedule";
 import Dashboard from "./pages/Barber/Dashnoard";
-import Profile from "./pages/Barber/Dashnoard";
+import Profile from "./pages/Barber/Profile";
 
 // Auth
 import Login from './pages/Auth/Login';
@@ -36,6 +36,7 @@ import BarberLogin from "./pages/Auth/BarberLogin";
 import ReceptionistLogin from "./pages/Auth/ReceptionistLogin";
 import ReceptionistDashboard from "./pages/Receptionist/Dashboard";
 import ReceptionistBarberSchedules from "./pages/Receptionist/BarberSchedules";
+import BarberDaySchedule from "./pages/Receptionist/BarberDaySchedule";
 import AdminLayout from "./layouts/AdminLayout";
 import ReceptionistLayout from "./layouts/ReceptionistLayout";
 
@@ -54,6 +55,12 @@ import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
 import AdminReviews from "./pages/Admin/Reviews";
 import StaffNotifications from "./pages/Admin/StaffNotifications";
 
+//VNpay
+import VnpayReturn from "./pages/Client/VnpayReturn";
+
+// Theme dùng chung, luôn import sau CSS riêng của từng module.
+import "./styles/ThadsTheme.css";
+
 function App() {
   return (
     <Router>
@@ -69,6 +76,7 @@ function App() {
           <Route path="service-categories" element={<AdminServiceCategories />}/>
           <Route path="barbers" element={<Barbers />}/>
           <Route path="barber-schedules" element={<ReceptionistBarberSchedules />}/>
+          <Route path="barber-day-schedule" element={<BarberDaySchedule />}/>
           <Route path="services" element={<AdminServices />}/>
           <Route path="appointments" element={<AdminAppointments />}/>
           <Route path="operations" element={<ReceptionistDashboard />}/>
@@ -88,6 +96,8 @@ function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<ReceptionistDashboard />} />
           <Route path="barbers" element={<ReceptionistBarberSchedules />} />
+          <Route path="barber-day-schedule" element={<BarberDaySchedule />} />
+          <Route path="notifications" element={<StaffNotifications />} />
         </Route>
 
         {/* ================= CLIENT ================= */}
@@ -117,6 +127,9 @@ function App() {
         <Route path="/barber/working-schedule"element={<WorkingSchedule />}/>
         <Route path="/barber/dashboard" element={<Dashboard />}/>
         <Route path="/barber/profile"element={<Profile />}/>
+
+        {/* ================= VNpay ================= */}
+        <Route path="/payment/vnpay-return"element={<VnpayReturn />}/>
 
 
         <Route path="*"element={

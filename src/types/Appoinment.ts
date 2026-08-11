@@ -29,6 +29,14 @@ export interface AppointmentService {
   durationSnapshot: number;
 }
 
+export interface AppointmentStaffAssignment {
+  barber: string | AppointmentUser;
+  staffType: "HAIR" | "CARE";
+  serviceIds: string[];
+  startTime: string;
+  endTime: string;
+}
+
 export interface AppointmentCancellation {
   cancelledBy?:
     | string
@@ -42,6 +50,11 @@ export interface AppointmentCancellation {
 
   reason: string;
   cancelledAt?: string;
+  depositRefundStatus?: "NOT_APPLICABLE" | "ELIGIBLE" | "NOT_ELIGIBLE" | "REFUNDED";
+  depositRefundAmount?: number;
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountName?: string;
 }
 
 export interface AppointmentActivityActor {
@@ -79,6 +92,7 @@ export interface Appointment {
     | AppointmentUser;
 
   services: AppointmentService[];
+  staffAssignments?: AppointmentStaffAssignment[];
 
   totalPrice: number;
   subtotal: number;
