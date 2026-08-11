@@ -1,24 +1,18 @@
-// import { Router } from "express";
+import { Router } from "express";
 
-// import {
-//   addFavoriteHairstyle,
-//   removeFavoriteHairstyle,
-//   getMyFavoriteHairstyles,
-// } from "../controllers/favoriteHairstyle.controller";
-// import { authenticate } from "../middleware/authenticate";
+import {
+  addFavoriteHairstyle,
+  getMyFavoriteHairstyles,
+  removeFavoriteHairstyle,
+} from "../controllers/favoriteHairstyle.controller";
+import { authenticate } from "../middleware/authenticate";
+import { authorize } from "../middleware/authorize";
 
-// const router = Router();
+const router = Router();
 
-// // Tất cả routes đều cần đăng nhập
-// router.use(authenticate);
+router.use(authenticate, authorize("CLIENT"));
+router.get("/", getMyFavoriteHairstyles);
+router.post("/", addFavoriteHairstyle);
+router.delete("/:id", removeFavoriteHairstyle);
 
-// // GET /api/favorites - Lấy danh sách yêu thích
-// router.get("/", getMyFavoriteHairstyles);
-
-// // POST /api/favorites - Thêm yêu thích
-// router.post("/", addFavoriteHairstyle);
-
-// // DELETE /api/favorites/:imageUrl - Xóa yêu thích
-// router.delete("/:imageUrl", removeFavoriteHairstyle);
-
-// export default router;
+export default router;

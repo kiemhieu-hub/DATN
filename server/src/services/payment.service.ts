@@ -26,7 +26,7 @@ const populatePayment = (query: any) => {
     .populate({
       path: "appointment",
       select:
-        "client barber services totalPrice durationMinutes appointmentDate startTime endTime status paymentStatus note",
+        "client barber services subtotal discountAmount totalPrice depositRequired depositAmount depositPaid durationMinutes appointmentDate startTime endTime status paymentStatus note",
       populate: [
         {
           path: "barber",
@@ -75,13 +75,9 @@ export const confirmCashPayment = async (
         throw new AppError("Không tìm thấy lịch hẹn", 404);
       }
 
-      if (
-        !["IN_PROGRESS", "COMPLETED"].includes(
-          appointment.status
-        )
-      ) {
+      if (appointment.status !== "COMPLETED") {
         throw new AppError(
-          "Chỉ thanh toán khi lịch đang thực hiện hoặc đã hoàn thành",
+          "Chỉ được thanh toán sau khi lịch hẹn đã hoàn thành",
           400
         );
       }
@@ -92,6 +88,7 @@ export const confirmCashPayment = async (
 
       const existingPayment = await Payment.findOne({
         appointment: appointmentId,
+        purpose: appointment.depositPaid ? "BALANCE" : "FULL",
         status: "PAID",
       }).session(session);
 
@@ -99,12 +96,22 @@ export const confirmCashPayment = async (
         throw new AppError("Lịch hẹn đã có giao dịch thanh toán", 409);
       }
 
+      // Tiền cọc đã trả là một phần của hóa đơn, không thu lại lần hai.
+      const depositCredit = appointment.depositPaid
+        ? appointment.depositAmount
+        : 0;
+      const remainingAmount = Math.max(
+        0,
+        appointment.totalPrice - depositCredit
+      );
+
       const [payment] = await Payment.create(
         [
           {
             appointment: appointment._id,
             client: appointment.client,
-            amount: appointment.totalPrice,
+            amount: remainingAmount,
+            purpose: appointment.depositPaid ? "BALANCE" : "FULL",
             method,
             status: "PAID",
             transactionCode: `${method === "CASH" ? "CASH" : "BANK"}-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -129,13 +136,14 @@ export const confirmCashPayment = async (
         action: "PAYMENT_CONFIRMED",
         description:
           method === "CASH"
-            ? `Đã xác nhận thanh toán tiền mặt ${appointment.totalPrice.toLocaleString("vi-VN")}đ`
-            : `Đã xác nhận chuyển khoản ${appointment.totalPrice.toLocaleString("vi-VN")}đ`,
+            ? `Đã xác nhận thanh toán tiền mặt phần còn lại ${remainingAmount.toLocaleString("vi-VN")}đ`
+            : `Đã xác nhận chuyển khoản phần còn lại ${remainingAmount.toLocaleString("vi-VN")}đ`,
         actorId: adminId,
         actorRole,
         metadata: {
           method,
-          amount: appointment.totalPrice,
+          amount: remainingAmount,
+          depositCredit,
           paymentStatus: "PAID",
           transactionCode: payment.transactionCode,
         },
@@ -148,7 +156,7 @@ export const confirmCashPayment = async (
     const payment = await Payment.findById(createdPaymentId)
       .populate(
         "appointment",
-        "appointmentDate startTime endTime services totalPrice status paymentStatus"
+        "appointmentDate startTime endTime services subtotal discountAmount totalPrice depositRequired depositAmount depositPaid status paymentStatus"
       )
       .populate(
         "client",
@@ -206,7 +214,7 @@ export const confirmCashPayment = async (
 
       void createStaffNotification({
         title: "Thanh toán thành công",
-        message: `Lịch ${appointment.appointmentCode} đã thanh toán ${appointment.totalPrice.toLocaleString("vi-VN")}đ bằng ${method === "CASH" ? "tiền mặt" : "chuyển khoản"}.`,
+        message: `Lịch ${appointment.appointmentCode} đã thanh toán phần còn lại ${payment.amount.toLocaleString("vi-VN")}đ bằng ${method === "CASH" ? "tiền mặt" : "chuyển khoản"}.`,
         kind: "PAYMENT",
         appointmentId,
         dedupeKey: `PAYMENT:${appointmentId}:${createdPaymentId}`,
@@ -238,6 +246,7 @@ export const getPaymentByAppointment = async (
     appointment: appointmentId,
     status: "PAID",
   })
+    .sort({ paidAt: -1 })
     .populate(
       "appointment",
       "appointmentDate startTime endTime services totalPrice status paymentStatus"
@@ -419,13 +428,35 @@ export const deleteAdminPayment = async (
     throw new AppError("Mã giao dịch không hợp lệ", 400);
   }
 
-  const payment = await Payment.findByIdAndDelete(paymentId).lean();
+  const payment = await Payment.findById(paymentId);
   if (!payment) throw new AppError("Không tìm thấy giao dịch", 404);
 
-  await Appointment.updateOne(
-    { _id: payment.appointment },
-    { $set: { paymentStatus: "UNPAID" } }
-  );
+  if (payment.purpose === "DEPOSIT") {
+    const hasFinalPayment = await Payment.exists({
+      appointment: payment.appointment,
+      purpose: { $in: ["BALANCE", "FULL"] },
+      status: "PAID",
+    });
+    if (hasFinalPayment) {
+      throw new AppError(
+        "Không thể xóa tiền cọc sau khi hóa đơn đã thanh toán xong",
+        409
+      );
+    }
+  }
+
+  await payment.deleteOne();
+
+  const appointment = await Appointment.findById(payment.appointment);
+  if (appointment) {
+    if (payment.purpose === "DEPOSIT") {
+      appointment.depositPaid = false;
+      appointment.paymentStatus = "UNPAID";
+    } else {
+      appointment.paymentStatus = appointment.depositPaid ? "PENDING" : "UNPAID";
+    }
+    await appointment.save();
+  }
   await recordAppointmentActivity({
     appointmentId: payment.appointment,
     action: "PAYMENT_DELETED",

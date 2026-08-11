@@ -7,7 +7,6 @@ import {
   resetBarberPassword,
   updateBarber,
   updateBarberStatus,
-  deleteBarber,
 } from "../controllers/adminBarber.controller";
 
 import { authenticate } from "../middleware/authenticate";
@@ -44,9 +43,6 @@ router.patch(
   "/:id/status",
   updateBarberStatus
 );
-
-router.delete("/:id", deleteBarber);
-
 
 router.patch(
   "/:id/reset-password",

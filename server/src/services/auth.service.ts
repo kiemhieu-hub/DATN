@@ -98,7 +98,7 @@ export const loginUser = async (
 
   const accessToken = generateToken({
     userId: user._id.toString(),
-    role: user.role ,
+    role: user.role,
   });
 
   return {
@@ -126,7 +126,44 @@ export const getCurrentUser = async (userId: string) => {
     fullName: user.fullName,
     email: user.email,
     phone: user.phone,
+    avatar: user.avatar,
     role: user.role,
     status: user.status,
   };
+};
+
+interface UpdateClientProfileInput {
+  fullName?: string;
+  phone?: string;
+  avatar?: string;
+}
+
+export const updateClientProfile = async (
+  userId: string,
+  input: UpdateClientProfileInput
+) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError("Không tìm thấy tài khoản", 404);
+  }
+
+  if (user.role !== "CLIENT") {
+    throw new AppError("Chỉ khách hàng được cập nhật hồ sơ tại đây", 403);
+  }
+
+  if (typeof input.fullName === "string") {
+    user.fullName = input.fullName.trim();
+  }
+
+  if (typeof input.phone === "string") {
+    user.phone = input.phone.trim();
+  }
+
+  if (typeof input.avatar === "string") {
+    user.avatar = input.avatar.trim();
+  }
+
+  await user.save();
+  return getCurrentUser(userId);
 };

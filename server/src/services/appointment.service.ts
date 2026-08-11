@@ -7,6 +7,7 @@ import Appointment, {
 
 import BarberProfile from "../models/BarberProfile";
 import BarberSchedule from "../models/BarberSchedule";
+import BarberScheduleOverride from "../models/BarberScheduleOverride";
 
 import Service, {
   type IService,
@@ -104,6 +105,9 @@ interface CancelAppointmentInput {
   userId: string;
   role: CancellationRole;
   reason?: string;
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountName?: string;
 }
 
 interface GetAppointmentsOptions {
@@ -124,7 +128,7 @@ interface UpdateAppointmentStatusInput {
 }
 
 interface AvailableSlotsInput {
-  barberId: string;
+  barberId?: string;
   serviceIds: string[];
   appointmentDate: string;
 }
@@ -182,7 +186,7 @@ const STATUS_TRANSITIONS: Record<
   PENDING: ["CONFIRMED", "CANCELLED"],
   CONFIRMED: ["CHECKED_IN", "NO_SHOW", "CANCELLED"],
   CHECKED_IN: ["IN_PROGRESS"],
-  IN_PROGRESS: ["COMPLETED", "CANCELLED"],
+  IN_PROGRESS: ["COMPLETED"],
   COMPLETED: [],
   NO_SHOW: ["CONFIRMED", "IN_PROGRESS"],
   CANCELLED: [],
@@ -532,11 +536,11 @@ const validateBarberSchedule = async (
   const dayOfWeek =
     getDayOfWeek(appointmentDate);
 
-  const schedule =
-    await BarberSchedule.findOne({
-      barber: barberId,
-      dayOfWeek,
-    }).lean();
+  const [weeklySchedule, dateOverride] = await Promise.all([
+    BarberSchedule.findOne({ barber: barberId, dayOfWeek }).lean(),
+    BarberScheduleOverride.findOne({ barber: barberId, date: appointmentDate }).lean(),
+  ]);
+  const schedule = dateOverride || weeklySchedule;
 
   if (
     !schedule ||
@@ -611,7 +615,7 @@ const validateAppointmentConflict =
     const appointments =
       await Appointment.find(query)
         .select(
-          "startTime endTime"
+          "barber startTime endTime staffAssignments"
         )
         .lean();
 
@@ -621,31 +625,32 @@ const validateAppointmentConflict =
     const requestedEnd =
       timeToMinutes(endTime);
 
-    const conflictingAppointment =
-      appointments.find(
-        (appointment) => {
-          const existingStart =
-            timeToMinutes(
-              appointment.startTime
-            );
+    const conflictingAppointment = appointments.find((appointment) => {
+      const assignments = appointment.staffAssignments?.filter(
+        (assignment) => String(assignment.barber) === barberId
+      ) ?? [];
+      const intervals = assignments.length > 0
+        ? assignments.map((assignment) => ({
+            startTime: assignment.startTime,
+            endTime: assignment.endTime,
+          }))
+        : String(appointment.barber) === barberId
+          ? [{ startTime: appointment.startTime, endTime: appointment.endTime }]
+          : [];
 
-          const existingEnd =
-            timeToMinutes(
-              appointment.endTime
-            );
-
-          return isTimeOverlap(
-            requestedStart,
-            requestedEnd,
-            existingStart,
-            existingEnd
-          );
-        }
+      return intervals.some((interval) =>
+        isTimeOverlap(
+          requestedStart,
+          requestedEnd,
+          timeToMinutes(interval.startTime),
+          timeToMinutes(interval.endTime)
+        )
       );
+    });
 
     if (conflictingAppointment) {
       throw new AppError(
-        `Barber đã có lịch từ ${conflictingAppointment.startTime} đến ${conflictingAppointment.endTime}`,
+        "Nhân viên đã có lịch trong khung giờ được chọn",
         409
       );
     }
@@ -724,6 +729,10 @@ const populateAppointment = async (
       .populate(
         "services.service",
         "name description image group isActive price durationMinutes"
+      )
+      .populate(
+        "staffAssignments.barber",
+        "fullName email phone role status"
       );
 
   if (!appointment) {
@@ -1056,6 +1065,10 @@ export const getMyAppointments =
         "services.service",
         "name image group isActive"
       )
+      .populate(
+        "staffAssignments.barber",
+        "fullName email phone role status"
+      )
       .sort({
         appointmentDate: -1,
         startTime: -1,
@@ -1073,6 +1086,9 @@ export const cancelMyAppointment =
     userId,
     role,
     reason,
+    refundBankName,
+    refundAccountNumber,
+    refundAccountName,
   }: CancelAppointmentInput) => {
     assertObjectId(
       appointmentId,
@@ -1131,8 +1147,14 @@ export const cancelMyAppointment =
     }
 
     const appointmentStart = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
-    if (appointmentStart.getTime() - Date.now() < 6 * 60 * 60 * 1000) {
-      throw new AppError("Chỉ có thể hủy lịch trước giờ hẹn ít nhất 6 tiếng", 400);
+    const leadTime = appointmentStart.getTime() - Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const threeDays = 3 * oneDay;
+
+    // Lịch chưa xác nhận có thể hủy bất cứ lúc nào trước giờ hẹn.
+    // Lịch đã xác nhận phải hủy trước ít nhất 24 giờ; hoàn cọc nếu trước 72 giờ.
+    if (appointment.status === "CONFIRMED" && leadTime < oneDay) {
+      throw new AppError("Lịch đã xác nhận chỉ có thể hủy trước giờ hẹn ít nhất 24 tiếng", 400);
     }
 
     if (!reason?.trim()) {
@@ -1141,6 +1163,13 @@ export const cancelMyAppointment =
 
     appointment.status =
       "CANCELLED";
+
+    const refundEligible = appointment.depositPaid && (
+      previousStatus === "PENDING" || leadTime >= threeDays
+    );
+    if (refundEligible && (!refundBankName?.trim() || !refundAccountNumber?.trim() || !refundAccountName?.trim())) {
+      throw new AppError("Vui lòng nhập đủ thông tin tài khoản nhận hoàn cọc", 400);
+    }
 
     appointment.cancellation = {
       cancelledBy:
@@ -1155,6 +1184,15 @@ export const cancelMyAppointment =
         "Khách hàng hủy lịch",
 
       cancelledAt: new Date(),
+      depositRefundStatus: !appointment.depositPaid
+        ? "NOT_APPLICABLE"
+        : refundEligible
+          ? "ELIGIBLE"
+          : "NOT_ELIGIBLE",
+      depositRefundAmount: refundEligible ? appointment.depositAmount : 0,
+      refundBankName: refundBankName?.trim() ?? "",
+      refundAccountNumber: refundAccountNumber?.trim() ?? "",
+      refundAccountName: refundAccountName?.trim() ?? "",
     };
 
     await appointment.save();
@@ -1208,8 +1246,11 @@ export const getBarberAppointments =
       "Tài khoản Barber không hợp lệ"
     );
 
-    const filter: AppointmentQuery = {
-      barber: barberId,
+    const filter: AppointmentQuery & { $or?: Array<Record<string, string>> } = {
+      $or: [
+        { barber: barberId },
+        { "staffAssignments.barber": barberId },
+      ],
     };
 
     if (options.status) {
@@ -1252,6 +1293,10 @@ export const getBarberAppointments =
       .populate(
         "services.service",
         "name image group isActive"
+      )
+      .populate(
+        "staffAssignments.barber",
+        "fullName email phone role status"
       )
       .sort({
         appointmentDate: 1,
@@ -1326,9 +1371,10 @@ export const updateAppointmentStatus =
 
     if (status === "CHECKED_IN") {
       const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
-      const earliest = startsAt.getTime() - 60 * 60 * 1000;
+      // Cho phép check-in sớm tối đa 24 giờ để thuận tiện kiểm thử/demo.
+      const earliest = startsAt.getTime() - 24 * 60 * 60 * 1000;
       if (Date.now() < earliest) {
-        throw new AppError("Chỉ được check-in sớm nhất 1 tiếng trước giờ hẹn", 400);
+        throw new AppError("Chỉ được check-in sớm nhất 1 ngày trước giờ hẹn", 400);
       }
       appointment.checkedInAt = new Date();
     }
@@ -1342,11 +1388,9 @@ export const updateAppointmentStatus =
     }
 
     if (status === "COMPLETED") {
-      const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
-      const endsAt = new Date(`${appointment.appointmentDate}T${appointment.endTime}:00`);
-      if (Date.now() < startsAt.getTime() || Date.now() > endsAt.getTime()) {
-        throw new AppError("Chỉ được nhấn hoàn thành trong khung thời gian của lịch hẹn", 400);
-      }
+      // Chỉ có lịch đang thực hiện mới chuyển được sang COMPLETED theo
+      // STATUS_TRANSITIONS. Cho phép kết thúc sớm khi khách đã làm xong,
+      // không khóa thao tác theo giờ kết thúc dự kiến.
       appointment.completedAt =
         new Date();
     }
@@ -1371,6 +1415,9 @@ export const updateAppointmentStatus =
 
         cancelledAt:
           new Date(),
+        // Hủy bởi cửa hàng luôn hoàn phần cọc đã thu cho khách.
+        depositRefundStatus: appointment.depositPaid ? "ELIGIBLE" : "NOT_APPLICABLE",
+        depositRefundAmount: appointment.depositPaid ? appointment.depositAmount : 0,
 };
 
     }
@@ -1496,65 +1543,135 @@ export const getAvailableSlots =
       );
     }
 
-    await validateBarber(
-      barberId
-    );
-
     const services =
       await normalizeServices(
         serviceIds
       );
 
-    const durationMinutes =
-      services.reduce(
-        (total, service) =>
-          total +
-          service.durationSnapshot,
-        0
-      );
+    const hairServices = services.filter((service) => service.staffType === "HAIR");
+    const careServices = services.filter((service) => service.staffType === "CARE");
+    const hairDuration = hairServices.reduce(
+      (total, service) => total + service.durationSnapshot,
+      0
+    );
+    const careDuration = careServices.reduce(
+      (total, service) => total + service.durationSnapshot,
+      0
+    );
+    const durationMinutes = hairDuration + careDuration;
+
+    if (hairServices.length > 0) {
+      if (!barberId) {
+        throw new AppError("Vui lòng chọn nhân viên làm tóc", 400);
+      }
+      await validateBarber(barberId);
+    }
 
     const dayOfWeek =
       getDayOfWeek(
         appointmentDate
       );
 
-    const schedule =
-      await BarberSchedule.findOne({
-        barber: barberId,
-        dayOfWeek,
-        isWorking: true,
-      }).lean();
+    const careProfiles = careServices.length > 0
+      ? await BarberProfile.find({
+          isActive: true,
+          staffType: "CARE",
+          specialties: {
+            $all: careServices.map((service) => service.service),
+          },
+        }).select("user").lean()
+      : [];
+    const careProfileIds = careProfiles.map((profile) => String(profile.user));
+    const activeCareUsers = careProfileIds.length > 0
+      ? await User.find({
+          _id: { $in: careProfileIds },
+          role: "BARBER",
+          status: "ACTIVE",
+        }).select("_id").lean()
+      : [];
+    const careBarberIds = activeCareUsers.map((user) => String(user._id));
 
-    if (!schedule) {
+    if (careServices.length > 0 && careBarberIds.length === 0) {
       return [];
     }
 
-    const activeAppointments =
-      await Appointment.find({
-        $or: [
-          { barber: barberId },
-          { "staffAssignments.barber": barberId },
-        ],
-        appointmentDate,
-        status: {
-          $in:
-            ACTIVE_APPOINTMENT_STATUSES,
-        },
-      })
-        .select(
-          "startTime endTime"
-        )
-        .lean();
+    const relevantBarberIds = [barberId, ...careBarberIds].filter(
+      (id): id is string => Boolean(id)
+    );
+    const [weeklySchedules, dateOverrides] = await Promise.all([
+      BarberSchedule.find({ barber: { $in: relevantBarberIds }, dayOfWeek }).lean(),
+      BarberScheduleOverride.find({ barber: { $in: relevantBarberIds }, date: appointmentDate }).lean(),
+    ]);
+    const overridesByBarber = new Map(dateOverrides.map((item) => [String(item.barber), item]));
+    const schedules = relevantBarberIds.map((id) =>
+      overridesByBarber.get(id) || weeklySchedules.find((item) => String(item.barber) === id)
+    ).filter((item): item is NonNullable<typeof item> => Boolean(item?.isWorking));
+    const scheduleByBarber = new Map(
+      schedules.map((schedule) => [String(schedule.barber), schedule])
+    );
+    const hairSchedule = barberId ? scheduleByBarber.get(barberId) : undefined;
 
-    const workingStart =
-      timeToMinutes(
-        schedule.startTime
-      );
+    if (hairServices.length > 0 && !hairSchedule) {
+      return [];
+    }
 
-    const workingEnd =
-      timeToMinutes(
-        schedule.endTime
-      );
+    const careSchedules = schedules.filter((schedule) =>
+      careBarberIds.includes(String(schedule.barber))
+    );
+    if (careServices.length > 0 && careSchedules.length === 0) {
+      return [];
+    }
+
+    const activeAppointments = await Appointment.find({
+      $or: [
+        { barber: { $in: relevantBarberIds } },
+        { "staffAssignments.barber": { $in: relevantBarberIds } },
+      ],
+      appointmentDate,
+      status: { $in: ACTIVE_APPOINTMENT_STATUSES },
+    }).select("barber startTime endTime staffAssignments").lean();
+
+    const isEmployeeAvailable = (
+      employeeId: string,
+      rangeStart: number,
+      rangeEnd: number
+    ): boolean => {
+      const schedule = scheduleByBarber.get(employeeId);
+      if (
+        !schedule ||
+        rangeStart < timeToMinutes(schedule.startTime) ||
+        rangeEnd > timeToMinutes(schedule.endTime)
+      ) {
+        return false;
+      }
+
+      return !activeAppointments.some((appointment) => {
+        const assignments = appointment.staffAssignments?.filter(
+          (assignment) => String(assignment.barber) === employeeId
+        ) ?? [];
+        const intervals = assignments.length > 0
+          ? assignments
+          : String(appointment.barber) === employeeId
+            ? [{ startTime: appointment.startTime, endTime: appointment.endTime }]
+            : [];
+        return intervals.some((interval) =>
+          isTimeOverlap(
+            rangeStart,
+            rangeEnd,
+            timeToMinutes(interval.startTime),
+            timeToMinutes(interval.endTime)
+          )
+        );
+      });
+    };
+
+    const candidateSchedules = hairSchedule ? [hairSchedule] : careSchedules;
+    const workingStart = Math.min(
+      ...candidateSchedules.map((schedule) => timeToMinutes(schedule.startTime))
+    );
+    const workingEnd = Math.max(
+      ...candidateSchedules.map((schedule) => timeToMinutes(schedule.endTime))
+    );
 
     const slots: Array<{
       startTime: string;
@@ -1575,20 +1692,14 @@ export const getAvailableSlots =
         slotStart +
         durationMinutes;
 
-      const overlapsAppointment =
-        activeAppointments.some(
-          (appointment) =>
-            isTimeOverlap(
-              slotStart,
-              slotEnd,
-              timeToMinutes(
-                appointment.startTime
-              ),
-              timeToMinutes(
-                appointment.endTime
-              )
-            )
-        );
+      const hairEnd = slotStart + hairDuration;
+      const hairAvailable = hairServices.length === 0 || Boolean(
+        barberId && isEmployeeAvailable(barberId, slotStart, hairEnd)
+      );
+      const careAvailable = careServices.length === 0 || careBarberIds.some(
+        (id) => isEmployeeAvailable(id, hairEnd, slotEnd)
+      );
+      const available = hairAvailable && careAvailable;
 
       const startTime =
         minutesToTime(
@@ -1610,8 +1721,10 @@ export const getAvailableSlots =
           minutesToTime(
             slotEnd
           ),
-        available: !overlapsAppointment,
-        reason: overlapsAppointment ? "Khung giờ đã có lịch" : undefined,
+        available,
+        reason: available
+          ? undefined
+          : "Không đủ nhân viên phù hợp trong khung giờ này",
       });
     }
 
@@ -1732,28 +1845,3 @@ export const processAutomaticAppointmentStatuses = async () => {
 
 export const markOverdueAppointmentsAsNoShow = async (): Promise<number> =>
   (await processAutomaticAppointmentStatuses()).noShow;
-
-export const confirmClientDeposit = async (appointmentId: string, clientId: string) => {
-  assertObjectId(appointmentId, "Mã lịch hẹn không hợp lệ");
-  const appointment = await Appointment.findOne({ _id: appointmentId, client: clientId });
-  if (!appointment) throw new AppError("Không tìm thấy lịch hẹn", 404);
-  if (!appointment.depositRequired) throw new AppError("Lịch hẹn này không yêu cầu đặt cọc", 400);
-  if (["CANCELLED", "COMPLETED"].includes(appointment.status)) {
-    throw new AppError("Không thể thanh toán cọc cho lịch này", 400);
-  }
-  appointment.depositPaid = true;
-  appointment.paymentStatus = "PENDING";
-  await appointment.save();
-  await recordAppointmentActivity({
-    appointmentId: appointment._id,
-    action: "DEPOSIT_CONFIRMED",
-    description: "Khách hàng đã xác nhận thanh toán tiền cọc",
-    actorId: clientId,
-    actorRole: "CLIENT",
-    metadata: {
-      depositAmount: appointment.depositAmount,
-      paymentStatus: "PENDING",
-    },
-  });
-  return populateAppointment(appointmentId);
-};

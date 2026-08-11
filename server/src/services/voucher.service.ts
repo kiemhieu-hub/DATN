@@ -122,7 +122,9 @@ export const evaluateVoucher = async (
     ? Math.round(eligibleSubtotal * voucher.value / 100)
     : Math.round(voucher.value);
 
-  if (voucher.maxDiscount > 0) {
+  // Giới hạn giảm tối đa chỉ áp dụng cho voucher phần trăm.
+  // Voucher số tiền cố định luôn giảm đúng giá trị đã cấu hình.
+  if (voucher.type === "PERCENT" && voucher.maxDiscount > 0) {
     discountAmount = Math.min(discountAmount, voucher.maxDiscount);
   }
   discountAmount = Math.min(discountAmount, subtotal);

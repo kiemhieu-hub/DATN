@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createService, deleteService, getService, getServices, updateService, updateStatus } from "../controllers/adminService.controller";
+import { createService, getService, getServices, updateService, updateStatus } from "../controllers/adminService.controller";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
 
@@ -10,6 +10,5 @@ router.get("/:id", getService);
 router.post("/", createService);
 router.put("/:id", updateService);
 router.patch("/:id/status", updateStatus);
-router.delete("/:id", deleteService);
 
 export default router;

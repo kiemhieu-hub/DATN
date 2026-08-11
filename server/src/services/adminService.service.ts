@@ -1,8 +1,26 @@
-import api from "./api";
-import type { AdminServiceMutationResponse, AdminServicePayload, GetAdminServicesResponse } from "../types/AdminService";
-import type { ServiceGroup } from "../types/Catalog";
+import mongoose from "mongoose";
 
-export interface AdminServiceParams {
+import Service, {
+  type ServiceGroup,
+} from "../models/Service";
+import AppError from "../utils/AppError";
+import BarberProfile from "../models/BarberProfile";
+import ServiceCategory from "../models/ServiceCategory";
+
+export interface AdminServiceInput {
+  name?: string;
+  description?: string;
+  price?: number;
+  priceFrom?: boolean;
+  durationMinutes?: number;
+  group?: ServiceGroup;
+  isExclusiveInGroup?: boolean;
+  image?: string;
+  isActive?: boolean;
+  categoryId?: string;
+}
+
+interface GetAdminServicesInput {
   keyword?: string;
   group?: ServiceGroup | "ALL";
   status?: "ACTIVE" | "INACTIVE" | "ALL";
@@ -10,17 +28,227 @@ export interface AdminServiceParams {
   limit?: number;
 }
 
-export const getAdminServices = async (params: AdminServiceParams = {}) =>
-  (await api.get<GetAdminServicesResponse>("/admin/services", { params })).data;
+const GROUPS: ServiceGroup[] = [
+  "HAIRCUT",
+  "BEARD",
+  "COLOR",
+  "CARE",
+  "OTHER",
+];
 
-export const createAdminService = async (payload: AdminServicePayload) =>
-  (await api.post<AdminServiceMutationResponse>("/admin/services", payload)).data;
+const assertObjectId = (id: string): void => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError("Mã dịch vụ không hợp lệ", 400);
+  }
+};
 
-export const updateAdminService = async (id: string, payload: AdminServicePayload) =>
-  (await api.put<AdminServiceMutationResponse>(`/admin/services/${id}`, payload)).data;
+const normalizePayload = async (
+  input: AdminServiceInput,
+  partial = false
+) => {
+  const payload: AdminServiceInput & { category?: mongoose.Types.ObjectId } = {};
 
-export const updateAdminServiceStatus = async (id: string, isActive: boolean) =>
-  (await api.patch<AdminServiceMutationResponse>(`/admin/services/${id}/status`, { isActive })).data;
+  if (!partial || input.name !== undefined) {
+    const name = String(input.name ?? "").trim();
+    if (name.length < 2 || name.length > 150) {
+      throw new AppError("Tên dịch vụ phải từ 2 đến 150 ký tự", 400);
+    }
+    payload.name = name;
+  }
 
-export const deleteAdminService = async (id: string) =>
-  (await api.delete<{ success: boolean; message: string }>(`/admin/services/${id}`)).data;
+  if (!partial || input.price !== undefined) {
+    const price = Number(input.price);
+    if (!Number.isFinite(price) || price < 0) {
+      throw new AppError("Giá dịch vụ không hợp lệ", 400);
+    }
+    payload.price = price;
+  }
+
+  if (!partial || input.durationMinutes !== undefined) {
+    const duration = Number(input.durationMinutes);
+    if (!Number.isInteger(duration) || duration < 1 || duration > 1440) {
+      throw new AppError("Thời lượng phải từ 1 đến 1440 phút", 400);
+    }
+    payload.durationMinutes = duration;
+  }
+
+  if (!partial || input.group !== undefined) {
+    if (!GROUPS.includes(input.group as ServiceGroup)) {
+      throw new AppError("Nhóm dịch vụ không hợp lệ", 400);
+    }
+    payload.group = input.group;
+  }
+
+  if (input.description !== undefined) {
+    payload.description = String(input.description).trim();
+  }
+  if (input.image !== undefined) {
+    payload.image = String(input.image).trim();
+  }
+  if (input.priceFrom !== undefined) {
+    payload.priceFrom = Boolean(input.priceFrom);
+  }
+  if (input.isActive !== undefined) {
+    payload.isActive = Boolean(input.isActive);
+  }
+
+  if (!partial || input.categoryId !== undefined) {
+    const categoryId = String(input.categoryId ?? "");
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      throw new AppError("Vui lòng chọn danh mục dịch vụ", 400);
+    }
+    const category = await ServiceCategory.exists({ _id: categoryId });
+    if (!category) throw new AppError("Danh mục dịch vụ không tồn tại", 404);
+    payload.category = new mongoose.Types.ObjectId(categoryId);
+  }
+
+  // Theo quy tắc dự án, chỉ HAIRCUT và COLOR là nhóm chọn độc quyền.
+  if (payload.group !== undefined) {
+    payload.isExclusiveInGroup =
+      payload.group === "HAIRCUT" || payload.group === "COLOR";
+  } else if (input.isExclusiveInGroup !== undefined) {
+    payload.isExclusiveInGroup = Boolean(input.isExclusiveInGroup);
+  }
+
+  return payload;
+};
+
+const serialize = (service: any) => ({
+  id: String(service._id),
+  name: service.name,
+  description: service.description,
+  price: service.price,
+  priceFrom: service.priceFrom,
+  durationMinutes: service.durationMinutes,
+  group: service.group,
+  isExclusiveInGroup: service.isExclusiveInGroup,
+  image: service.image,
+  isActive: service.isActive,
+  createdAt: service.createdAt,
+  updatedAt: service.updatedAt,
+  category: service.category && typeof service.category === "object" && service.category.name
+    ? {
+        id: String(service.category._id),
+        name: service.category.name,
+        slug: service.category.slug,
+        isActive: service.category.isActive,
+      }
+    : null,
+});
+
+export const getAdminServices = async (input: GetAdminServicesInput) => {
+  const page = Math.max(1, Number(input.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(input.limit) || 10));
+  const query: Record<string, unknown> = {};
+
+  if (input.keyword?.trim()) {
+    query.$or = [
+      { name: { $regex: input.keyword.trim(), $options: "i" } },
+      { description: { $regex: input.keyword.trim(), $options: "i" } },
+    ];
+  }
+  if (input.group && input.group !== "ALL") query.group = input.group;
+  if (input.status && input.status !== "ALL") {
+    query.isActive = input.status === "ACTIVE";
+  }
+
+  const [items, totalItems] = await Promise.all([
+    Service.find(query)
+      .populate("category", "name slug isActive")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    Service.countDocuments(query),
+  ]);
+
+  return {
+    items: items.map(serialize),
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages: Math.max(1, Math.ceil(totalItems / limit)),
+    },
+  };
+};
+
+export const getAdminServiceById = async (id: string) => {
+  assertObjectId(id);
+  const service = await Service.findById(id)
+    .populate("category", "name slug isActive")
+    .lean();
+  if (!service) throw new AppError("Không tìm thấy dịch vụ", 404);
+  return serialize(service);
+};
+
+export const createAdminService = async (input: AdminServiceInput) => {
+  const payload = await normalizePayload(input);
+  const duplicated = await Service.exists({
+    name: { $regex: `^${String(payload.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+  });
+  if (duplicated) throw new AppError("Tên dịch vụ đã tồn tại", 409);
+
+  const service = await Service.create({
+    ...payload,
+    description: payload.description ?? "",
+    image: payload.image ?? "",
+    priceFrom: payload.priceFrom ?? false,
+    isActive: payload.isActive ?? true,
+  });
+  const populated = await Service.findById(service._id)
+    .populate("category", "name slug isActive")
+    .lean();
+  return serialize(populated);
+};
+
+export const updateAdminService = async (id: string, input: AdminServiceInput) => {
+  assertObjectId(id);
+  const payload = await normalizePayload(input, true);
+  if (payload.name) {
+    const duplicated = await Service.exists({
+      _id: { $ne: id },
+      name: { $regex: `^${payload.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+    });
+    if (duplicated) throw new AppError("Tên dịch vụ đã tồn tại", 409);
+  }
+
+  const current = await Service.findById(id);
+  if (!current) throw new AppError("Không tìm thấy dịch vụ", 404);
+  if (payload.group === undefined && current.group) {
+    payload.isExclusiveInGroup = current.group === "HAIRCUT" || current.group === "COLOR";
+  }
+  Object.assign(current, payload);
+  await current.save();
+  const populated = await Service.findById(current._id)
+    .populate("category", "name slug isActive")
+    .lean();
+  return serialize(populated);
+};
+
+export const updateAdminServiceStatus = async (id: string, isActive: unknown) => {
+  assertObjectId(id);
+  if (typeof isActive !== "boolean") {
+    throw new AppError("Trạng thái dịch vụ không hợp lệ", 400);
+  }
+  const service = await Service.findByIdAndUpdate(
+    id,
+    { isActive },
+    { new: true, runValidators: true }
+  ).populate("category", "name slug isActive").lean();
+  if (!service) throw new AppError("Không tìm thấy dịch vụ", 404);
+  return serialize(service);
+};
+
+export const deleteAdminService = async (id: string) => {
+  assertObjectId(id);
+  const service = await Service.findByIdAndDelete(id).lean();
+  if (!service) throw new AppError("Không tìm thấy dịch vụ", 404);
+
+  await BarberProfile.updateMany(
+    { specialties: service._id },
+    { $pull: { specialties: service._id } }
+  );
+
+  return serialize(service);
+};
