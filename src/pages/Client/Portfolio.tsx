@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -25,20 +27,24 @@ function Portfolio() {
   >(new Set());
   const [favoriteMessage, setFavoriteMessage] = useState("");
 
-  useEffect(() => {
-    getPublicHairstyles()
+  const loadGallery = useCallback(() => {
+    fetchBusinessQuery("public-hairstyles", () => getPublicHairstyles())
       .then((response) => setHairstyles(response.items))
       .catch(() => setHairstyles([]))
       .finally(() => setGalleryLoading(false));
   }, []);
 
   useEffect(() => {
+    loadGallery();
+  }, [loadGallery]);
+
+  const loadFavorites = useCallback(() => {
     if (!isAuthenticated) {
       setFavoritesByImage(new Map());
       return;
     }
 
-    void getMyFavorites()
+    void fetchBusinessQuery("my-favorites", () => getMyFavorites())
       .then((items) => {
         setFavoritesByImage(
           new Map(items.map((favorite) => [favorite.imageUrl, favorite]))
@@ -46,6 +52,15 @@ function Portfolio() {
       })
       .catch(() => setFavoriteMessage("Không thể tải danh sách yêu thích"));
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
+
+  useRealtimeRefresh(() => {
+    loadGallery();
+    loadFavorites();
+  });
 
   const galleryCategories = useMemo(
     () => [...new Set(hairstyles.map((item) => item.category).filter(Boolean))],

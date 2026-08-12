@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
@@ -85,7 +87,7 @@ function BarberSchedules() {
   >([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  useEffect(() => {
+  const loadSchedules = useCallback(() => {
     if (isLoading) return;
 
     if (!isAuthenticated || !user) {
@@ -93,7 +95,7 @@ function BarberSchedules() {
       return;
     }
 
-    getReceptionBarberSchedules()
+    fetchBusinessQuery("reception-barber-schedules", () => getReceptionBarberSchedules())
       .then(({ items: responseItems }) => {
         const normalizedItems = responseItems.map((item) => ({
           ...item,
@@ -119,6 +121,12 @@ function BarberSchedules() {
       })
       .catch(() => setError("Không thể tải lịch nhân viên"));
   }, [isLoading, isAuthenticated, user, navigate, isAdmin]);
+
+  useEffect(() => {
+    loadSchedules();
+  }, [loadSchedules]);
+
+  useRealtimeRefresh(loadSchedules, isAuthenticated);
 
   const hairOptions = useMemo(
     () =>
@@ -167,7 +175,7 @@ function BarberSchedules() {
   const loadDateSchedule = async (barberId: string, date: string) => {
     try {
       setError("");
-      const result = await getReceptionBarberDayDetail(barberId, date);
+      const result = await fetchBusinessQuery("reception-barber-day", () => getReceptionBarberDayDetail(barberId, date), [barberId, date]);
 
       patchDraft(barberId, {
         date,
@@ -335,7 +343,7 @@ function BarberSchedules() {
       setHistoryBarber(barber);
       setHistoryLoading(true);
       setHistoryItems([]);
-      const response = await getReceptionScheduleHistory(barber._id);
+      const response = await fetchBusinessQuery("reception-schedule-history", () => getReceptionScheduleHistory(barber._id), barber._id, 0);
       setHistoryItems(response.items);
     } catch {
       setError("Không thể tải lịch sử thay đổi lịch làm việc");

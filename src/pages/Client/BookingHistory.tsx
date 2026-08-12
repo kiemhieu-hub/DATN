@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {useCallback,useEffect,useMemo,useState,} from "react";
 import {Link,useLocation,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -142,8 +144,8 @@ function BookingHistory() {
         setError("");
 
         const [response, reviewResponse] = await Promise.all([
-          getMyAppointments(),
-          getMyReviews(),
+          fetchBusinessQuery("my-appointments", () => getMyAppointments()),
+          fetchBusinessQuery("my-reviews", () => getMyReviews()),
         ]);
 
         setAppointments(
@@ -163,6 +165,10 @@ function BookingHistory() {
         setLoading(false);
       }
     }, []);
+
+  useRealtimeRefresh(() => {
+    void loadAppointments();
+  }, isAuthenticated);
 
   useEffect(() => {
     if (authLoading) {

@@ -1,5 +1,7 @@
 import axios from "axios";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -92,8 +94,8 @@ function Booking() {
     }
   }, [user]);
 
-  useEffect(() => {
-    Promise.all([getCatalogServices(), getCatalogBarbers()])
+  const loadCatalog = useCallback(() => {
+    Promise.all([fetchBusinessQuery("catalog-services", () => getCatalogServices()), fetchBusinessQuery("catalog-barbers", () => getCatalogBarbers())])
       .then(([serviceResponse, barberResponse]) => {
         setServices(serviceResponse.services);
         setBarbers(barberResponse.barbers);
@@ -101,6 +103,12 @@ function Booking() {
       .catch((requestError) => setError(getError(requestError)))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
+  useRealtimeRefresh(loadCatalog);
 
   const selectedServices = useMemo(
     () =>
@@ -131,7 +139,7 @@ function Booking() {
       return;
     }
     setSlotsLoading(true);
-    getAvailableSlots(hairBarberId || undefined, serviceIds, appointmentDate)
+    fetchBusinessQuery("booking-slots", () => getAvailableSlots(hairBarberId || undefined, serviceIds, appointmentDate), [hairBarberId || undefined, serviceIds, appointmentDate])
       .then((response) => setSlots(response.slots))
       .catch((requestError) => {
         setSlots([]);
@@ -139,6 +147,22 @@ function Booking() {
       })
       .finally(() => setSlotsLoading(false));
   }, [needsHair, hairBarberId, appointmentDate, serviceIds]);
+
+  useRealtimeRefresh(() => {
+    if (
+      appointmentDate &&
+      serviceIds.length > 0 &&
+      (!needsHair || hairBarberId)
+    ) {
+      void getAvailableSlots(
+        hairBarberId || undefined,
+        serviceIds,
+        appointmentDate
+      )
+        .then((response) => setSlots(response.slots))
+        .catch(() => undefined);
+    }
+  });
 
   const subtotal = selectedServices.reduce((sum, service) => sum + service.price, 0);
   const hairDuration = selectedServices
@@ -186,10 +210,13 @@ function Booking() {
     }
 
     const timer = window.setTimeout(() => {
-      getAvailableVouchers(
+      fetchBusinessQuery("available-vouchers", () => getAvailableVouchers(
         serviceIds,
         [hairBarberId].filter(Boolean)
-      )
+      ), [
+        serviceIds,
+        [hairBarberId].filter(Boolean)
+      ])
         .then((response) => setAvailableVouchers(response.vouchers))
         .catch(() => setAvailableVouchers([]));
     }, 250);

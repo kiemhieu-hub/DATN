@@ -1,9 +1,11 @@
 import axios from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { getBarberDashboard } from "../../services/barberDashboard.service";
 import type { BarberDashboardData } from "../../types/BarberDashboard";
+import { queryKeys } from "../../lib/queryKeys";
 import "./css/Dashboard.css";
 
 const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
@@ -12,26 +14,8 @@ const today = () => new Date().toISOString().slice(0, 10);
 function Dashboard() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth("BARBER");
-  const [data, setData] = useState<BarberDashboardData | null>(null);
   const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const response = await getBarberDashboard({ dateFrom, dateTo });
-      setData(response.data);
-    } catch (requestError) {
-      setError(axios.isAxiosError(requestError)
-        ? requestError.response?.data?.message || "Không thể tải dữ liệu."
-        : "Không thể tải dữ liệu.");
-    } finally {
-      setLoading(false);
-    }
-  }, [dateFrom, dateTo]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -39,8 +23,20 @@ function Dashboard() {
       navigate("/barber/login", { replace: true });
       return;
     }
-    void load();
-  }, [authLoading, isAuthenticated, user, navigate, load]);
+  }, [authLoading, isAuthenticated, user, navigate]);
+
+  const dashboardQuery = useQuery({
+    queryKey: queryKeys.barberDashboard({ dateFrom, dateTo }),
+    queryFn: async () => (await getBarberDashboard({ dateFrom, dateTo })).data,
+    enabled: !authLoading && isAuthenticated && user?.role === "BARBER",
+  });
+
+  const data: BarberDashboardData | undefined = dashboardQuery.data;
+  const error = dashboardQuery.error
+    ? axios.isAxiosError(dashboardQuery.error)
+      ? dashboardQuery.error.response?.data?.message || "Không thể tải dữ liệu."
+      : "Không thể tải dữ liệu."
+    : "";
 
   const maxRevenue = useMemo(
     () => Math.max(1, ...(data?.revenueSeries.map((item) => item.amount) ?? [1])),
@@ -51,7 +47,7 @@ function Dashboard() {
   const cancelled = data?.outcomes.cancellationRate ?? 0;
   const donut = `conic-gradient(#258657 0 ${completed}%, #d94c4c ${completed}% ${completed + cancelled}%, #ddd4c7 ${completed + cancelled}% 100%)`;
 
-  if (authLoading || (loading && !data)) {
+  if (authLoading || (dashboardQuery.isPending && !data)) {
     return <div className="barber-dashboard-page barber-dashboard-loading">Đang tải Dashboard...</div>;
   }
 
@@ -76,7 +72,7 @@ function Dashboard() {
         <section className="barber-dashboard-filter">
           <label>Từ ngày<input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} /></label>
           <label>Đến ngày<input type="date" min={dateFrom} value={dateTo} onChange={(e) => setDateTo(e.target.value)} /></label>
-          <button onClick={() => void load()}>Làm mới</button>
+          <button onClick={() => void dashboardQuery.refetch()}>Làm mới</button>
         </section>
         {error && <p className="barber-dashboard-error">{error}</p>}
 

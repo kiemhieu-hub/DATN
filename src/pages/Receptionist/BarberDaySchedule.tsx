@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { Link } from "react-router-dom";
 
 import {
@@ -65,8 +67,8 @@ function BarberDaySchedule() {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    getReceptionBarberSchedules()
+  const loadStaff = useCallback(() => {
+    fetchBusinessQuery("reception-barber-schedules", () => getReceptionBarberSchedules())
       .then(({ items: responseItems }) => {
         setItems(responseItems);
         setSelectedHairIds(
@@ -90,6 +92,10 @@ function BarberDaySchedule() {
       })
       .catch(() => setError("Không thể tải danh sách nhân viên"));
   }, []);
+
+  useEffect(() => {
+    loadStaff();
+  }, [loadStaff]);
 
   const hairOptions = useMemo(
     () =>
@@ -171,7 +177,7 @@ function BarberDaySchedule() {
       setError("");
 
       const result = await Promise.all(
-        dates.map((date) => getReceptionBarberDayDetail(barberId, date))
+        dates.map((date) => fetchBusinessQuery("reception-barber-day", () => getReceptionBarberDayDetail(barberId, date), [barberId, date]))
       );
 
       setDetails((current) => ({ ...current, [barberId]: result }));
@@ -181,6 +187,14 @@ function BarberDaySchedule() {
       setLoading((current) => ({ ...current, [barberId]: false }));
     }
   };
+
+  useRealtimeRefresh(() => {
+    loadStaff();
+
+    Object.keys(details).forEach((barberId) => {
+      void loadSchedule(barberId);
+    });
+  });
 
   return (
     <div className="reception-page reception-page-embedded schedule-detail-page">

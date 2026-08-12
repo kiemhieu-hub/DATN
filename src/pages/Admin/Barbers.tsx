@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
@@ -205,7 +207,14 @@ function Barbers() {
         setError("");
 
         const response =
-          await getAdminBarbers({
+          await fetchBusinessQuery("admin-barbers", () => getAdminBarbers({
+            keyword:
+              submittedKeyword ||
+              undefined,
+            status: statusFilter,
+            page: pagination.page,
+            limit: pagination.limit,
+          }), {
             keyword:
               submittedKeyword ||
               undefined,
@@ -239,7 +248,7 @@ function Barbers() {
     useCallback(async (): Promise<void> => {
       try {
         const response =
-          await getCatalogServices();
+          await fetchBusinessQuery("catalog-services", () => getCatalogServices());
 
         setServices(
           response.services
@@ -253,6 +262,11 @@ function Barbers() {
         );
       }
     }, []);
+
+  useRealtimeRefresh(() => {
+    void loadBarbers();
+    void loadServices();
+  });
 
   useEffect(() => {
     if (authLoading) {

@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -50,18 +52,22 @@ function Services() {
   const load = useCallback(async () => {
     try {
       setLoading(true); setError("");
-      const response = await getAdminServices({ keyword: search || undefined, group, status, page, limit: 8 });
+      const response = await fetchBusinessQuery("admin-services", () => getAdminServices({ keyword: search || undefined, group, status, page, limit: 8 }), { keyword: search || undefined, group, status, page, limit: 8 });
       setItems(response.items); setTotalPages(response.pagination.totalPages);
     } catch (e) { setError(errorMessage(e)); }
     finally { setLoading(false); }
   }, [search, group, status, page]);
+
+  useRealtimeRefresh(() => {
+    void load();
+  });
 
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated || !user) { navigate("/admin/login", { replace: true }); return; }
     if (user.role !== "ADMIN") { navigate("/admin/login", { replace: true }); return; }
     void load();
-    void getAdminServiceCategories()
+    void fetchBusinessQuery("service-categories", () => getAdminServiceCategories())
       .then((response) => setCategories(response.items))
       .catch((error) => setError(errorMessage(error)));
   }, [authLoading, isAuthenticated, user, navigate, load]);

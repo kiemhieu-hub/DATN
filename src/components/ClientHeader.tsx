@@ -10,7 +10,6 @@ export default function ClientHeader() {
     queryKey: ["client-appointment-notifications", user?.id],
     queryFn: getMyAppointments,
     enabled: Boolean(user),
-    refetchInterval: 30000,
   });
   const notificationCount = notifications.data?.appointments.filter((item) =>
     ["PENDING", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"].includes(item.status)

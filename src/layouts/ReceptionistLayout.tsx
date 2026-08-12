@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../contexts/AuthContext";
 import { getStaffNotifications } from "../services/staffNotification.service";
+import { realtimeSocket } from "../lib/realtime";
 import "./AdminLayout.css";
 
 function ReceptionistLayout() {
@@ -32,11 +33,11 @@ function ReceptionistLayout() {
     };
 
     void loadCount();
-    const timer = window.setInterval(() => {
-      void loadCount();
-    }, 30_000);
+    realtimeSocket.on("notifications:changed", loadCount);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      realtimeSocket.off("notifications:changed", loadCount);
+    };
   }, [isAuthenticated, user?.role]);
 
   if (isLoading) return <div className="admin-shell-loading">Đang kiểm tra phiên đăng nhập...</div>;

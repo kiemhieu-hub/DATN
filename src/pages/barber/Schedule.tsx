@@ -1,9 +1,11 @@
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { getBarberAppointments, markBarberAppointmentViewed } from "../../services/barberAppointment.service";
 import type { Appointment, AppointmentStatus } from "../../types/Appointment";
+import { queryKeys } from "../../lib/queryKeys";
 import "./css/Schedule.css";
 
 const labels: Record<AppointmentStatus, string> = {
@@ -15,30 +17,10 @@ const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 function Schedule() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth("BARBER");
-  const [items, setItems] = useState<Appointment[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showAll, setShowAll] = useState(true);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const response = await getBarberAppointments(showAll ? {} : {
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || dateFrom || undefined,
-      });
-      setItems(response.appointments);
-    } catch (requestError) {
-      setError(axios.isAxiosError(requestError)
-        ? requestError.response?.data?.message || "Không thể tải lịch."
-        : "Không thể tải lịch.");
-    } finally {
-      setLoading(false);
-    }
-  }, [dateFrom, dateTo, showAll]);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (authLoading) return;
@@ -46,15 +28,31 @@ function Schedule() {
       navigate("/barber/login", { replace: true });
       return;
     }
-    void load();
-  }, [authLoading, isAuthenticated, user, navigate, load]);
+  }, [authLoading, isAuthenticated, user, navigate]);
+
+  const filters = showAll ? {} : {
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || dateFrom || undefined,
+  };
+  const appointmentsQuery = useQuery({
+    queryKey: queryKeys.appointments("barber", filters),
+    queryFn: async () => (await getBarberAppointments(filters)).appointments,
+    enabled: !authLoading && isAuthenticated && user?.role === "BARBER",
+  });
+  const items: Appointment[] = appointmentsQuery.data ?? [];
+  const error = appointmentsQuery.error
+    ? axios.isAxiosError(appointmentsQuery.error)
+      ? appointmentsQuery.error.response?.data?.message || "Không thể tải lịch."
+      : "Không thể tải lịch."
+    : "";
+  const viewedMutation = useMutation({
+    mutationFn: markBarberAppointmentViewed,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["thads", "appointments", "barber"] }),
+  });
 
   const view = async (item: Appointment) => {
     if (!item.barberViewedAt) {
-      await markBarberAppointmentViewed(item._id);
-      setItems((current) => current.map((entry) => entry._id === item._id
-        ? { ...entry, barberViewedAt: new Date().toISOString() }
-        : entry));
+      await viewedMutation.mutateAsync(item._id);
     }
   };
 
@@ -70,11 +68,11 @@ function Schedule() {
           <label><input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Hiển thị tất cả lịch hẹn</label>
           <label>Từ ngày<input disabled={showAll} type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} /></label>
           <label>Đến ngày<input disabled={showAll} min={dateFrom} type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} /></label>
-          <button onClick={() => void load()}>Áp dụng</button>
+          <button onClick={() => void appointmentsQuery.refetch()}>Áp dụng</button>
         </section>
 
         {error && <p className="schedule-error">{error}</p>}
-        {loading ? <p className="schedule-empty">Đang tải...</p> : (
+        {appointmentsQuery.isPending ? <p className="schedule-empty">Đang tải...</p> : (
           <section className="schedule-list">
             {items.length === 0 && <p className="schedule-empty">Không có lịch hẹn phù hợp.</p>}
             {items.map((item) => (

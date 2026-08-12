@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
@@ -8,24 +9,31 @@ import {
   type FavoriteHairstyle,
 } from "../../services/favoriteService";
 import "./css/Favorites.css";
+import { queryKeys } from "../../lib/queryKeys";
 
 function Favorites() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
-  const [favorites, setFavorites] = useState<FavoriteHairstyle[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
-    void getMyFavorites()
-      .then(setFavorites)
-      .catch(() => setError("Không thể tải danh sách kiểu tóc yêu thích"))
-      .finally(() => setLoading(false));
   }, [isAuthenticated, navigate]);
+
+  const favoritesQuery = useQuery({
+    queryKey: queryKeys.favorites(user?.id),
+    queryFn: getMyFavorites,
+    enabled: isAuthenticated,
+  });
+  const favorites: FavoriteHairstyle[] = favoritesQuery.data ?? [];
+  const removeMutation = useMutation({
+    mutationFn: removeFavorite,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.favorites(user?.id) }),
+  });
 
   const handleLogout = () => {
     logout();
@@ -35,10 +43,7 @@ function Favorites() {
   const handleRemove = async (favoriteId: string) => {
     try {
       setError("");
-      await removeFavorite(favoriteId);
-      setFavorites((current) =>
-        current.filter((favorite) => favorite._id !== favoriteId)
-      );
+      await removeMutation.mutateAsync(favoriteId);
     } catch {
       setError("Không thể bỏ kiểu tóc khỏi danh sách yêu thích");
     }
@@ -207,7 +212,7 @@ function Favorites() {
 
           {error && <div className="favorites-alert">{error}</div>}
 
-          {loading ? (
+          {favoritesQuery.isPending ? (
             <div className="text-center py-5">
               <div className="loading-spinner" />
             </div>
