@@ -71,6 +71,20 @@ const formatDateTime = (dateValue: string): string => {
   return date.toLocaleString("vi-VN");
 };
 
+const getDepositDeadline = (appointment: Appointment): Date => {
+  if (appointment.depositExpiresAt) {
+    return new Date(appointment.depositExpiresAt);
+  }
+
+  return new Date(new Date(appointment.createdAt).getTime() + 15 * 60 * 1000);
+};
+
+const canRetryDeposit = (appointment: Appointment): boolean =>
+  appointment.depositRequired &&
+  !appointment.depositPaid &&
+  getDepositDeadline(appointment).getTime() > Date.now() &&
+  !["CANCELLED", "COMPLETED", "NO_SHOW"].includes(appointment.status);
+
 const getBarberName = (appointment: Appointment): string => {
   if (
     typeof appointment.barber ==="string"
@@ -630,9 +644,7 @@ function BookingHistory() {
                           : "Hủy lịch"}
                       </button>
                     )}
-                    {appointment.depositRequired &&
-                      !appointment.depositPaid &&
-                      !["CANCELLED", "COMPLETED", "NO_SHOW"].includes(appointment.status) && (
+                    {canRetryDeposit(appointment) && (
                         <button
                           type="button"
                           className="history-payment-button"
@@ -643,6 +655,15 @@ function BookingHistory() {
                             ? "Đang chuyển hướng..."
                             : `Thanh toán cọc ${formatPrice(appointment.depositAmount)}đ`}
                         </button>
+                      )}
+                    {appointment.depositRequired &&
+                      !appointment.depositPaid &&
+                      appointment.status === "PENDING" && (
+                        <small className="history-deposit-deadline">
+                          Hạn thanh toán cọc: {formatDateTime(
+                            getDepositDeadline(appointment).toISOString()
+                          )}
+                        </small>
                       )}
                     {appointment.status === "COMPLETED" &&
                       appointment.paymentStatus !== "PAID" && (

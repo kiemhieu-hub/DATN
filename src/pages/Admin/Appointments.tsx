@@ -102,12 +102,17 @@ const nextActions: Partial<
       status: "COMPLETED",
       label: "Hoàn thành",
     },
-    {
-      status: "CANCELLED",
-      label: "Hủy",
-    },
   ],
 };
+
+const cancellationReasons = [
+  "Khách hàng yêu cầu hủy",
+  "Khách hàng không thể đến",
+  "Nhân viên bận đột xuất",
+  "Cửa hàng có sự cố",
+  "Lịch hẹn bị trùng hoặc tạo nhầm",
+  "Khác",
+] as const;
 
 const statusActionIcons: Record<AppointmentStatus, string> = {
   PENDING: "…",
@@ -131,9 +136,33 @@ const getRemainingPayment = (appointment: Appointment): number => {
   return Math.max(0, appointment.totalPrice - getPaidDeposit(appointment));
 };
 
-const getTransferQrUrl = (appointment: Appointment): string => {
+const getAssignmentTime = (
+  appointment: Appointment,
+  staffType: "HAIR" | "CARE"
+): string => {
+  const assignment = appointment.staffAssignments?.find(
+    (item) => item.staffType === staffType
+  );
+
+  return assignment
+    ? `${assignment.startTime} - ${assignment.endTime}`
+    : "Không có";
+};
+
+const getTransferQrUrl = (
+  appointment: Appointment,
+  provider: "MOMO" | "ZALOPAY" | "VNPAY"
+): string => {
   const amount = getRemainingPayment(appointment);
   const description = appointment.appointmentCode;
+  const configuredQr = provider === "MOMO"
+    ? import.meta.env.VITE_MOMO_QR_URL?.trim()
+    : provider === "ZALOPAY"
+      ? import.meta.env.VITE_ZALOPAY_QR_URL?.trim()
+      : import.meta.env.VITE_VNPAY_QR_URL?.trim();
+
+  if (configuredQr) return configuredQr;
+
   const bankId = import.meta.env.VITE_BANK_ID?.trim();
   const accountNumber = import.meta.env.VITE_BANK_ACCOUNT_NO?.trim();
   const accountName = import.meta.env.VITE_BANK_ACCOUNT_NAME?.trim();
@@ -152,6 +181,7 @@ const getTransferQrUrl = (appointment: Appointment): string => {
   }
 
   const fallbackData = JSON.stringify({
+    provider,
     merchant: "THADS BARBER",
     appointmentCode: description,
     amount,
@@ -274,6 +304,18 @@ function Appointments() {
   const [paymentDialog, setPaymentDialog] = useState<{
     appointment: Appointment;
     method: "CASH" | "BANK_TRANSFER";
+    provider: "MOMO" | "ZALOPAY" | "VNPAY";
+  } | null>(null);
+  const [cancelDialog, setCancelDialog] = useState<{
+    appointment: Appointment;
+    reason: string;
+    customReason: string;
+  } | null>(null);
+  const [rescheduleDialog, setRescheduleDialog] = useState<{
+    appointment: Appointment;
+    appointmentDate: string;
+    startTime: string;
+    customerConsent: boolean;
   } | null>(null);
 
   const loadAppointments = useCallback(async () => {
@@ -492,23 +534,13 @@ function Appointments() {
     appointment: Appointment,
     targetStatus: AppointmentStatus
   ): Promise<void> => {
-    let cancellationReason: string | undefined;
-
     if (targetStatus === "CANCELLED") {
-      const inputReason = window.prompt(
-        "Nhập lý do hủy lịch:"
-      );
-
-      if (inputReason === null) {
-        return;
-      }
-
-      if (!inputReason.trim()) {
-        setError("Lý do hủy không được để trống");
-        return;
-      }
-
-      cancellationReason = inputReason.trim();
+      setCancelDialog({
+        appointment,
+        reason: cancellationReasons[0],
+        customReason: "",
+      });
+      return;
     } else {
       const confirmed = window.confirm(
         `Chuyển lịch sang “${statusLabels[targetStatus]}”?`
@@ -528,7 +560,7 @@ function Appointments() {
         await updateAdminAppointmentStatus(
           appointment._id,
           targetStatus,
-          cancellationReason
+          undefined
         );
 
       setMessage(response.message);
@@ -545,6 +577,38 @@ function Appointments() {
           "Không thể cập nhật trạng thái lịch hẹn"
         )
       );
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const submitCancellation = async (): Promise<void> => {
+    if (!cancelDialog) return;
+    const reason = cancelDialog.reason === "Khác"
+      ? cancelDialog.customReason.trim()
+      : cancelDialog.reason;
+    if (!reason) {
+      setError("Vui lòng chọn hoặc nhập lý do hủy lịch");
+      return;
+    }
+
+    const appointment = cancelDialog.appointment;
+    try {
+      setProcessingId(appointment._id);
+      setError("");
+      const response = await updateAdminAppointmentStatus(
+        appointment._id,
+        "CANCELLED",
+        reason
+      );
+      setMessage(response.message);
+      setCancelDialog(null);
+      if (selectedAppointment?._id === appointment._id) {
+        setSelectedAppointment(response.appointment);
+      }
+      await loadAppointments();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể hủy lịch hẹn"));
     } finally {
       setProcessingId(null);
     }
@@ -686,15 +750,31 @@ function Appointments() {
     }
   };
 
-  const handleReschedule = async (appointment: Appointment): Promise<void> => {
-    const date = window.prompt("Ngày hẹn mới (YYYY-MM-DD):", appointment.appointmentDate);
-    if (!date) return;
-    const time = window.prompt("Giờ bắt đầu mới (HH:mm):", appointment.startTime);
-    if (!time || !window.confirm("Xác nhận khách hàng đã đồng ý đổi lịch?")) return;
+  const openRescheduleDialog = (appointment: Appointment): void => {
+    setRescheduleDialog({
+      appointment,
+      appointmentDate: appointment.appointmentDate,
+      startTime: appointment.startTime,
+      customerConsent: false,
+    });
+  };
+
+  const handleReschedule = async (): Promise<void> => {
+    if (!rescheduleDialog || !rescheduleDialog.customerConsent) {
+      setError("Cần xác nhận khách hàng đã đồng ý đổi lịch");
+      return;
+    }
+    const { appointment, appointmentDate, startTime } = rescheduleDialog;
     try {
       setProcessingId(appointment._id);
-      const response = await rescheduleAdminAppointment(appointment._id, date, time, true);
+      const response = await rescheduleAdminAppointment(
+        appointment._id,
+        appointmentDate,
+        startTime,
+        true
+      );
       setMessage(response.message);
+      setRescheduleDialog(null);
       if (selectedAppointment?._id === appointment._id) setSelectedAppointment(response.appointment);
       await loadAppointments();
     } catch (requestError) {
@@ -1071,9 +1151,18 @@ function Appointments() {
                               type="button"
                               key={action.status}
                               disabled={
-                                processingId === appointment._id
+                                processingId === appointment._id ||
+                                (action.status === "CONFIRMED" &&
+                                  appointment.depositRequired &&
+                                  !appointment.depositPaid)
                               }
-                              title={action.label}
+                              title={
+                                action.status === "CONFIRMED" &&
+                                appointment.depositRequired &&
+                                !appointment.depositPaid
+                                  ? "Chưa thể xác nhận: khách chưa thanh toán cọc"
+                                  : action.label
+                              }
                               aria-label={action.label}
                               className={`appointment-icon-button ${action.status === "CANCELLED" ? "appointment-icon-cancel" : `appointment-icon-${action.status.toLowerCase()}`}`}
                               onClick={() =>
@@ -1095,7 +1184,7 @@ function Appointments() {
                             title="Đổi lịch hẹn"
                             aria-label="Đổi lịch hẹn"
                             disabled={processingId === appointment._id}
-                            onClick={() => void handleReschedule(appointment)}
+                            onClick={() => openRescheduleDialog(appointment)}
                           >
                             ◷
                           </button>
@@ -1125,6 +1214,7 @@ function Appointments() {
                             onClick={() => setPaymentDialog({
                               appointment,
                               method: "CASH",
+                              provider: "MOMO",
                             })}
                           >
                             ₫
@@ -1218,6 +1308,31 @@ function Appointments() {
                 <strong>
                   {paymentStatusLabels[selectedAppointment.paymentStatus]}
                 </strong>
+              </div>
+
+              <div>
+                <span>Voucher đã chọn</span>
+                <strong>{selectedAppointment.voucherCode || "Không sử dụng"}</strong>
+              </div>
+
+              <div>
+                <span>Thời gian làm tóc</span>
+                <strong>{getAssignmentTime(selectedAppointment, "HAIR")}</strong>
+              </div>
+
+              <div>
+                <span>Thời gian gội đầu / chăm sóc</span>
+                <strong>{getAssignmentTime(selectedAppointment, "CARE")}</strong>
+              </div>
+
+              <div>
+                <span>Số tiền đã cọc</span>
+                <strong>{formatMoney(getPaidDeposit(selectedAppointment))}đ</strong>
+              </div>
+
+              <div>
+                <span>Số tiền còn phải trả</span>
+                <strong>{formatMoney(getRemainingPayment(selectedAppointment))}đ</strong>
               </div>
             </div>
 
@@ -1322,6 +1437,7 @@ function Appointments() {
                 onClick={() => setPaymentDialog({
                   appointment: selectedAppointment,
                   method: "CASH",
+                  provider: "MOMO",
                 })}
               >
                 {processingId === selectedAppointment._id
@@ -1448,6 +1564,21 @@ function Appointments() {
             {paymentDialog.method === "BANK_TRANSFER" && (
               <div className="appointment-transfer-qr">
                 <div>
+                  <div className="appointment-transfer-providers">
+                    {(["MOMO", "ZALOPAY", "VNPAY"] as const).map((provider) => (
+                      <button
+                        type="button"
+                        key={provider}
+                        className={paymentDialog.provider === provider ? "active" : ""}
+                        onClick={() => setPaymentDialog({
+                          ...paymentDialog,
+                          provider,
+                        })}
+                      >
+                        {provider === "ZALOPAY" ? "ZaloPay" : provider}
+                      </button>
+                    ))}
+                  </div>
                   <span>Quét mã để chuyển khoản</span>
                   <strong>
                     {formatMoney(getRemainingPayment(paymentDialog.appointment))}đ
@@ -1458,9 +1589,22 @@ function Appointments() {
                 </div>
 
                 <img
-                  src={getTransferQrUrl(paymentDialog.appointment)}
+                  src={getTransferQrUrl(
+                    paymentDialog.appointment,
+                    paymentDialog.provider
+                  )}
                   alt={`QR thanh toán lịch ${paymentDialog.appointment.appointmentCode}`}
                 />
+                {!(paymentDialog.provider === "MOMO"
+                  ? import.meta.env.VITE_MOMO_QR_URL
+                  : paymentDialog.provider === "ZALOPAY"
+                    ? import.meta.env.VITE_ZALOPAY_QR_URL
+                    : import.meta.env.VITE_VNPAY_QR_URL) && (
+                  <small className="appointment-qr-config-note">
+                    Để dùng mã nhận tiền thật, cấu hình VITE_{paymentDialog.provider}_QR_URL
+                    bằng ảnh QR merchant tương ứng.
+                  </small>
+                )}
               </div>
             )}
 
@@ -1614,6 +1758,143 @@ function Appointments() {
                 onClick={() => void saveEditorServices()}
               >
                 {processingId ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {rescheduleDialog && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setRescheduleDialog(null)}
+        >
+          <section
+            className="appointment-modal appointment-form-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              onClick={() => setRescheduleDialog(null)}
+            >×</button>
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2>Đổi thời gian lịch hẹn</h2>
+            <div className="appointment-old-schedule">
+              <span>Lịch hiện tại</span>
+              <strong>
+                {formatDate(rescheduleDialog.appointment.appointmentDate)} · {rescheduleDialog.appointment.startTime}
+              </strong>
+            </div>
+            <div className="appointment-form-grid">
+              <label>
+                Ngày hẹn mới
+                <input
+                  type="date"
+                  min={new Date().toISOString().slice(0, 10)}
+                  value={rescheduleDialog.appointmentDate}
+                  onChange={(event) => setRescheduleDialog({
+                    ...rescheduleDialog,
+                    appointmentDate: event.target.value,
+                  })}
+                />
+              </label>
+              <label>
+                Giờ bắt đầu mới
+                <input
+                  type="time"
+                  value={rescheduleDialog.startTime}
+                  onChange={(event) => setRescheduleDialog({
+                    ...rescheduleDialog,
+                    startTime: event.target.value,
+                  })}
+                />
+              </label>
+            </div>
+            <label className="appointment-consent-check">
+              <input
+                type="checkbox"
+                checked={rescheduleDialog.customerConsent}
+                onChange={(event) => setRescheduleDialog({
+                  ...rescheduleDialog,
+                  customerConsent: event.target.checked,
+                })}
+              />
+              Khách hàng đã đồng ý với ngày và giờ mới
+            </label>
+            <div className="appointment-dialog-actions">
+              <button type="button" onClick={() => setRescheduleDialog(null)}>Đóng</button>
+              <button
+                type="button"
+                className="primary"
+                disabled={!rescheduleDialog.customerConsent || Boolean(processingId)}
+                onClick={() => void handleReschedule()}
+              >
+                {processingId ? "Đang lưu..." : "Xác nhận đổi lịch"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {cancelDialog && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setCancelDialog(null)}
+        >
+          <section
+            className="appointment-modal appointment-form-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              onClick={() => setCancelDialog(null)}
+            >×</button>
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2>Hủy lịch hẹn</h2>
+            <p className="appointment-dialog-description">
+              {cancelDialog.appointment.appointmentCode} · {getUserName(cancelDialog.appointment.client)}
+            </p>
+            <label className="appointment-dialog-field">
+              Lý do hủy
+              <select
+                value={cancelDialog.reason}
+                onChange={(event) => setCancelDialog({
+                  ...cancelDialog,
+                  reason: event.target.value,
+                })}
+              >
+                {cancellationReasons.map((reason) => (
+                  <option key={reason} value={reason}>{reason}</option>
+                ))}
+              </select>
+            </label>
+            {cancelDialog.reason === "Khác" && (
+              <label className="appointment-dialog-field">
+                Lý do khác
+                <textarea
+                  rows={4}
+                  maxLength={500}
+                  value={cancelDialog.customReason}
+                  placeholder="Nhập lý do hủy cụ thể..."
+                  onChange={(event) => setCancelDialog({
+                    ...cancelDialog,
+                    customReason: event.target.value,
+                  })}
+                />
+              </label>
+            )}
+            <p className="appointment-cancel-warning">
+              Lịch đã cọc do cửa hàng hủy sẽ tạo yêu cầu hoàn 100% tiền cọc.
+            </p>
+            <div className="appointment-dialog-actions">
+              <button type="button" onClick={() => setCancelDialog(null)}>Quay lại</button>
+              <button
+                type="button"
+                className="danger"
+                disabled={Boolean(processingId)}
+                onClick={() => void submitCancellation()}
+              >
+                {processingId ? "Đang hủy..." : "Xác nhận hủy lịch"}
               </button>
             </div>
           </section>

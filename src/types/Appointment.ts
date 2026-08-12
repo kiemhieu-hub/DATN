@@ -106,6 +106,8 @@ export interface Appointment {
   depositRequired: boolean;
   depositAmount: number;
   depositPaid: boolean;
+  depositExpiresAt?: string;
+  depositExpiredAt?: string;
   durationMinutes: number;
 
   appointmentDate: string;

@@ -495,6 +495,14 @@
   opacity: .55;
 }
 
+.history-deposit-deadline {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  color: #9b5a24 !important;
+  font-weight: 700;
+}
+
 .history-reviewed-label {
   color: #afe8ba;
   font-size: 13px;

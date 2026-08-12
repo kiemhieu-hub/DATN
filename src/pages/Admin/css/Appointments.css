@@ -904,11 +904,147 @@
 
 .appointment-services-modal {
   width: min(820px, 100%);
+  background: #181816;
 }
 
 .appointment-service-editor-description {
   margin: -14px 0 24px;
   color: #aaa69e;
+}
+
+.appointment-form-modal {
+  width: min(620px, 100%);
+}
+
+.appointment-old-schedule {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid #4d4537;
+  border-radius: 10px;
+  background: #242119;
+  color: #d8d1c5;
+}
+
+.appointment-old-schedule strong {
+  color: #e2ba67;
+}
+
+.appointment-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.appointment-form-grid label,
+.appointment-dialog-field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 15px;
+  color: #f4efe6;
+  font-weight: 700;
+}
+
+.appointment-form-grid input,
+.appointment-dialog-field select,
+.appointment-dialog-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border: 1px solid #5c5549;
+  border-radius: 8px;
+  background: #10100f;
+  color: #fff;
+  font: inherit;
+}
+
+.appointment-consent-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 14px;
+  border-radius: 8px;
+  background: #242119;
+  color: #f4efe6;
+}
+
+.appointment-dialog-description {
+  margin: -12px 0 20px;
+  color: #c0b9ae;
+}
+
+.appointment-cancel-warning {
+  padding: 12px 14px;
+  border-left: 3px solid #d7ad58;
+  background: #302718;
+  color: #f1d59c;
+}
+
+.appointment-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.appointment-dialog-actions button {
+  padding: 11px 16px;
+  border: 1px solid #5b554a;
+  border-radius: 8px;
+  background: #282620;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.appointment-dialog-actions .primary {
+  border-color: #cba355;
+  background: #cba355;
+  color: #17140f;
+}
+
+.appointment-dialog-actions .danger {
+  border-color: #a94d4d;
+  background: #722c2c;
+}
+
+.appointment-transfer-providers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.appointment-transfer-providers button {
+  padding: 8px 11px;
+  border: 1px solid #5d574d;
+  border-radius: 7px;
+  background: #24231f;
+  color: #ddd6ca;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.appointment-transfer-providers button.active {
+  border-color: #d3aa58;
+  background: #d3aa58;
+  color: #17140f;
+}
+
+.appointment-qr-config-note {
+  grid-column: 1 / -1;
+  color: #d9b66d !important;
+  line-height: 1.5;
+}
+
+@media (max-width: 620px) {
+  .appointment-form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .appointment-service-editor-heading {
