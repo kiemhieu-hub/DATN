@@ -504,7 +504,7 @@ function About() {
                   Đội ngũ của chúng tôi
                 </div>
 
-                <div className="section-title white">
+                <div className="section-title black">
                   Barber chuyên nghiệp
                 </div>
               </div>

@@ -178,7 +178,7 @@ function Index() {
               <li className="nav-item">
                 <Link
                   className="nav-link"
-                  to="/contact.html"
+                  to="/contact"
                 >
                   Liên hệ
                 </Link>
