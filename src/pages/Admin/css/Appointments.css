@@ -594,6 +594,17 @@
   line-height: 1;
 }
 
+.appointment-icon-work {
+  border-color: #237a50 !important;
+  background: #237a50 !important;
+  color: #ffffff !important;
+}
+
+.appointment-icon-work:hover:not(:disabled) {
+  border-color: #195e3c !important;
+  background: #195e3c !important;
+}
+
 .appointment-icon-detail{border-color:#737068!important;color:#eee!important}.appointment-icon-barber{border-color:#8b6d37!important;color:#e6bd69!important}.appointment-icon-reopen,.appointment-icon-reschedule{border-color:#447c91!important;color:#a8e4f7!important}.appointment-icon-services{border-color:#80639b!important;color:#dfc0f7!important}.appointment-icon-confirmed,.appointment-icon-checked_in,.appointment-icon-in_progress,.appointment-icon-completed{border-color:#3d8a60!important;color:#b7f1cf!important}.appointment-icon-no_show{border-color:#a47431!important;color:#ffd38d!important}.appointment-icon-cancel{border-color:#a64444!important;color:#ffaaaa!important;background:#3a2020!important;font-size:22px!important}.appointment-icon-payment{border-color:#3f8d61!important;color:#aeecc7!important;background:#173326!important}
 
 .appointment-action-detail {
@@ -758,6 +769,26 @@
   font-size: 14px;
 }
 
+.appointment-detail-staff-pair {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.appointment-detail-staff-pair section {
+  min-width: 0;
+  padding: 2px 12px;
+  border-left: 3px solid #c9963e;
+}
+
+.appointment-detail-staff-pair small {
+  display: block;
+  margin-top: 6px;
+  color: #aaa49a;
+  line-height: 1.45;
+}
+
 .appointment-detail-services {
   margin: 0;
   padding: 0;
@@ -824,16 +855,38 @@
   color: #ffd0d0;
 }
 
-.appointment-change-barber {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
+.appointment-change-workers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
   margin-top: 22px;
   padding-top: 20px;
   border-top: 1px solid #39362f;
 }
 
-.appointment-change-barber label {
+.appointment-change-worker {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #39362f;
+  border-radius: 10px;
+  background: #171714;
+}
+
+.appointment-change-worker > div span,
+.appointment-change-worker > div small {
+  display: block;
+  color: #aaa49a;
+  font-size: 12px;
+}
+
+.appointment-change-worker > div strong {
+  display: block;
+  margin: 5px 0;
+  color: #fff;
+}
+
+.appointment-change-worker label {
   display: flex;
   flex: 1;
   margin: 0;
@@ -844,7 +897,7 @@
   font-weight: 600;
 }
 
-.appointment-change-barber select {
+.appointment-change-worker select {
   width: 100%;
   height: 44px;
   margin: 0;
@@ -856,7 +909,7 @@
   font-family: inherit;
 }
 
-.appointment-change-barber button {
+.appointment-change-worker button {
   height: 44px;
   margin: 0;
   padding: 0 18px;
@@ -869,7 +922,7 @@
   cursor: pointer;
 }
 
-.appointment-change-barber button:disabled {
+.appointment-change-worker button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -1502,9 +1555,9 @@
     grid-template-columns: 1fr;
   }
 
-  .appointment-change-barber {
-    align-items: stretch;
-    flex-direction: column;
+  .appointment-change-workers,
+  .appointment-detail-staff-pair {
+    grid-template-columns: 1fr;
   }
 
   .appointment-modal {

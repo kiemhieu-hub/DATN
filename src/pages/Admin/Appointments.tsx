@@ -17,7 +17,8 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 
 import {
-  changeAdminAppointmentBarber,
+  changeAdminAppointmentWorker,
+  getAvailableAppointmentWorkers,
   getAdminAppointment,
   getAdminAppointments,
   reopenAdminNoShowAppointment,
@@ -142,6 +143,74 @@ const getAssignmentTime = (
   return assignment
     ? `${assignment.startTime} - ${assignment.endTime}`
     : "Không có";
+};
+
+const getAssignment = (
+  appointment: Appointment,
+  staffType: "HAIR" | "CARE"
+) => appointment.staffAssignments?.find((item) => item.staffType === staffType);
+
+const getAssignmentWorkerName = (
+  appointment: Appointment,
+  staffType: "HAIR" | "CARE"
+): string => {
+  const worker = getAssignment(appointment, staffType)?.barber;
+  return worker ? getUserName(worker) : "Không có";
+};
+
+const getAssignmentServiceNames = (
+  appointment: Appointment,
+  staffType: "HAIR" | "CARE"
+): string => {
+  const assignment = getAssignment(appointment, staffType);
+  if (!assignment) return "Không có dịch vụ";
+  const ids = new Set(assignment.serviceIds.map(String));
+  return appointment.services
+    .filter((item) => {
+      const id = typeof item.service === "string" ? item.service : item.service._id;
+      return ids.has(String(id));
+    })
+    .map((item) => item.nameSnapshot)
+    .join(", ");
+};
+
+const getSegmentDuration = (
+  appointment: Appointment,
+  staffType: "HAIR" | "CARE"
+): number => {
+  const assignment = appointment.staffAssignments?.find(
+    (item) => item.staffType === staffType
+  );
+  if (!assignment) return 0;
+
+  const ids = new Set(assignment.serviceIds.map(String));
+  return appointment.services
+    .filter((service) => {
+      const serviceId = typeof service.service === "string"
+        ? service.service
+        : service.service._id;
+      return ids.has(String(serviceId));
+    })
+    .reduce((sum, service) => sum + service.durationSnapshot, 0);
+};
+
+const getEstimatedRangeFromNow = (
+  appointment: Appointment,
+  staffType: "HAIR" | "CARE"
+): string => {
+  const now = new Date();
+  const end = new Date(now.getTime() + getSegmentDuration(appointment, staffType) * 60_000);
+  const time = (date: Date) =>
+    `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  return `${time(now)} - ${time(end)}`;
+};
+
+const formatDateTime = (value?: string): string => {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("vi-VN", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
 };
 
 const getTransferQrUrl = (
@@ -305,8 +374,14 @@ function Appointments() {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
 
-  const [selectedBarberId, setSelectedBarberId] =
-    useState("");
+  const [selectedWorkerIds, setSelectedWorkerIds] = useState<{
+    HAIR: string;
+    CARE: string;
+  }>({ HAIR: "", CARE: "" });
+  const [availableWorkers, setAvailableWorkers] = useState<{
+    HAIR: Array<{ id: string; fullName: string }>;
+    CARE: Array<{ id: string; fullName: string }>;
+  }>({ HAIR: [], CARE: [] });
   const [reopenForm, setReopenForm] = useState<{
     appointment: Appointment;
     mode: "CHECK_IN" | "RESCHEDULE";
@@ -484,13 +559,13 @@ function Appointments() {
 
         const response = await fetchBusinessQuery("admin-appointment-detail", () => getAdminAppointment(appointmentId), appointmentId, 0);
         setSelectedAppointment(response.appointment);
+        setSelectedWorkerIds({ HAIR: "", CARE: "" });
 
-        const currentBarberId =
-          typeof response.appointment.barber === "string"
-            ? response.appointment.barber
-            : response.appointment.barber._id;
-
-        setSelectedBarberId(currentBarberId);
+        const [hair, care] = await Promise.all([
+          getAvailableAppointmentWorkers(appointmentId, "HAIR"),
+          getAvailableAppointmentWorkers(appointmentId, "CARE"),
+        ]);
+        setAvailableWorkers({ HAIR: hair.workers, CARE: care.workers });
       } catch (requestError) {
         setError(
           getErrorMessage(
@@ -524,12 +599,12 @@ function Appointments() {
       const response = await fetchBusinessQuery("admin-appointment-detail", () => getAdminAppointment(appointment._id), appointment._id, 0);
       setSelectedAppointment(response.appointment);
 
-      const currentBarberId =
-        typeof response.appointment.barber === "string"
-          ? response.appointment.barber
-          : response.appointment.barber._id;
-
-      setSelectedBarberId(currentBarberId);
+      setSelectedWorkerIds({ HAIR: "", CARE: "" });
+      const [hair, care] = await Promise.all([
+        getAvailableAppointmentWorkers(appointment._id, "HAIR"),
+        getAvailableAppointmentWorkers(appointment._id, "CARE"),
+      ]);
+      setAvailableWorkers({ HAIR: hair.workers, CARE: care.workers });
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Không thể tải chi tiết lịch hẹn"));
     } finally {
@@ -543,7 +618,8 @@ function Appointments() {
     }
 
     setSelectedAppointment(null);
-    setSelectedBarberId("");
+    setSelectedWorkerIds({ HAIR: "", CARE: "" });
+    setAvailableWorkers({ HAIR: [], CARE: [] });
 
     if (new URLSearchParams(location.search).has("appointmentId")) {
       navigate(location.pathname, { replace: true });
@@ -555,7 +631,18 @@ function Appointments() {
     targetStatus: AppointmentStatus
   ): Promise<void> => {
     if (targetStatus === "IN_PROGRESS") {
-      setStartWorkDialog(appointment);
+      const pendingSegments = (["HAIR", "CARE"] as const).filter(
+        (segment) =>
+          appointment.workProgress?.[
+            segment === "HAIR" ? "hair" : "care"
+          ] === "PENDING"
+      );
+
+      if (pendingSegments.length === 1) {
+        await startWorkSegment(appointment, pendingSegments[0]);
+      } else {
+        setStartWorkDialog(appointment);
+      }
       return;
     }
     if (targetStatus === "CANCELLED") {
@@ -638,13 +725,17 @@ function Appointments() {
     }
   };
 
-  const handleChangeBarber = async (): Promise<void> => {
+  const handleChangeWorker = async (
+    staffType: "HAIR" | "CARE"
+  ): Promise<void> => {
     if (!selectedAppointment) {
       return;
     }
 
-    if (!selectedBarberId) {
-      setError("Vui lòng chọn Barber mới");
+    const workerId = selectedWorkerIds[staffType];
+    const label = staffType === "HAIR" ? "Barber" : "nhân viên chăm sóc";
+    if (!workerId) {
+      setError(`Vui lòng chọn ${label} mới`);
       return;
     }
 
@@ -653,20 +744,22 @@ function Appointments() {
       setError("");
       setMessage("");
 
-      const response = await changeAdminAppointmentBarber(
+      const response = await changeAdminAppointmentWorker(
         selectedAppointment._id,
-        selectedBarberId
+        workerId,
+        staffType
       );
 
       setMessage(response.message);
       setSelectedAppointment(response.appointment);
+      setSelectedWorkerIds((current) => ({ ...current, [staffType]: "" }));
 
       await loadAppointments();
     } catch (requestError) {
       setError(
         getErrorMessage(
           requestError,
-          "Không thể đổi Barber"
+          `Không thể đổi ${label}`
         )
       );
     } finally {
@@ -871,32 +964,10 @@ function Appointments() {
     }
   };
 
-  const changeWorkProgress = async (
-    segment: "HAIR" | "CARE",
-    action: "START" | "COMPLETE"
-  ): Promise<void> => {
-    if (!selectedAppointment) return;
-    const label = `${action === "START" ? "bắt đầu" : "hoàn thành"} phần ${segment === "HAIR" ? "làm tóc" : "chăm sóc"}`;
-    if (!window.confirm(`Xác nhận ${label}?`)) return;
-    try {
-      setProcessingId(selectedAppointment._id);
-      const response = await updateAdminAppointmentWorkProgress(selectedAppointment._id, segment, action);
-      setSelectedAppointment(response.appointment);
-      setMessage(response.message);
-      await loadAppointments();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, `Không thể ${label}`));
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const startFirstWorkSegment = async (
+  const startWorkSegment = async (
+    appointment: Appointment,
     segment: "HAIR" | "CARE"
   ): Promise<void> => {
-    if (!startWorkDialog) return;
-
-    const appointment = startWorkDialog;
     try {
       setProcessingId(appointment._id);
       setError("");
@@ -913,6 +984,67 @@ function Appointments() {
       setError(getErrorMessage(requestError, "Không thể bắt đầu phần việc"));
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const handleWorkAction = async (appointment: Appointment): Promise<void> => {
+    const progress = appointment.workProgress;
+    if (!progress) {
+      setError("Lịch hẹn chưa có thông tin phân công dịch vụ");
+      return;
+    }
+
+    const activeSegment = progress.hair === "IN_PROGRESS"
+      ? "HAIR"
+      : progress.care === "IN_PROGRESS"
+        ? "CARE"
+        : null;
+
+    if (activeSegment) {
+      const roleLabel = activeSegment === "HAIR"
+        ? "Barber"
+        : "Nhân viên chăm sóc";
+      const workerName = getAssignmentWorkerName(appointment, activeSegment);
+      const serviceNames = getAssignmentServiceNames(appointment, activeSegment);
+      if (!window.confirm(
+        `Xác nhận hoàn thành ${roleLabel}-${workerName}\nDịch vụ: ${serviceNames}\nNhân viên sẽ được giải phóng ngay lúc này.`
+      )) {
+        return;
+      }
+
+      try {
+        setProcessingId(appointment._id);
+        setError("");
+        const response = await updateAdminAppointmentWorkProgress(
+          appointment._id,
+          activeSegment,
+          "COMPLETE"
+        );
+        setMessage(response.message);
+        if (selectedAppointment?._id === appointment._id) {
+          setSelectedAppointment(response.appointment);
+        }
+        await loadAppointments();
+      } catch (requestError) {
+        setError(getErrorMessage(requestError, "Không thể hoàn thành phần việc"));
+      } finally {
+        setProcessingId(null);
+      }
+      return;
+    }
+
+    const pendingSegments = (["HAIR", "CARE"] as const).filter(
+      (segment) =>
+        progress[segment === "HAIR" ? "hair" : "care"] === "PENDING"
+    );
+
+    if (pendingSegments.length === 1) {
+      await startWorkSegment(appointment, pendingSegments[0]);
+      return;
+    }
+
+    if (pendingSegments.length > 1) {
+      setStartWorkDialog(appointment);
     }
   };
 
@@ -1238,16 +1370,37 @@ function Appointments() {
                         )}
 
                         {(["CHECKED_IN", "IN_PROGRESS"] as AppointmentStatus[]).includes(appointment.status) && (
-                          <button
-                            type="button"
-                            className="appointment-icon-button appointment-icon-services"
-                            title="Thêm hoặc bớt dịch vụ"
-                            aria-label="Thêm hoặc bớt dịch vụ"
-                            disabled={processingId === appointment._id}
-                            onClick={() => openServiceEditor(appointment)}
-                          >
-                            ±
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              className="appointment-icon-button appointment-icon-work"
+                              title={
+                                appointment.workProgress?.hair === "IN_PROGRESS" ||
+                                appointment.workProgress?.care === "IN_PROGRESS"
+                                  ? "Hoàn thành và giải phóng nhân viên đang làm"
+                                  : "Bắt đầu phần việc tiếp theo"
+                              }
+                              aria-label="Cập nhật tiến độ thực hiện"
+                              disabled={processingId === appointment._id}
+                              onClick={() => void handleWorkAction(appointment)}
+                            >
+                              {appointment.workProgress?.hair === "IN_PROGRESS" ||
+                              appointment.workProgress?.care === "IN_PROGRESS"
+                                ? "✓"
+                                : "▶"}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="appointment-icon-button appointment-icon-services"
+                              title="Thêm hoặc bớt dịch vụ"
+                              aria-label="Thêm hoặc bớt dịch vụ"
+                              disabled={processingId === appointment._id}
+                              onClick={() => openServiceEditor(appointment)}
+                            >
+                              ±
+                            </button>
+                          </>
                         )}
 
                         {appointment.status === "COMPLETED" &&
@@ -1326,9 +1479,17 @@ function Appointments() {
                 <strong>{getCustomerName(selectedAppointment)}</strong>
               </div>
 
-              <div>
-                <span>Barber</span>
-                <strong>{getUserName(selectedAppointment.barber)}</strong>
+              <div className="appointment-detail-staff-pair">
+                <section>
+                  <span>Barber làm tóc</span>
+                  <strong>{getAssignmentWorkerName(selectedAppointment, "HAIR")}</strong>
+                  <small>{getAssignmentServiceNames(selectedAppointment, "HAIR")}</small>
+                </section>
+                <section>
+                  <span>Nhân viên chăm sóc</span>
+                  <strong>{getAssignmentWorkerName(selectedAppointment, "CARE")}</strong>
+                  <small>{getAssignmentServiceNames(selectedAppointment, "CARE")}</small>
+                </section>
               </div>
 
               <div>
@@ -1420,8 +1581,16 @@ function Appointments() {
                   return <div key={segment}>
                     <span>{segment === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc"}</span>
                     <b>{value === "PENDING" ? "Chưa bắt đầu" : value === "IN_PROGRESS" ? "Đang thực hiện" : "Đã hoàn thành"}</b>
-                    {value === "PENDING" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "START")}>Bắt đầu</button>}
-                    {value === "IN_PROGRESS" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "COMPLETE")}>Hoàn thành phần việc</button>}
+                    {value === "IN_PROGRESS" && (
+                      <small>
+                        Bắt đầu thực tế: {formatDateTime(selectedAppointment.workProgress?.[segment === "HAIR" ? "hairStartedAt" : "careStartedAt"])} · Dự kiến xong: {formatDateTime(selectedAppointment.workProgress?.[segment === "HAIR" ? "hairEstimatedEndAt" : "careEstimatedEndAt"])}
+                      </small>
+                    )}
+                    {value === "COMPLETED" && (
+                      <small>
+                        Đã giải phóng lúc {formatDateTime(selectedAppointment.workProgress?.[segment === "HAIR" ? "hairCompletedAt" : "careCompletedAt"])}
+                      </small>
+                    )}
                   </div>;
                 })}
                 <small>Lịch chỉ hoàn thành khi tất cả phần việc bắt buộc đều đã hoàn thành.</small>
@@ -1498,36 +1667,51 @@ function Appointments() {
             {!["COMPLETED", "CANCELLED"].includes(
               selectedAppointment.status
             ) && (
-              <div className="appointment-change-barber">
-                <label htmlFor="new-barber">
-                  Đổi Barber
-                  <select
-                    id="new-barber"
-                    value={selectedBarberId}
-                    onChange={(event) =>
-                      setSelectedBarberId(event.target.value)
-                    }
-                  >
-                    {barbers.map((barber) => (
-                      <option
-                        key={barber.id}
-                        value={barber.id}
-                      >
-                        {barber.fullName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              <div className="appointment-change-workers">
+                {(["HAIR", "CARE"] as const).map((staffType) => {
+                  const assignment = getAssignment(selectedAppointment, staffType);
+                  if (!assignment) return null;
+                  const label = staffType === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc";
+                  const candidates = availableWorkers[staffType];
 
-                <button
-                  type="button"
-                  disabled={processingId === selectedAppointment._id}
-                  onClick={() => void handleChangeBarber()}
-                >
-                  {processingId === selectedAppointment._id
-                    ? "Đang lưu..."
-                    : "Lưu Barber"}
-                </button>
+                  return (
+                    <section className="appointment-change-worker" key={staffType}>
+                      <div>
+                        <span>{label} hiện tại</span>
+                        <strong>{getAssignmentWorkerName(selectedAppointment, staffType)}</strong>
+                        <small>{getAssignmentServiceNames(selectedAppointment, staffType)}</small>
+                      </div>
+                      <label htmlFor={`new-worker-${staffType}`}>
+                        Đổi {label}
+                        <select
+                          id={`new-worker-${staffType}`}
+                          value={selectedWorkerIds[staffType]}
+                          onChange={(event) => setSelectedWorkerIds((current) => ({
+                            ...current,
+                            [staffType]: event.target.value,
+                          }))}
+                        >
+                          <option value="">Chọn nhân viên thay thế</option>
+                          {candidates.map((worker) => (
+                            <option key={worker.id} value={worker.id}>
+                              {worker.fullName}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        disabled={
+                          processingId === selectedAppointment._id ||
+                          !selectedWorkerIds[staffType]
+                        }
+                        onClick={() => void handleChangeWorker(staffType)}
+                      >
+                        {processingId === selectedAppointment._id ? "Đang lưu..." : `Lưu ${label}`}
+                      </button>
+                    </section>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -2094,25 +2278,25 @@ function Appointments() {
             </p>
 
             <div className="appointment-start-work-options">
-              {startWorkDialog.workProgress?.hair !== "NOT_REQUIRED" && (
+              {startWorkDialog.workProgress?.hair === "PENDING" && (
                 <button
                   type="button"
                   disabled={Boolean(processingId)}
-                  onClick={() => void startFirstWorkSegment("HAIR")}
+                  onClick={() => void startWorkSegment(startWorkDialog, "HAIR")}
                 >
                   <strong>Barber làm tóc trước</strong>
-                  <span>{getAssignmentTime(startWorkDialog, "HAIR")}</span>
+                  <span>Dự kiến {getEstimatedRangeFromNow(startWorkDialog, "HAIR")}</span>
                 </button>
               )}
 
-              {startWorkDialog.workProgress?.care !== "NOT_REQUIRED" && (
+              {startWorkDialog.workProgress?.care === "PENDING" && (
                 <button
                   type="button"
                   disabled={Boolean(processingId)}
-                  onClick={() => void startFirstWorkSegment("CARE")}
+                  onClick={() => void startWorkSegment(startWorkDialog, "CARE")}
                 >
                   <strong>Nhân viên chăm sóc trước</strong>
-                  <span>{getAssignmentTime(startWorkDialog, "CARE")}</span>
+                  <span>Dự kiến {getEstimatedRangeFromNow(startWorkDialog, "CARE")}</span>
                 </button>
               )}
             </div>

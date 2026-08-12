@@ -140,8 +140,10 @@ export interface Appointment {
     hair: "NOT_REQUIRED" | "PENDING" | "IN_PROGRESS" | "COMPLETED";
     care: "NOT_REQUIRED" | "PENDING" | "IN_PROGRESS" | "COMPLETED";
     hairStartedAt?: string;
+    hairEstimatedEndAt?: string;
     hairCompletedAt?: string;
     careStartedAt?: string;
+    careEstimatedEndAt?: string;
     careCompletedAt?: string;
   };
   cancellationPolicySnapshot?: {

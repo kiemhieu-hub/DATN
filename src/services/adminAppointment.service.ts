@@ -8,8 +8,29 @@ export const getAdminAppointment = async (id: string) =>
   (await api.get<GetAdminAppointmentResponse>(`/admin/appointments/${id}`)).data;
 export const updateAdminAppointmentStatus = async (id: string, status: AppointmentStatus, reason?: string) =>
   (await api.patch<AdminAppointmentMutationResponse>(`/admin/appointments/${id}/status`, { status, reason })).data;
-export const changeAdminAppointmentBarber = async (id: string, barberId: string) =>
-  (await api.patch<AdminAppointmentMutationResponse>(`/admin/appointments/${id}/barber`, { barberId })).data;
+export const changeAdminAppointmentWorker = async (
+  id: string,
+  workerId: string,
+  staffType: "HAIR" | "CARE"
+) =>
+  (
+    await api.patch<AdminAppointmentMutationResponse>(
+      `/admin/appointments/${id}/barber`,
+      { workerId, staffType }
+    )
+  ).data;
+export const getAvailableAppointmentWorkers = async (
+  id: string,
+  staffType: "HAIR" | "CARE"
+) =>
+  (
+    await api.get<{
+      success: boolean;
+      workers: Array<{ id: string; fullName: string }>;
+    }>(`/admin/appointments/${id}/available-workers`, {
+      params: { staffType },
+    })
+  ).data;
 export const reopenAdminNoShowAppointment = async (
   id: string,
   payload: {
