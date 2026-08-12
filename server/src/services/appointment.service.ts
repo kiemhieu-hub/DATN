@@ -23,7 +23,6 @@ import {
   type AppointmentEmailEvent,
 } from "./email.service";
 import {
-  consumeVoucher,
   evaluateVoucher,
   type VoucherCalculation,
 } from "./voucher.service";
@@ -32,6 +31,7 @@ import {
   recordSystemActivities,
 } from "./appointmentActivity.service";
 import { createStaffNotification } from "./staffNotification.service";
+import { createRefundRequestForAppointment } from "./refund.service";
 
 interface LifecycleEmailAppointment {
   appointmentCode: string;
@@ -923,7 +923,9 @@ export const createAppointment =
 
     const discountPercent = voucherCalculation?.discountPercent ?? 0;
     const discountAmount = voucherCalculation?.discountAmount ?? 0;
-    const totalPrice = voucherCalculation?.total ?? subtotal;
+    // Voucher chỉ được ghi nhận khi đặt lịch. Số tiền giảm thực tế được áp
+    // dụng sau khi chốt dịch vụ ở bước thanh toán cuối cùng.
+    const totalPrice = subtotal;
     const depositRequired = subtotal > 200000;
     const depositAmount = depositRequired ? Math.round(subtotal * 0.3) : 0;
 
@@ -988,20 +990,23 @@ export const createAppointment =
         status: "PENDING",
         paymentStatus: "UNPAID",
 
+        workProgress: {
+          hair: hairServices.length > 0 ? "PENDING" : "NOT_REQUIRED",
+          care: careServices.length > 0 ? "PENDING" : "NOT_REQUIRED",
+        },
+        cancellationPolicySnapshot: {
+          fullRefundHours: Number(process.env.CANCELLATION_FULL_REFUND_HOURS) || 24,
+          shopCancellationRefundPercent: 100,
+          lateCancellationRefundPercent: 0,
+          noShowRefundPercent: 0,
+          capturedAt: new Date(),
+        },
+
         note:
           typeof note === "string"
             ? note.trim()
             : "",
       });
-
-    if (voucherCalculation) {
-      try {
-        await consumeVoucher(voucherCalculation.voucherId);
-      } catch (error) {
-        await Appointment.deleteOne({ _id: appointment._id });
-        throw error;
-      }
-    }
 
     await recordAppointmentActivity({
       appointmentId: appointment._id,
@@ -1148,14 +1153,8 @@ export const cancelMyAppointment =
 
     const appointmentStart = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
     const leadTime = appointmentStart.getTime() - Date.now();
-    const oneDay = 24 * 60 * 60 * 1000;
-    const threeDays = 3 * oneDay;
-
-    // Lịch chưa xác nhận có thể hủy bất cứ lúc nào trước giờ hẹn.
-    // Lịch đã xác nhận phải hủy trước ít nhất 24 giờ; hoàn cọc nếu trước 72 giờ.
-    if (appointment.status === "CONFIRMED" && leadTime < oneDay) {
-      throw new AppError("Lịch đã xác nhận chỉ có thể hủy trước giờ hẹn ít nhất 24 tiếng", 400);
-    }
+    const policyHours = appointment.cancellationPolicySnapshot?.fullRefundHours ?? 24;
+    const fullRefundWindow = policyHours * 60 * 60 * 1000;
 
     if (!reason?.trim()) {
       throw new AppError("Vui lòng nhập lý do hủy lịch", 400);
@@ -1164,9 +1163,7 @@ export const cancelMyAppointment =
     appointment.status =
       "CANCELLED";
 
-    const refundEligible = appointment.depositPaid && (
-      previousStatus === "PENDING" || leadTime >= threeDays
-    );
+    const refundEligible = appointment.depositPaid && leadTime >= fullRefundWindow;
     if (refundEligible && (!refundBankName?.trim() || !refundAccountNumber?.trim() || !refundAccountName?.trim())) {
       throw new AppError("Vui lòng nhập đủ thông tin tài khoản nhận hoàn cọc", 400);
     }
@@ -1193,9 +1190,23 @@ export const cancelMyAppointment =
       refundBankName: refundBankName?.trim() ?? "",
       refundAccountNumber: refundAccountNumber?.trim() ?? "",
       refundAccountName: refundAccountName?.trim() ?? "",
+      refundEligible,
+      refundAmount: refundEligible ? appointment.depositAmount : 0,
+      policyApplied: refundEligible
+        ? `Khách hủy trước ít nhất ${policyHours} giờ: hoàn 100% tiền cọc`
+        : `Khách hủy dưới ${policyHours} giờ: không hoàn tiền cọc`,
+      refundStatus: refundEligible ? "PENDING" : "NOT_REQUIRED",
     };
 
     await appointment.save();
+
+    if (refundEligible) {
+      await createRefundRequestForAppointment(
+        String(appointment._id),
+        userId,
+        role
+      );
+    }
 
     await recordAppointmentActivity({
       appointmentId: appointment._id,
@@ -1285,7 +1296,7 @@ export const getBarberAppointments =
       }
     }
 
-    return Appointment.find(filter)
+    const appointments = await Appointment.find(filter)
       .populate(
         "client",
         "fullName email phone role status"
@@ -1298,12 +1309,42 @@ export const getBarberAppointments =
         "staffAssignments.barber",
         "fullName email phone role status"
       )
-      .sort({
-        appointmentDate: 1,
-        startTime: 1,
-      })
       .lean();
+
+    const now = Date.now();
+    return appointments.sort((first, second) => {
+      const firstUnread = !first.barberViewedAt;
+      const secondUnread = !second.barberViewedAt;
+      if (firstUnread !== secondUnread) return firstUnread ? -1 : 1;
+
+      const firstTime = new Date(`${first.appointmentDate}T${first.startTime}:00`).getTime();
+      const secondTime = new Date(`${second.appointmentDate}T${second.startTime}:00`).getTime();
+      const firstFuture = firstTime >= now;
+      const secondFuture = secondTime >= now;
+      if (firstFuture !== secondFuture) return firstFuture ? -1 : 1;
+      return firstFuture ? firstTime - secondTime : secondTime - firstTime;
+    });
   };
+
+export const markBarberAppointmentViewed = async (
+  appointmentId: string,
+  barberId: string
+) => {
+  assertObjectId(appointmentId, "Mã lịch hẹn không hợp lệ");
+  assertObjectId(barberId, "Tài khoản Barber không hợp lệ");
+
+  const appointment = await Appointment.findOneAndUpdate(
+    {
+      _id: appointmentId,
+      $or: [{ barber: barberId }, { "staffAssignments.barber": barberId }],
+    },
+    { $set: { barberViewedAt: new Date() } },
+    { new: true }
+  ).lean();
+
+  if (!appointment) throw new AppError("Không tìm thấy lịch được phân công", 404);
+  return appointment;
+};
 
 /**
  * LỄ TÂN hoặc ADMIN cập nhật trạng thái.
@@ -1418,11 +1459,23 @@ export const updateAppointmentStatus =
         // Hủy bởi cửa hàng luôn hoàn phần cọc đã thu cho khách.
         depositRefundStatus: appointment.depositPaid ? "ELIGIBLE" : "NOT_APPLICABLE",
         depositRefundAmount: appointment.depositPaid ? appointment.depositAmount : 0,
+        refundEligible: appointment.depositPaid,
+        refundAmount: appointment.depositPaid ? appointment.depositAmount : 0,
+        policyApplied: "Cửa hàng chủ động hủy: hoàn 100% tiền cọc",
+        refundStatus: appointment.depositPaid ? "PENDING" : "NOT_REQUIRED",
 };
 
     }
 
     await appointment.save();
+
+    if (status === "CANCELLED" && appointment.depositPaid) {
+      await createRefundRequestForAppointment(
+        String(appointment._id),
+        actorId,
+        actorRole
+      );
+    }
 
     await recordAppointmentActivity({
       appointmentId: appointment._id,
@@ -1770,7 +1823,14 @@ export const processAutomaticAppointmentStatuses = async () => {
   const completedResult = completedIds.length
     ? await Appointment.updateMany(
         { _id: { $in: completedIds }, status: "IN_PROGRESS" },
-        { $set: { status: "COMPLETED", completedAt: now } }
+        {
+          $set: {
+            status: "COMPLETED",
+            completedAt: now,
+            "workProgress.hair": "COMPLETED",
+            "workProgress.care": "COMPLETED",
+          },
+        }
       )
     : { modifiedCount: 0 };
 

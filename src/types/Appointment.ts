@@ -55,6 +55,10 @@ export interface AppointmentCancellation {
   refundBankName?: string;
   refundAccountNumber?: string;
   refundAccountName?: string;
+  refundEligible?: boolean;
+  refundAmount?: number;
+  policyApplied?: string;
+  refundStatus?: string;
 }
 
 export interface AppointmentActivityActor {
@@ -126,4 +130,23 @@ export interface Appointment {
   createdAt: string;
 
   updatedAt: string;
+  barberViewedAt?: string;
+  finalPrice?: number;
+  finalDiscountAmount?: number;
+  voucherAppliedAt?: string;
+  workProgress?: {
+    hair: "NOT_REQUIRED" | "PENDING" | "IN_PROGRESS" | "COMPLETED";
+    care: "NOT_REQUIRED" | "PENDING" | "IN_PROGRESS" | "COMPLETED";
+    hairStartedAt?: string;
+    hairCompletedAt?: string;
+    careStartedAt?: string;
+    careCompletedAt?: string;
+  };
+  cancellationPolicySnapshot?: {
+    fullRefundHours: number;
+    shopCancellationRefundPercent: number;
+    lateCancellationRefundPercent: number;
+    noShowRefundPercent: number;
+    capturedAt: string;
+  };
 }

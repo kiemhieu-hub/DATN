@@ -21,6 +21,7 @@ import {
   rescheduleAdminAppointment,
   updateAdminAppointmentServices,
   updateAdminAppointmentStatus,
+  updateAdminAppointmentWorkProgress,
 } from "../../services/adminAppointment.service";
 import { getCatalogBarbers, getCatalogServices } from "../../services/catalog.service";
 import { confirmBankTransfer, confirmCashPayment } from "../../services/payment.service";
@@ -740,6 +741,26 @@ function Appointments() {
     }
   };
 
+  const changeWorkProgress = async (
+    segment: "HAIR" | "CARE",
+    action: "START" | "COMPLETE"
+  ): Promise<void> => {
+    if (!selectedAppointment) return;
+    const label = `${action === "START" ? "bắt đầu" : "hoàn thành"} phần ${segment === "HAIR" ? "làm tóc" : "chăm sóc"}`;
+    if (!window.confirm(`Xác nhận ${label}?`)) return;
+    try {
+      setProcessingId(selectedAppointment._id);
+      const response = await updateAdminAppointmentWorkProgress(selectedAppointment._id, segment, action);
+      setSelectedAppointment(response.appointment);
+      setMessage(response.message);
+      await loadAppointments();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, `Không thể ${label}`));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   if (authLoading || (loading && appointments.length === 0)) {
     return (
       <div className="admin-appointments-page">
@@ -1200,6 +1221,24 @@ function Appointments() {
               <strong>Ghi chú:</strong>
               <span>{selectedAppointment.note || "Không có ghi chú"}</span>
             </div>
+
+            {selectedAppointment.workProgress && ["CHECKED_IN", "IN_PROGRESS"].includes(selectedAppointment.status) && (
+              <section className="appointment-work-progress">
+                <h3>Tiến độ thực hiện</h3>
+                {(["HAIR", "CARE"] as const).map((segment) => {
+                  const key = segment === "HAIR" ? "hair" : "care";
+                  const value = selectedAppointment.workProgress?.[key];
+                  if (value === "NOT_REQUIRED") return null;
+                  return <div key={segment}>
+                    <span>{segment === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc"}</span>
+                    <b>{value === "PENDING" ? "Chưa bắt đầu" : value === "IN_PROGRESS" ? "Đang thực hiện" : "Đã hoàn thành"}</b>
+                    {value === "PENDING" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "START")}>Bắt đầu</button>}
+                    {value === "IN_PROGRESS" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "COMPLETE")}>Hoàn thành phần việc</button>}
+                  </div>;
+                })}
+                <small>Lịch chỉ hoàn thành khi tất cả phần việc bắt buộc đều đã hoàn thành.</small>
+              </section>
+            )}
 
             {selectedAppointment.cancellation && (
               <div className="appointment-cancel-reason">

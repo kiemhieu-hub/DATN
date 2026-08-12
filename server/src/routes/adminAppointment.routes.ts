@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changeBarber, getAppointment, getAppointments, reopenNoShow, reschedule, updateServices, updateStatus } from "../controllers/adminAppointment.controller";
+import { changeBarber, getAppointment, getAppointments, reopenNoShow, reschedule, updateServices, updateStatus, updateWorkProgress } from "../controllers/adminAppointment.controller";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
 
@@ -12,4 +12,5 @@ router.patch("/:id/barber", changeBarber);
 router.patch("/:id/reopen", reopenNoShow);
 router.patch("/:id/reschedule", reschedule);
 router.patch("/:id/services", updateServices);
+router.patch("/:id/work-progress", updateWorkProgress);
 export default router;

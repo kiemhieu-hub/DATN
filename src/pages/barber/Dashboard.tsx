@@ -1,188 +1,58 @@
 import axios from "axios";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
-
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { getBarberDashboard } from "../../services/barberDashboard.service";
-
-import type {
-  BarberDashboardAppointment,
-  BarberDashboardData,
-} from "../../types/BarberDashboard";
-
+import type { BarberDashboardData } from "../../types/BarberDashboard";
 import "./css/Dashboard.css";
 
-const formatPrice = (value: number): string =>
-  new Intl.NumberFormat("vi-VN").format(value);
-
-const formatDate = (value: string): string => {
-  const [year, month, day] = value.split("-");
-  return year && month && day
-    ? `${day}/${month}/${year}`
-    : value;
-};
-
-const formatDuration = (
-  totalMinutes: number
-): string => {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours > 0 && minutes > 0) {
-    return `${hours} giờ ${minutes} phút`;
-  }
-
-  if (hours > 0) {
-    return `${hours} giờ`;
-  }
-
-  return `${minutes} phút`;
-};
-
-const getErrorMessage = (
-  error: unknown,
-  fallback: string
-): string => {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as
-      | { message?: string }
-      | undefined;
-
-    return data?.message || fallback;
-  }
-
-  return fallback;
-};
-
-const getClientName = (
-  appointment: BarberDashboardAppointment
-): string =>
-  appointment.client?.fullName ?? "Khách hàng";
-
-const getClientPhone = (
-  appointment: BarberDashboardAppointment
-): string =>
-  appointment.client?.phone ?? "Chưa cập nhật";
-
-const statusLabels: Record<
-  BarberDashboardAppointment["status"],
-  string
-> = {
-  PENDING: "Chờ xác nhận",
-  CONFIRMED: "Đã xác nhận",
-  CHECKED_IN: "Đã check-in",
-  IN_PROGRESS: "Đang thực hiện",
-  COMPLETED: "Đã hoàn thành",
-  NO_SHOW: "Vắng mặt",
-  CANCELLED: "Đã hủy",
-};
+const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
+const today = () => new Date().toISOString().slice(0, 10);
 
 function Dashboard() {
   const navigate = useNavigate();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth("BARBER");
+  const [data, setData] = useState<BarberDashboardData | null>(null);
+  const [dateFrom, setDateFrom] = useState(today());
+  const [dateTo, setDateTo] = useState(today());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const {
-    user,
-    isAuthenticated,
-    isLoading: authLoading,
-    logout,
-  } = useAuth("BARBER");
-
-  const [dashboard, setDashboard] =
-    useState<BarberDashboardData | null>(null);
-  const [loading, setLoading] =
-    useState(true);
-  const [error, setError] =
-    useState("");
-
-  const loadDashboard = useCallback(
-    async (): Promise<void> => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const response =
-          await getBarberDashboard();
-
-        setDashboard(response.data);
-      } catch (requestError) {
-        setError(
-          getErrorMessage(
-            requestError,
-            "Không thể tải Dashboard Barber."
-          )
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const response = await getBarberDashboard({ dateFrom, dateTo });
+      setData(response.data);
+    } catch (requestError) {
+      setError(axios.isAxiosError(requestError)
+        ? requestError.response?.data?.message || "Không thể tải dữ liệu."
+        : "Không thể tải dữ liệu.");
+    } finally {
+      setLoading(false);
+    }
+  }, [dateFrom, dateTo]);
 
   useEffect(() => {
     if (authLoading) return;
-
-    if (!isAuthenticated || !user) {
-      navigate("/barber/login", {
-        replace: true,
-        state: {
-          message:
-            "Bạn cần đăng nhập bằng tài khoản Barber.",
-        },
-      });
-      return;
-    }
-
-    if (user.role !== "BARBER") {
+    if (!isAuthenticated || user?.role !== "BARBER") {
       navigate("/barber/login", { replace: true });
       return;
     }
+    void load();
+  }, [authLoading, isAuthenticated, user, navigate, load]);
 
-    void loadDashboard();
-  }, [
-    authLoading,
-    isAuthenticated,
-    user,
-    navigate,
-    loadDashboard,
-  ]);
-
-  const upcomingAppointments = useMemo(
-    () =>
-      dashboard?.todayAppointments.filter(
-        (appointment) =>
-          appointment.status === "PENDING" ||
-          appointment.status === "CONFIRMED" ||
-          appointment.status === "IN_PROGRESS"
-      ) ?? [],
-    [dashboard]
+  const maxRevenue = useMemo(
+    () => Math.max(1, ...(data?.revenueSeries.map((item) => item.amount) ?? [1])),
+    [data]
   );
+  const unread = data?.appointments.filter((item) => !item.barberViewedAt).length ?? 0;
+  const completed = data?.outcomes.completionRate ?? 0;
+  const cancelled = data?.outcomes.cancellationRate ?? 0;
+  const donut = `conic-gradient(#258657 0 ${completed}%, #d94c4c ${completed}% ${completed + cancelled}%, #ddd4c7 ${completed + cancelled}% 100%)`;
 
-  const handleLogout = (): void => {
-    logout();
-    navigate("/barber/login", { replace: true });
-  };
-
-  if (authLoading || loading) {
-    return (
-      <div className="barber-dashboard-page">
-        <div className="barber-dashboard-loading">
-          <div className="barber-dashboard-spinner" />
-          <p>Đang tải Dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || user.role !== "BARBER") {
-    return null;
+  if (authLoading || (loading && !data)) {
+    return <div className="barber-dashboard-page barber-dashboard-loading">Đang tải Dashboard...</div>;
   }
 
   return (
@@ -190,268 +60,59 @@ function Dashboard() {
       <main className="barber-dashboard-container">
         <header className="barber-dashboard-header">
           <div>
-            <p className="barber-dashboard-brand">
-              THADS Barber
-            </p>
+            <p className="eyebrow">THADS BARBER</p>
             <h1>Dashboard Barber</h1>
-            <p>
-              Xin chào, {user.fullName}. Đây là tổng quan công việc hôm nay.
-            </p>
+            <p>Xin chào {user?.fullName}. Theo dõi doanh thu và lịch làm việc của bạn.</p>
           </div>
-
-          <div className="barber-dashboard-header-actions">
-            <Link to="/barber/schedule">
-              Lịch hẹn
-            </Link>
-            <Link to="/barber/working-schedule">
-              Lịch làm việc
-            </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-            >
-              Đăng xuất
-            </button>
-          </div>
+          <nav>
+            <Link className="bell" to="/barber/schedule" aria-label="Thông báo">♢{unread > 0 && <b>{unread}</b>}</Link>
+            <Link to="/barber/schedule">Lịch hẹn</Link>
+            <Link to="/barber/working-schedule">Lịch làm việc</Link>
+            <Link to="/barber/profile">Cá nhân</Link>
+            <button onClick={() => { logout(); navigate("/barber/login"); }}>Đăng xuất</button>
+          </nav>
         </header>
 
-        {error && (
-          <div className="barber-dashboard-message barber-dashboard-error">
-            <span>{error}</span>
-            <button
-              type="button"
-              onClick={() =>
-                void loadDashboard()
-              }
-            >
-              Thử lại
-            </button>
-          </div>
-        )}
+        <section className="barber-dashboard-filter">
+          <label>Từ ngày<input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} /></label>
+          <label>Đến ngày<input type="date" min={dateFrom} value={dateTo} onChange={(e) => setDateTo(e.target.value)} /></label>
+          <button onClick={() => void load()}>Làm mới</button>
+        </section>
+        {error && <p className="barber-dashboard-error">{error}</p>}
 
-        {dashboard && (
-          <>
-            <section className="barber-dashboard-date-banner">
-              <div>
-                <span>Ngày làm việc</span>
-                <strong>
-                  {formatDate(dashboard.date)}
-                </strong>
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  void loadDashboard()
-                }
-              >
-                Làm mới dữ liệu
-              </button>
-            </section>
-
-            <section className="barber-dashboard-statistics">
-              <article>
-                <span>Tổng lịch</span>
-                <strong>{dashboard.statistics.total}</strong>
-              </article>
-              <article>
-                <span>Chờ xác nhận</span>
-                <strong>{dashboard.statistics.pending}</strong>
-              </article>
-              <article>
-                <span>Đã xác nhận</span>
-                <strong>{dashboard.statistics.confirmed}</strong>
-              </article>
-              <article>
-                <span>Đang thực hiện</span>
-                <strong>{dashboard.statistics.inProgress}</strong>
-              </article>
-              <article>
-                <span>Đã hoàn thành</span>
-                <strong>{dashboard.statistics.completed}</strong>
-              </article>
-              <article>
-                <span>Đã hủy</span>
-                <strong>{dashboard.statistics.cancelled}</strong>
-              </article>
-            </section>
-
-            <section className="barber-dashboard-main-grid">
-              <article className="barber-dashboard-revenue-card">
-                <div>
-                  <span>Doanh thu hôm nay</span>
-                  <strong>
-                    {formatPrice(
-                      dashboard.statistics.todayRevenue
-                    )}
-                    đ
-                  </strong>
-                  <p>
-                    Chỉ tính lịch đã hoàn thành và đã thanh toán.
-                  </p>
-                </div>
-
-                <Link to="/barber/schedule">
-                  Xem lịch hôm nay
-                </Link>
-              </article>
-
-              <article className="barber-dashboard-next-card">
-                <div className="barber-dashboard-section-heading">
-                  <div>
-                    <span>Lịch tiếp theo</span>
-                    <h2>
-                      {dashboard.nextAppointment
-                        ? `${dashboard.nextAppointment.startTime} - ${dashboard.nextAppointment.endTime}`
-                        : "Chưa có lịch tiếp theo"}
-                    </h2>
+        {data && <>
+          <section className="barber-dashboard-charts">
+            <article className="revenue-chart">
+              <div className="chart-title"><div><small>DOANH THU</small><h2>{money(data.revenue)}đ</h2></div></div>
+              <div className="bar-chart">
+                {data.revenueSeries.map((item) => (
+                  <div className="bar-column" key={item.date} title={`${item.date}: ${money(item.amount)}đ`}>
+                    <span>{item.amount ? money(item.amount) : "0"}</span>
+                    <i style={{ height: `${Math.max(4, (item.amount / maxRevenue) * 100)}%` }} />
+                    <small>{item.date.slice(5).split("-").reverse().join("/")}</small>
                   </div>
-                </div>
-
-                {dashboard.nextAppointment ? (
-                  <div className="barber-dashboard-next-content">
-                    <div className="barber-dashboard-client">
-                      <strong>
-                        {getClientName(
-                          dashboard.nextAppointment
-                        )}
-                      </strong>
-                      <span>
-                        {getClientPhone(
-                          dashboard.nextAppointment
-                        )}
-                      </span>
-                    </div>
-
-                    <ul>
-                      {dashboard.nextAppointment.services.map(
-                        (service, index) => (
-                          <li key={`${service.name}-${index}`}>
-                            <span>{service.name}</span>
-                            <small>
-                              {formatDuration(
-                                service.durationMinutes
-                              )}
-                            </small>
-                          </li>
-                        )
-                      )}
-                    </ul>
-
-                    <div className="barber-dashboard-next-summary">
-                      <span>
-                        Tổng thời gian:{" "}
-                        {formatDuration(
-                          dashboard.nextAppointment.durationMinutes
-                        )}
-                      </span>
-                      <strong>
-                        {formatPrice(
-                          dashboard.nextAppointment.totalPrice
-                        )}
-                        đ
-                      </strong>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="barber-dashboard-empty-text">
-                    Không có lịch đang chờ, đã xác nhận hoặc đang thực hiện.
-                  </p>
-                )}
-              </article>
-            </section>
-
-            <section className="barber-dashboard-today-section">
-              <div className="barber-dashboard-section-heading">
-                <div>
-                  <span>Lịch trong ngày</span>
-                  <h2>
-                    {upcomingAppointments.length} lịch cần xử lý
-                  </h2>
-                </div>
-
-                <Link to="/barber/schedule">
-                  Xem toàn bộ
-                </Link>
+                ))}
               </div>
+            </article>
+            <article className="outcome-chart">
+              <small>TỶ LỆ LỊCH HẸN</small>
+              <div className="donut" style={{ background: donut }}><strong>{data.appointments.length}</strong><span>lịch hẹn</span></div>
+              <div className="legend"><span><i className="green" />Hoàn thành {completed}%</span><span><i className="red" />Hủy {cancelled}%</span></div>
+            </article>
+          </section>
 
-              {dashboard.todayAppointments.length === 0 ? (
-                <p className="barber-dashboard-empty-text">
-                  Hôm nay chưa có lịch hẹn.
-                </p>
-              ) : (
-                <div className="barber-dashboard-appointment-list">
-                  {dashboard.todayAppointments.map(
-                    (appointment) => (
-                      <article
-                        className="barber-dashboard-appointment-card"
-                        key={appointment._id}
-                      >
-                        <div className="barber-dashboard-appointment-time">
-                          <strong>{appointment.startTime}</strong>
-                          <span>đến {appointment.endTime}</span>
-                        </div>
-
-                        <div className="barber-dashboard-appointment-info">
-                          <div>
-                            <strong>
-                              {getClientName(appointment)}
-                            </strong>
-                            <span>
-                              {appointment.services
-                                .map((service) => service.name)
-                                .join(", ")}
-                            </span>
-                          </div>
-
-                          <small>
-                            {formatDuration(
-                              appointment.durationMinutes
-                            )}
-                          </small>
-                        </div>
-
-                        <div className="barber-dashboard-appointment-meta">
-                          <span
-                            className={`barber-dashboard-status status-${appointment.status.toLowerCase()}`}
-                          >
-                            {statusLabels[appointment.status]}
-                          </span>
-                          <strong>
-                            {formatPrice(appointment.totalPrice)}đ
-                          </strong>
-                        </div>
-                      </article>
-                    )
-                  )}
-                </div>
-              )}
-            </section>
-
-            <section className="barber-dashboard-shortcuts">
-              <Link to="/barber/schedule">
-                <span>Quản lý lịch hẹn</span>
-                <small>
-                  Xác nhận, bắt đầu, hoàn thành hoặc hủy lịch
-                </small>
-              </Link>
-
-              <Link to="/barber/working-schedule">
-                <span>Quản lý lịch làm việc</span>
-                <small>
-                  Chỉnh ngày làm, giờ làm và khoảng nghỉ
-                </small>
-              </Link>
-
-              <Link to="/">
-                <span>Trang chủ</span>
-                <small>
-                  Quay về giao diện chính của THADS Barber
-                </small>
-              </Link>
-            </section>
-          </>
-        )}
+          <section className="dashboard-appointments">
+            <div className="section-heading"><div><small>LỊCH LÀM VIỆC</small><h2>Lịch hẹn trong khoảng đã chọn</h2></div><Link to="/barber/schedule">Xem tất cả →</Link></div>
+            {data.appointments.length === 0 ? <p className="empty">Không có lịch hẹn.</p> : data.appointments.map((item) => (
+              <article key={item._id} className={!item.barberViewedAt ? "unread" : ""}>
+                <div><b>{item.client?.fullName || "Khách hàng"}</b><small>{item.client?.phone}</small></div>
+                <div><b>{item.appointmentDate}</b><small>{item.startTime}–{item.endTime}</small></div>
+                <div><b>{item.services.map((service) => service.name).join(", ")}</b></div>
+                {!item.barberViewedAt && <em>Mới</em>}
+              </article>
+            ))}
+          </section>
+        </>}
       </main>
     </div>
   );

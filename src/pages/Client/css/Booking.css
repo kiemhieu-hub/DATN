@@ -340,6 +340,8 @@
   box-shadow: 0 24px 70px #0006;
 }
 
+.booking-voucher-modal{position:fixed;inset:0;background:#000a;z-index:2000;display:grid;place-items:center;padding:20px}.booking-voucher-modal>section{position:relative;width:min(620px,100%);max-height:80vh;overflow:auto;background:#fffaf4;border:1px solid #c79850;border-radius:18px;padding:30px;color:#211b16}.booking-voucher-modal h2{font-size:32px;margin:5px 0}.booking-voucher-modal>section>span{color:#a77831;letter-spacing:3px;font-weight:700}.booking-voucher-modal .close{position:absolute;right:18px;top:15px;border:0;background:transparent;font-size:26px;cursor:pointer}.voucher-option{width:100%;display:grid;grid-template-columns:1fr auto;text-align:left;gap:5px;margin:10px 0;padding:16px;border:1px solid #d4c1a8;border-radius:12px;background:#fff;color:#211b16;cursor:pointer}.voucher-option small{grid-column:1/-1;color:#766b61}.voucher-option.selected{border:2px solid #b7843d;background:#f7ead7}.booking-voucher-trigger{width:100%!important;border-radius:10px!important}.booking-summary-tools{display:block!important}
+
 .booking-summary-header {
   display: flex;
   gap: 16px;

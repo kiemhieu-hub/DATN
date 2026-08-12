@@ -32,6 +32,7 @@ import reviewRoutes from "./routes/review.routes";
 import staffNotificationRoutes from "./routes/staffNotification.routes";
 import vnpayRoutes from "./routes/vnpay.routes";
 import favoriteHairstyleRoutes from "./routes/favoriteHairstyle.routes";
+import refundRoutes from "./routes/refund.routes";
 
 const app = express();
 
@@ -78,6 +79,7 @@ app.use("/api/receptionist", receptionistRoutes);
 app.use("/api/staff/notifications", staffNotificationRoutes);
 app.use("/api/payments/vnpay", vnpayRoutes);
 app.use("/api/favorites", favoriteHairstyleRoutes);
+app.use("/api/admin/refunds", refundRoutes);
 
 
 
