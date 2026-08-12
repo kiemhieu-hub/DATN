@@ -11,8 +11,9 @@ import { authorize } from "../middleware/authorize";
 const router = Router();
 
 router.use(authenticate, authorize("CLIENT"));
+
 router.get("/", getMyFavoriteHairstyles);
 router.post("/", addFavoriteHairstyle);
-router.delete("/:id", removeFavoriteHairstyle);
+router.delete("/:favoriteId", removeFavoriteHairstyle);
 
 export default router;

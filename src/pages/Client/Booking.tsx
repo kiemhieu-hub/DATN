@@ -1,5 +1,7 @@
 import axios from "axios";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -74,6 +76,7 @@ function Booking() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [voucherMessage, setVoucherMessage] = useState("");
+  const [voucherOpen, setVoucherOpen] = useState(false);
   const [depositAppointment, setDepositAppointment] = useState<Appointment | null>(null);
 
   const today = useMemo(() => dateValue(new Date()), []);
@@ -91,8 +94,8 @@ function Booking() {
     }
   }, [user]);
 
-  useEffect(() => {
-    Promise.all([getCatalogServices(), getCatalogBarbers()])
+  const loadCatalog = useCallback(() => {
+    Promise.all([fetchBusinessQuery("catalog-services", () => getCatalogServices()), fetchBusinessQuery("catalog-barbers", () => getCatalogBarbers())])
       .then(([serviceResponse, barberResponse]) => {
         setServices(serviceResponse.services);
         setBarbers(barberResponse.barbers);
@@ -100,6 +103,12 @@ function Booking() {
       .catch((requestError) => setError(getError(requestError)))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
+  useRealtimeRefresh(loadCatalog);
 
   const selectedServices = useMemo(
     () =>
@@ -130,7 +139,7 @@ function Booking() {
       return;
     }
     setSlotsLoading(true);
-    getAvailableSlots(hairBarberId || undefined, serviceIds, appointmentDate)
+    fetchBusinessQuery("booking-slots", () => getAvailableSlots(hairBarberId || undefined, serviceIds, appointmentDate), [hairBarberId || undefined, serviceIds, appointmentDate])
       .then((response) => setSlots(response.slots))
       .catch((requestError) => {
         setSlots([]);
@@ -138,6 +147,22 @@ function Booking() {
       })
       .finally(() => setSlotsLoading(false));
   }, [needsHair, hairBarberId, appointmentDate, serviceIds]);
+
+  useRealtimeRefresh(() => {
+    if (
+      appointmentDate &&
+      serviceIds.length > 0 &&
+      (!needsHair || hairBarberId)
+    ) {
+      void getAvailableSlots(
+        hairBarberId || undefined,
+        serviceIds,
+        appointmentDate
+      )
+        .then((response) => setSlots(response.slots))
+        .catch(() => undefined);
+    }
+  });
 
   const subtotal = selectedServices.reduce((sum, service) => sum + service.price, 0);
   const hairDuration = selectedServices
@@ -147,9 +172,7 @@ function Booking() {
     .filter((service) => service.staffType === "CARE")
     .reduce((sum, service) => sum + service.durationMinutes, 0);
   const totalDuration = hairDuration + careDuration;
-  const discountPercent = voucherCalculation?.discountPercent ?? 0;
-  const discountAmount = voucherCalculation?.discountAmount ?? 0;
-  const total = voucherCalculation?.total ?? subtotal;
+  const total = subtotal;
   const depositRequired = subtotal > 200000;
   const depositAmount = depositRequired ? Math.round(subtotal * 0.3) : 0;
 
@@ -158,13 +181,6 @@ function Booking() {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return remainingMinutes ? `${hours}h${remainingMinutes}p` : `${hours}h`;
-  };
-
-  const addMinutes = (time: string, minutes: number): string => {
-    if (!time) return "";
-    const [hours, minute] = time.split(":").map(Number);
-    const totalMinutes = hours * 60 + minute + minutes;
-    return `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
   };
 
   const toggleService = (service: CatalogService) => {
@@ -194,10 +210,13 @@ function Booking() {
     }
 
     const timer = window.setTimeout(() => {
-      getAvailableVouchers(
+      fetchBusinessQuery("available-vouchers", () => getAvailableVouchers(
         serviceIds,
         [hairBarberId].filter(Boolean)
-      )
+      ), [
+        serviceIds,
+        [hairBarberId].filter(Boolean)
+      ])
         .then((response) => setAvailableVouchers(response.vouchers))
         .catch(() => setAvailableVouchers([]));
     }, 250);
@@ -208,7 +227,8 @@ function Booking() {
   const chooseVoucher = (voucher: AvailableVoucher): void => {
     setVoucherCode(voucher.code);
     setVoucherCalculation(voucher);
-    setVoucherMessage(`Đã áp dụng ${voucher.code}, giảm ${money(voucher.discountAmount)}đ.`);
+    setVoucherMessage(`Đã chọn ${voucher.code}. Voucher sẽ được tính trên hóa đơn thực tế khi hoàn thành.`);
+    setVoucherOpen(false);
   };
 
   const clearVoucher = (): void => {
@@ -314,28 +334,27 @@ function Booking() {
           </section>
 
           {serviceIds.length > 0 && <section className="booking-panel">
-            <div className="booking-panel-title"><b>02</b><div><h2>Chọn Barber</h2><p>Bạn chỉ cần chọn Barber làm tóc. Nhân viên chăm sóc được hệ thống phân công ngẫu nhiên theo chuyên môn và lịch trống.</p></div></div>
+            <div className="booking-panel-title"><b>02</b><div><h2>Chọn ngày và Barber</h2><p>Chọn ngày trước, sau đó chọn Barber còn lịch phù hợp.</p></div></div>
+            <label className="booking-date">Ngày hẹn<input type="date" min={today} max={maxDate} value={appointmentDate} onChange={(e) => { setAppointmentDate(e.target.value); setHairBarberId(""); }} /></label>
             {needsHair && <BarberPicker title="Nhân viên làm tóc" items={hairBarbers} value={hairBarberId} onChange={(id) => changeBarber(setHairBarberId, id)} />}
             {!needsHair && needsCare && <div className="booking-auto-care"><b>Nhân viên chăm sóc tự động</b><span>Hệ thống sẽ chọn ngẫu nhiên một nhân viên phù hợp còn lịch trống.</span></div>}
           </section>}
 
           <section className="booking-panel">
-            <div className="booking-panel-title"><b>03</b><div><h2>Thông tin khách sử dụng</h2><p>Có thể sửa để đặt lịch hộ người khác.</p></div></div>
-            <div className="booking-fields"><label>Họ và tên<input value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></label><label>Số điện thoại<input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} /></label><label>Email<input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} /></label></div>
-          </section>
-
-          <section className="booking-panel">
-            <div className="booking-panel-title"><b>04</b><div><h2>Chọn thời gian</h2><p>Chỉ nhận lịch từ hôm nay đến tối đa 14 ngày tiếp theo.</p></div></div>
-            <label className="booking-date">Ngày hẹn<input type="date" min={today} max={maxDate} value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} /></label>
+            <div className="booking-panel-title"><b>03</b><div><h2>Chọn thời gian</h2><p>Khung giờ mờ đã có lịch; khung sáng còn có thể đặt.</p></div></div>
             <div className="booking-slots">{slotsLoading ? <p>Đang tải khung giờ...</p> : slots.map((slot) => <button type="button" key={slot.startTime} disabled={!slot.available} title={slot.reason} className={`${startTime === slot.startTime ? "selected" : ""} ${!slot.available ? "occupied" : ""}`} onClick={() => setStartTime(slot.startTime)}>{slot.startTime}<small>{slot.endTime}</small></button>)}</div>
             <label className="booking-note">Ghi chú<textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Yêu cầu kiểu tóc hoặc lưu ý khác..." /></label>
+          </section>
+          <section className="booking-panel">
+            <div className="booking-panel-title"><b>04</b><div><h2>Thông tin khách sử dụng</h2><p>Có thể sửa để đặt lịch hộ người khác.</p></div></div>
+            <div className="booking-fields"><label>Họ và tên<input value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></label><label>Số điện thoại<input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} /></label><label>Email<input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} /></label></div>
           </section>
         </main>
 
         <aside className="booking-summary">
           <div className="booking-summary-header">
             <div><span>ĐƠN ĐẶT LỊCH</span><h2>Dịch vụ đã chọn</h2></div>
-            <strong title="Thời gian Barber làm tóc, không tính dịch vụ chăm sóc">{formatDuration(hairDuration)}</strong>
+            <strong title="Tổng thời gian tất cả dịch vụ">{formatDuration(totalDuration)}</strong>
           </div>
 
           <div className="booking-summary-services">
@@ -358,31 +377,17 @@ function Booking() {
           </div>
 
           <div className="booking-summary-tools">
-            <div className="booking-times">
-              <div><span>Time 1 · Barber</span><b>{hairDuration ? (startTime ? `${startTime}–${addMinutes(startTime, hairDuration)}` : formatDuration(hairDuration)) : "—"}</b></div>
-              <div><span>Time 2 · Chăm sóc</span><b>{careDuration ? (startTime ? `${addMinutes(startTime, hairDuration)}–${addMinutes(startTime, totalDuration)}` : formatDuration(careDuration)) : "—"}</b></div>
-            </div>
-
             <div className="booking-voucher-picker">
-              <button type="button" className="booking-voucher-trigger">
+              <button type="button" className="booking-voucher-trigger" onClick={() => setVoucherOpen(true)}>
                 <span>Voucher</span><b>{voucherCode || "Chọn mã"}</b><i>⌄</i>
               </button>
-              <div className="booking-voucher-menu">
-                {voucherCode && <button type="button" onClick={clearVoucher}><b>Không dùng voucher</b><small>Bỏ mã đang chọn</small></button>}
-                {availableVouchers.length ? availableVouchers.map((voucher) => (
-                  <button type="button" key={voucher.code} className={voucher.code === voucherCode ? "selected" : ""} onClick={() => chooseVoucher(voucher)}>
-                    <b>{voucher.code} · {voucher.type === "PERCENT" ? `-${voucher.value}%` : `-${money(voucher.value)}đ`}</b>
-                    <small>{voucher.name} · giảm {money(voucher.discountAmount)}đ</small>
-                  </button>
-                )) : <p>Không có voucher phù hợp.</p>}
-              </div>
             </div>
           </div>
 
           {voucherMessage && <small className="booking-voucher-message">{voucherMessage}</small>}
           <div className="booking-totals">
-            {discountAmount > 0 && <p className="discount"><span>Giảm giá</span><b>-{money(discountAmount)}đ</b></p>}
-            <p className="grand-total"><span>Tổng tiền</span><b>{money(total)}đ</b></p>
+            <p className="grand-total"><span>Tổng tiền tạm tính</span><b>{money(total)}đ</b></p>
+            {voucherCode && <small>Voucher <b>{voucherCode}</b> sẽ áp dụng khi chốt hóa đơn cuối cùng.</small>}
             {depositRequired && <small>Đặt cọc 30% tổng đơn ban đầu: <b>{money(depositAmount)}đ</b></small>}
           </div>
           <div className="booking-summary-footer">
@@ -399,6 +404,25 @@ function Booking() {
             <strong>{money(depositAppointment.depositAmount)}đ</strong>
             <p>Bạn sẽ được chuyển sang cổng VNPay để chọn ngân hàng, quét QR hoặc thanh toán bằng phương thức được hỗ trợ.</p>
             <button type="button" disabled={submitting} onClick={() => void finishDeposit()}>{submitting ? "Đang tạo giao dịch..." : "Thanh toán cọc qua VNPay"}</button>
+          </section>
+        </div>
+      )}
+      {voucherOpen && (
+        <div className="booking-voucher-modal" onMouseDown={() => setVoucherOpen(false)}>
+          <section onMouseDown={(event) => event.stopPropagation()}>
+            <button className="close" type="button" onClick={() => setVoucherOpen(false)}>×</button>
+            <span>THADS BARBER</span>
+            <h2>Chọn voucher</h2>
+            <p>Voucher chỉ được tính trên hóa đơn thực tế sau khi hoàn thành dịch vụ.</p>
+            {voucherCode && <button type="button" className="voucher-option" onClick={() => { clearVoucher(); setVoucherOpen(false); }}><b>Không dùng voucher</b></button>}
+            {availableVouchers.map((voucher) => (
+              <button type="button" className={`voucher-option ${voucher.code === voucherCode ? "selected" : ""}`} key={voucher.code} onClick={() => chooseVoucher(voucher)}>
+                <b>{voucher.code}</b>
+                <strong>{voucher.type === "PERCENT" ? `Giảm ${voucher.value}%` : `Giảm ${money(voucher.value)}đ`}</strong>
+                <small>{voucher.name}{voucher.maxDiscount ? ` · tối đa ${money(voucher.maxDiscount)}đ` : ""}</small>
+              </button>
+            ))}
+            {!availableVouchers.length && <p>Không có voucher phù hợp.</p>}
           </section>
         </div>
       )}

@@ -62,4 +62,5 @@ export interface AvailableVoucher extends VoucherCalculation {
   name: string;
   description: string;
   endDate: string;
+  maxDiscount?: number;
 }

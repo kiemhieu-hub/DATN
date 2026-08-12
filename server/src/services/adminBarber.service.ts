@@ -27,6 +27,7 @@ interface CreateBarberInput {
   bio?: string;
   experienceYears?: number;
   specialtyIds?: string[];
+  staffType?: "HAIR" | "CARE";
 }
 
 interface UpdateBarberInput {
@@ -37,6 +38,7 @@ interface UpdateBarberInput {
   bio?: string;
   experienceYears?: number;
   specialtyIds?: string[];
+  staffType?: "HAIR" | "CARE";
 }
 
 interface UpdateBarberStatusInput {
@@ -387,6 +389,9 @@ const getPopulatedBarberProfile =
             reviewCount:
               profile.reviewCount,
 
+            staffType:
+              profile.staffType,
+
             specialties:
               profile.specialties,
 
@@ -560,6 +565,9 @@ export const getAdminBarbers =
                 reviewCount:
                   profile.reviewCount,
 
+                staffType:
+                  profile.staffType,
+
                 specialties:
                   profile.specialties,
 
@@ -694,6 +702,9 @@ export const createAdminBarber =
       specialties:
         specialtyIds,
 
+      staffType:
+        input.staffType === "CARE" ? "CARE" : "HAIR",
+
       averageRating: 0,
       reviewCount: 0,
       isActive: true,
@@ -753,6 +764,7 @@ export const updateAdminBarber =
       avatar?: string;
       experienceYears?: number;
       specialties?: mongoose.Types.ObjectId[];
+      staffType?: "HAIR" | "CARE";
       isActive?: boolean;
     } = {};
 
@@ -795,6 +807,11 @@ export const updateAdminBarber =
         await normalizeSpecialtyIds(
           input.specialtyIds
         );
+    }
+
+    if (input.staffType !== undefined) {
+      profileUpdate.staffType =
+        input.staffType === "CARE" ? "CARE" : "HAIR";
     }
 
     await BarberProfile.findOneAndUpdate(

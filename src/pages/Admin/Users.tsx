@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
@@ -326,26 +328,26 @@ function Users() {
 
       const [adminResponse, receptionistResponse, barberResponse, clientResponse] =
         await Promise.all([
-          getAdminUsers({
+          fetchBusinessQuery("admin-users", () => getAdminUsers({
             ...commonParams,
             role: "ADMIN",
             page: adminPage,
-          }),
-          getAdminUsers({
+          }), { ...commonParams, role: "ADMIN", page: adminPage }),
+          fetchBusinessQuery("admin-users", () => getAdminUsers({
             ...commonParams,
             role: "RECEPTIONIST",
             page: receptionistPage,
-          }),
-          getAdminUsers({
+          }), { ...commonParams, role: "RECEPTIONIST", page: receptionistPage }),
+          fetchBusinessQuery("admin-users", () => getAdminUsers({
             ...commonParams,
             role: "BARBER",
             page: barberPage,
-          }),
-          getAdminUsers({
+          }), { ...commonParams, role: "BARBER", page: barberPage }),
+          fetchBusinessQuery("admin-users", () => getAdminUsers({
             ...commonParams,
             role: "CLIENT",
             page: clientPage,
-          }),
+          }), { ...commonParams, role: "CLIENT", page: clientPage }),
         ]);
 
       setAdminGroup({
@@ -382,6 +384,10 @@ function Users() {
     receptionistPage,
     clientPage,
   ]);
+
+  useRealtimeRefresh(() => {
+    void loadUsers();
+  });
 
   useEffect(() => {
     if (authLoading) {
@@ -432,7 +438,7 @@ function Users() {
       setDetailLoading(true);
       setError("");
 
-      const response = await getAdminUserById(userId);
+      const response = await fetchBusinessQuery("admin-user-detail", () => getAdminUserById(userId), userId, 0);
       setSelectedUser(response.client);
     } catch (requestError) {
       setError(getErrorMessage(requestError));

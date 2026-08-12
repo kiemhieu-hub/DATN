@@ -1397,3 +1397,5 @@
 }
 
 .appointment-receipt{width:min(620px,100%);max-height:90vh;padding:30px;overflow:auto;color:#111;background:#fff}.appointment-receipt h2{text-align:center}.appointment-receipt ul{padding:0;list-style:none}.appointment-receipt li{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid #ddd}.appointment-receipt img{display:block;width:220px;height:220px;margin:20px auto}.appointment-receipt>div{display:flex;justify-content:flex-end;gap:10px}.appointment-receipt button{padding:10px 16px;cursor:pointer}
+.appointment-work-progress{margin:18px 0;padding:18px;border:1px solid #d4c1a8;border-radius:14px;background:#f8efe3}.appointment-work-progress>div{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #dfcfbc}.appointment-work-progress button{border:0;border-radius:8px;background:#287653;color:#fff;padding:9px 13px;font-weight:700;cursor:pointer}.appointment-work-progress small{display:block;color:#725f4b;margin-top:9px}
+  

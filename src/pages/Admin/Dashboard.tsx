@@ -1,4 +1,7 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { realtimeSocket } from "../../lib/realtime";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
@@ -62,7 +65,7 @@ function Dashboard() {
     try {
       setLoading(true);
       setError("");
-      const response = await getAdminDashboard();
+      const response = await fetchBusinessQuery("admin-dashboard", () => getAdminDashboard());
       setData(response.data);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
@@ -77,7 +80,7 @@ function Dashboard() {
 
   const loadNotifications = useCallback(async () => {
     try {
-      const response = await getStaffNotifications();
+      const response = await fetchBusinessQuery("staff-notifications", () => getStaffNotifications());
       setNotifications(response.items);
       setUnreadCount(response.unreadCount);
     } catch {
@@ -88,12 +91,24 @@ function Dashboard() {
   useEffect(() => {
     void loadNotifications();
 
-    const timer = window.setInterval(() => {
+    const handleStaffDataChanged = (): void => {
+      void loadDashboard();
       void loadNotifications();
-    }, 30_000);
+    };
 
-    return () => window.clearInterval(timer);
-  }, [loadNotifications]);
+    realtimeSocket.on("notifications:changed", handleStaffDataChanged);
+    realtimeSocket.on("appointments:changed", handleStaffDataChanged);
+
+    return () => {
+      realtimeSocket.off("notifications:changed", handleStaffDataChanged);
+      realtimeSocket.off("appointments:changed", handleStaffDataChanged);
+    };
+  }, [loadDashboard, loadNotifications]);
+
+  useRealtimeRefresh(() => {
+    void loadDashboard();
+    void loadNotifications();
+  });
 
   useEffect(() => {
     const closeWhenClickOutside = (event: MouseEvent) => {

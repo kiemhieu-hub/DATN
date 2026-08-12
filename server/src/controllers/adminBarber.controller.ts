@@ -159,6 +159,9 @@ export const createBarber = async (
 
           specialtyIds:
             req.body.specialtyIds,
+
+          staffType:
+            req.body.staffType,
         }
       );
 
@@ -206,6 +209,9 @@ export const updateBarber = async (
 
           specialtyIds:
             req.body.specialtyIds,
+
+          staffType:
+            req.body.staffType,
         }
       );
 

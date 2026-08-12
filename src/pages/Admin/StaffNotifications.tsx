@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useLocation,
   useNavigate,
@@ -20,6 +21,8 @@ import type {
 } from "../../types/StaffNotification";
 
 import "./css/StaffNotifications.css";
+import { queryKeys } from "../../lib/queryKeys";
+import { realtimeSocket } from "../../lib/realtime";
 
 const kindLabels: Record<
   StaffNotificationKind,
@@ -49,47 +52,44 @@ function StaffNotifications() {
     location.pathname.startsWith(
       "/receptionist"
     );
-  const [items, setItems] = useState<
-    StaffNotification[]
-  >([]);
-  const [unreadCount, setUnreadCount] =
-    useState(0);
   const [unreadOnly, setUnreadOnly] =
     useState(false);
-  const [loading, setLoading] =
-    useState(true);
   const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const response =
-        await getStaffNotifications(
-          unreadOnly
-        );
-      setItems(response.items);
-      setUnreadCount(
-        response.unreadCount
-      );
-    } catch (requestError) {
-      setError(getError(requestError));
-    } finally {
-      setLoading(false);
-    }
-  }, [unreadOnly]);
+  const queryClient = useQueryClient();
+  const scope = isReceptionist ? "receptionist" : "admin";
+  const notificationsQuery = useQuery({
+    queryKey: [...queryKeys.staffNotifications(scope), unreadOnly],
+    queryFn: () => getStaffNotifications(unreadOnly),
+  });
+  const items: StaffNotification[] = notificationsQuery.data?.items ?? [];
+  const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
+  const refresh = useCallback(
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.staffNotifications(scope),
+      }),
+    [queryClient, scope]
+  );
+  const readMutation = useMutation({ mutationFn: markStaffNotificationRead, onSuccess: refresh });
+  const readAllMutation = useMutation({ mutationFn: markAllStaffNotificationsRead, onSuccess: refresh });
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    const handleNotificationsChanged = (): void => {
+      void refresh();
+    };
+
+    realtimeSocket.on("notifications:changed", handleNotificationsChanged);
+
+    return () => {
+      realtimeSocket.off("notifications:changed", handleNotificationsChanged);
+    };
+  }, [refresh]);
 
   const openNotification = async (
     notification: StaffNotification
   ) => {
     if (!notification.isRead) {
-      await markStaffNotificationRead(
-        notification._id
-      );
+      await readMutation.mutateAsync(notification._id);
     }
     const appointmentId =
       typeof notification.appointment === "string"
@@ -108,8 +108,7 @@ function StaffNotifications() {
 
   const readAll = async () => {
     try {
-      await markAllStaffNotificationsRead();
-      await load();
+      await readAllMutation.mutateAsync();
     } catch (requestError) {
       setError(getError(requestError));
     }
@@ -160,7 +159,7 @@ function StaffNotifications() {
       )}
 
       <section className="staff-notification-list">
-        {loading ? (
+          {notificationsQuery.isPending ? (
           <p className="staff-notification-empty">
             Đang tải thông báo...
           </p>

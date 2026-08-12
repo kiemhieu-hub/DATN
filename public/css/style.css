@@ -59,13 +59,6 @@ body {
     font-smoothing: antialiased;
 }
 
-:root{
-    --thads-bg: #f5eee7;
-    --thads-ink: #14100c;
-    --thads-muted: #625c56;
-    --thads-accent: #91765a;
-}
-
 * {
     margin: 0;
     padding: 0;
@@ -81,9 +74,9 @@ body {
     font-size: 15px;
     font-weight: 300;
     line-height: 1.75em;
-    color: var(--thads-muted);
+    color: #625c56;
     overflow-x: hidden !important;
-    background: var(--thads-bg);
+    background: #f5eee7;
 }
 
 p {
@@ -91,7 +84,7 @@ p {
     font-size: 15px;
     font-weight: 300;
     line-height: 1.75em;
-    color: var(--thads-muted);
+    color: #625c56;
     margin-bottom: 15px;
 }
 
@@ -105,7 +98,7 @@ h6 {
     font-weight: 800;
     line-height: 1.25em;
     margin: 0 0 20px 0;
-    color: var(--thads-ink);
+    color: #14100c;
 }
 
 h1 {

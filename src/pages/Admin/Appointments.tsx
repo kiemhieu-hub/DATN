@@ -1,4 +1,7 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { realtimeSocket } from "../../lib/realtime";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
@@ -21,6 +24,7 @@ import {
   rescheduleAdminAppointment,
   updateAdminAppointmentServices,
   updateAdminAppointmentStatus,
+  updateAdminAppointmentWorkProgress,
 } from "../../services/adminAppointment.service";
 import { getCatalogBarbers, getCatalogServices } from "../../services/catalog.service";
 import { confirmBankTransfer, confirmCashPayment } from "../../services/payment.service";
@@ -277,7 +281,16 @@ function Appointments() {
       setLoading(true);
       setError("");
 
-      const response = await getAdminAppointments({
+      const response = await fetchBusinessQuery("admin-appointments", () => getAdminAppointments({
+        keyword: submittedKeyword || undefined,
+        status: statusFilter,
+        barberId: barberFilter || undefined,
+        appointmentDate: dateFilter || undefined,
+        appointmentTime: timeFilter || undefined,
+        sortOrder,
+        page,
+        limit: 10,
+      }), {
         keyword: submittedKeyword || undefined,
         status: statusFilter,
         barberId: barberFilter || undefined,
@@ -312,7 +325,7 @@ function Appointments() {
 
   const loadBarbers = useCallback(async () => {
     try {
-      const response = await getCatalogBarbers();
+      const response = await fetchBusinessQuery("catalog-barbers", () => getCatalogBarbers());
       setBarbers(response.barbers);
     } catch (requestError) {
       setError(
@@ -326,7 +339,7 @@ function Appointments() {
 
   const loadServices = useCallback(async () => {
     try {
-      const response = await getCatalogServices();
+      const response = await fetchBusinessQuery("catalog-services", () => getCatalogServices());
       setServices(response.services);
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Không thể tải danh sách dịch vụ"));
@@ -368,12 +381,26 @@ function Appointments() {
   ]);
 
   useEffect(() => {
-    if (!isAuthenticated || !user || user.role !== authRole) return;
-    const refreshTimer = window.setInterval(() => {
+    if (!isAuthenticated || !user || user.role !== authRole) {
+      return;
+    }
+
+    const handleAppointmentsChanged = (): void => {
       void loadAppointments();
-    }, 60_000);
-    return () => window.clearInterval(refreshTimer);
+    };
+
+    realtimeSocket.on("appointments:changed", handleAppointmentsChanged);
+
+    return () => {
+      realtimeSocket.off("appointments:changed", handleAppointmentsChanged);
+    };
   }, [authRole, isAuthenticated, loadAppointments, user]);
+
+  useRealtimeRefresh(() => {
+    void loadAppointments();
+    void loadBarbers();
+    void loadServices();
+  }, Boolean(isAuthenticated && user?.role === authRole));
 
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== authRole) {
@@ -393,7 +420,7 @@ function Appointments() {
         setProcessingId(appointmentId);
         setError("");
 
-        const response = await getAdminAppointment(appointmentId);
+        const response = await fetchBusinessQuery("admin-appointment-detail", () => getAdminAppointment(appointmentId), appointmentId, 0);
         setSelectedAppointment(response.appointment);
 
         const currentBarberId =
@@ -432,7 +459,7 @@ function Appointments() {
     try {
       setProcessingId(appointment._id);
       setError("");
-      const response = await getAdminAppointment(appointment._id);
+      const response = await fetchBusinessQuery("admin-appointment-detail", () => getAdminAppointment(appointment._id), appointment._id, 0);
       setSelectedAppointment(response.appointment);
 
       const currentBarberId =
@@ -735,6 +762,26 @@ function Appointments() {
       await loadAppointments();
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Không thể cập nhật dịch vụ"));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const changeWorkProgress = async (
+    segment: "HAIR" | "CARE",
+    action: "START" | "COMPLETE"
+  ): Promise<void> => {
+    if (!selectedAppointment) return;
+    const label = `${action === "START" ? "bắt đầu" : "hoàn thành"} phần ${segment === "HAIR" ? "làm tóc" : "chăm sóc"}`;
+    if (!window.confirm(`Xác nhận ${label}?`)) return;
+    try {
+      setProcessingId(selectedAppointment._id);
+      const response = await updateAdminAppointmentWorkProgress(selectedAppointment._id, segment, action);
+      setSelectedAppointment(response.appointment);
+      setMessage(response.message);
+      await loadAppointments();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, `Không thể ${label}`));
     } finally {
       setProcessingId(null);
     }
@@ -1200,6 +1247,24 @@ function Appointments() {
               <strong>Ghi chú:</strong>
               <span>{selectedAppointment.note || "Không có ghi chú"}</span>
             </div>
+
+            {selectedAppointment.workProgress && ["CHECKED_IN", "IN_PROGRESS"].includes(selectedAppointment.status) && (
+              <section className="appointment-work-progress">
+                <h3>Tiến độ thực hiện</h3>
+                {(["HAIR", "CARE"] as const).map((segment) => {
+                  const key = segment === "HAIR" ? "hair" : "care";
+                  const value = selectedAppointment.workProgress?.[key];
+                  if (value === "NOT_REQUIRED") return null;
+                  return <div key={segment}>
+                    <span>{segment === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc"}</span>
+                    <b>{value === "PENDING" ? "Chưa bắt đầu" : value === "IN_PROGRESS" ? "Đang thực hiện" : "Đã hoàn thành"}</b>
+                    {value === "PENDING" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "START")}>Bắt đầu</button>}
+                    {value === "IN_PROGRESS" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "COMPLETE")}>Hoàn thành phần việc</button>}
+                  </div>;
+                })}
+                <small>Lịch chỉ hoàn thành khi tất cả phần việc bắt buộc đều đã hoàn thành.</small>
+              </section>
+            )}
 
             {selectedAppointment.cancellation && (
               <div className="appointment-cancel-reason">

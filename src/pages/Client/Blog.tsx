@@ -17,7 +17,7 @@ function Blog() {
         <div className="container">
           {/* Logo */}
           <div className="logo-wrapper">
-            <a className="logo" href="index.html"> 
+            <a className="logo" href="/"> 
               <img src="img/logo.png" className="logo-img" alt="" /> 
             </a>
           </div>
@@ -30,23 +30,23 @@ function Blog() {
           {/* Menu */}
           <div className="collapse navbar-collapse" id="navbar">
             <ul className="navbar-nav ms-auto">
-              <li className="nav-item"><a className="nav-link" href="index.html">Home</a></li>
-              <li className="nav-item"><a className="nav-link" href="about.html">About</a></li>
-              <li className="nav-item"><a className="nav-link" href="services.html">Services</a></li>
-              <li className="nav-item"><a className="nav-link" href="pricing.html">Pricing</a></li>
+              <li className="nav-item"><a className="nav-link" href="/">Home</a></li>
+              <li className="nav-item"><a className="nav-link" href="/about">About</a></li>
+              <li className="nav-item"><a className="nav-link" href="/services">Services</a></li>
+              <li className="nav-item"><a className="nav-link" href="/pricing">Pricing</a></li>
               <li className="nav-item dropdown"> 
                 <a className="nav-link dropdown-toggle" href="#0" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                   Pages <i className="ti-angle-down"></i>
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a href="portfolio.html" className="dropdown-item"><span>Portfolio</span></a></li>
-                  <li><a href="team.html" className="dropdown-item"><span>Team</span></a></li>
-                  <li><a href="faq.html" className="dropdown-item"><span>Faq</span></a></li>
-                  <li><a href="services-page.html" className="dropdown-item"><span>Services Page</span></a></li>
-                  <li><a href="team-details.html" className="dropdown-item"><span>Team Details</span></a></li>
-                  <li><a href="post.html" className="dropdown-item"><span>Post Single</span></a></li>
-                  <li><a href="404.html" className="dropdown-item"><span>404</span></a></li>
-                  <li><a href="coming-soon.html" className="dropdown-item"><span>Coming Soon</span></a></li>
+                  <li><a href="/portfolio" className="dropdown-item"><span>Portfolio</span></a></li>
+                  <li><a href="/team" className="dropdown-item"><span>Team</span></a></li>
+                  <li><a href="/faq" className="dropdown-item"><span>Faq</span></a></li>
+                  <li><a href="/services-page" className="dropdown-item"><span>Services Page</span></a></li>
+                  <li><a href="/team-details" className="dropdown-item"><span>Team Details</span></a></li>
+                  <li><a href="/post" className="dropdown-item"><span>Post Single</span></a></li>
+                  <li><a href="/404" className="dropdown-item"><span>404</span></a></li>
+                  <li><a href="/404" className="dropdown-item"><span>Coming Soon</span></a></li>
                   <li className="dropdown-submenu dropdown"> 
                     <a className="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" href="#0">
                       <span>Sub Menu <i className="ti-angle-right"></i></span>
@@ -63,12 +63,12 @@ function Blog() {
                   Blog <i className="ti-angle-down"></i>
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a href="blog.html" className="dropdown-item active"><span>Blog 01</span></a></li>
-                  <li><a href="blog2.html" className="dropdown-item"><span>Blog 02</span></a></li>
-                  <li><a href="blog3.html" className="dropdown-item"><span>Blog 03</span></a></li>
+                  <li><a href="/blog" className="dropdown-item active"><span>Blog 01</span></a></li>
+                  <li><a href="/blog2" className="dropdown-item"><span>Blog 02</span></a></li>
+                  <li><a href="/blog3" className="dropdown-item"><span>Blog 03</span></a></li>
                 </ul>
               </li>
-              <li className="nav-item"><a className="nav-link" href="contact.html">Contact</a></li>
+              <li className="nav-item"><a className="nav-link" href="/contact">Contact</a></li>
             </ul>
           </div>
         </div>
@@ -96,14 +96,14 @@ function Blog() {
                 <div className="position-re o-hidden"> 
                   <img src="img/slider/8.jpg" alt="" />
                   <div className="date">
-                    <a href="post.html"> <span>Dec</span> <i>29</i> </a>
+                    <a href="/post"> <span>Dec</span> <i>29</i> </a>
                   </div>
                 </div>
                 <div className="con"> 
                   <span className="category">
-                    <a href="blog.html">Hair Care</a>
+                    <a href="/blog">Hair Care</a>
                   </span>
-                  <h5><a href="post.html">Women's Hair Care Routine for Any Hair Type</a></h5>
+                  <h5><a href="/post">Women's Hair Care Routine for Any Hair Type</a></h5>
                 </div>
               </div>
             </div>
@@ -114,14 +114,14 @@ function Blog() {
                 <div className="position-re o-hidden"> 
                   <img src="img/slider/9.jpg" alt="" />
                   <div className="date">
-                    <a href="post.html"> <span>Dec</span> <i>27</i> </a>
+                    <a href="/post"> <span>Dec</span> <i>27</i> </a>
                   </div>
                 </div>
                 <div className="con"> 
                   <span className="category">
-                    <a href="blog.html">Beard</a>
+                    <a href="/blog">Beard</a>
                   </span>
-                  <h5><a href="post.html">Common Mistakes That Damage Your Beard</a></h5>
+                  <h5><a href="/post">Common Mistakes That Damage Your Beard</a></h5>
                 </div>
               </div>
             </div>
@@ -132,14 +132,14 @@ function Blog() {
                 <div className="position-re o-hidden"> 
                   <img src="img/slider/6.jpg" alt="" />
                   <div className="date">
-                    <a href="post.html"> <span>Dec</span> <i>25</i> </a>
+                    <a href="/post"> <span>Dec</span> <i>25</i> </a>
                   </div>
                 </div>
                 <div className="con"> 
                   <span className="category">
-                    <a href="blog.html">Hairstyle</a>
+                    <a href="/blog">Hairstyle</a>
                   </span>
-                  <h5><a href="post.html">5 Most Iconic Men’s Hairstyles Of All Times</a></h5>
+                  <h5><a href="/post">5 Most Iconic Men’s Hairstyles Of All Times</a></h5>
                 </div>
               </div>
             </div>
@@ -150,14 +150,14 @@ function Blog() {
                 <div className="position-re o-hidden"> 
                   <img src="img/slider/4.jpg" alt="" />
                   <div className="date">
-                    <a href="post.html"> <span>Dec</span> <i>23</i> </a>
+                    <a href="/post"> <span>Dec</span> <i>23</i> </a>
                   </div>
                 </div>
                 <div className="con"> 
                   <span className="category">
-                    <a href="blog.html">Haircut</a>
+                    <a href="/blog">Haircut</a>
                   </span>
-                  <h5><a href="post.html">What Are The Secrets of The Haircut &amp; Moustache Trim?</a></h5>
+                  <h5><a href="/post">What Are The Secrets of The Haircut &amp; Moustache Trim?</a></h5>
                 </div>
               </div>
             </div>
@@ -168,12 +168,12 @@ function Blog() {
                 <div className="position-re o-hidden"> 
                   <img src="img/slider/16.jpg" alt="" />
                   <div className="date">
-                    <a href="post.html"> <span>Dec</span> <i>22</i> </a>
+                    <a href="/post"> <span>Dec</span> <i>22</i> </a>
                   </div>
                 </div>
                 <div className="con"> 
-                  <span className="category"><a href="blog.html">Wedding</a></span>
-                  <h5><a href="post.html">Best Tips for Groom Shaving for Your Wedding</a></h5>
+                  <span className="category"><a href="/blog">Wedding</a></span>
+                  <h5><a href="/post">Best Tips for Groom Shaving for Your Wedding</a></h5>
                 </div>
               </div>
             </div>
@@ -184,14 +184,14 @@ function Blog() {
                 <div className="position-re o-hidden"> 
                   <img src="img/slider/19.jpg" alt="" />
                   <div className="date">
-                    <a href="post.html"> <span>Dec</span> <i>20</i> </a>
+                    <a href="/post"> <span>Dec</span> <i>20</i> </a>
                   </div>
                 </div>
                 <div className="con"> 
                   <span className="category">
-                    <a href="blog.html">Model</a>
+                    <a href="/blog">Model</a>
                   </span>
-                  <h5><a href="post.html">What We Need to Choose The Fashion Model?</a></h5>
+                  <h5><a href="/post">What We Need to Choose The Fashion Model?</a></h5>
                 </div>
               </div>
             </div>

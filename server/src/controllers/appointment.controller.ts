@@ -6,6 +6,7 @@ import {
   getAdminAppointments,
   getAvailableSlots,
   getBarberAppointments,
+  markBarberAppointmentViewed,
   getMyAppointments,
   updateAppointmentStatus,
 } from "../services/appointment.service";
@@ -199,6 +200,23 @@ export const getBarberMine = async (
       success: true,
       appointments,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const markBarberViewed = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
+    const appointment = await markBarberAppointmentViewed(
+      getStringParam(req.params.id, "Mã lịch hẹn không hợp lệ"),
+      req.user.userId
+    );
+    res.json({ success: true, appointment });
   } catch (error) {
     next(error);
   }

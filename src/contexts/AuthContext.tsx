@@ -10,6 +10,9 @@ import {
   getMe,
   login as loginApi,
 } from "../services/authService";
+import { fetchBusinessQuery } from "../lib/queryApi";
+import { queryClient } from "../lib/queryClient";
+import { queryKeys } from "../lib/queryKeys";
 import type {
   AuthUser,
   LoginPayload,
@@ -93,7 +96,12 @@ export function AuthProvider({
           }
 
           try {
-            const currentUser = await getMe(accessToken);
+            const currentUser = await fetchBusinessQuery(
+              "auth-session",
+              () => getMe(accessToken),
+              role,
+              30_000
+            );
 
             if (currentUser.role !== role) {
               throw new Error("Phiên đăng nhập sai quyền");
@@ -144,6 +152,7 @@ export function AuthProvider({
       ...current,
       [role]: result.user,
     }));
+    queryClient.setQueryData(queryKeys.auth(role), result.user);
 
     return result.user;
   };
@@ -156,11 +165,13 @@ export function AuthProvider({
       ...current,
       [role]: null,
     }));
+    queryClient.removeQueries({ queryKey: queryKeys.auth(role) });
   };
 
   const updateSession = (role: UserRole, user: AuthUser): void => {
     localStorage.setItem(userKey(role), JSON.stringify(user));
     setSessions((current) => ({ ...current, [role]: user }));
+    queryClient.setQueryData(queryKeys.auth(role), user);
   };
 
   return (

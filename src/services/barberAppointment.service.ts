@@ -55,3 +55,10 @@ export const updateBarberAppointmentStatus =
 
     return response.data;
   };
+
+export const markBarberAppointmentViewed = async (appointmentId: string) => {
+  const response = await api.patch(
+    `/barber/appointments/${appointmentId}/viewed`
+  );
+  return response.data;
+};

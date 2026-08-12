@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {useCallback,useEffect,useState,type FormEvent,} from "react";
 import {Link,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -101,7 +103,15 @@ function Payments() {
       setLoading(true);
       setError("");
 
-      const response = await getAdminPayments({
+      const response = await fetchBusinessQuery("admin-payments", () => getAdminPayments({
+        keyword: submittedKeyword || undefined,
+        status,
+        method,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        page,
+        limit: 10,
+      }), {
         keyword: submittedKeyword || undefined,
         status,
         method,
@@ -120,6 +130,10 @@ function Payments() {
       setLoading(false);
     }
   }, [submittedKeyword, status, method, dateFrom, dateTo, page]);
+
+  useRealtimeRefresh(() => {
+    void loadPayments();
+  });
 
   useEffect(() => {
     if (authLoading) {

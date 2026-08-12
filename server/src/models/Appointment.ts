@@ -11,6 +11,12 @@ export type AppointmentPaymentStatus =| "UNPAID"| "PENDING"| "PAID"| "REFUNDED";
 
 export type CancellationRole =| "CLIENT"| "RECEPTIONIST"| "ADMIN";
 
+export type WorkProgressStatus =
+  | "NOT_REQUIRED"
+  | "PENDING"
+  | "IN_PROGRESS"
+  | "COMPLETED";
+
 export interface IAppointmentCustomer {
   fullName: string;
   email: string;
@@ -44,6 +50,27 @@ export interface IAppointmentCancellation {
   refundBankName?: string;
   refundAccountNumber?: string;
   refundAccountName?: string;
+  refundEligible?: boolean;
+  refundAmount?: number;
+  policyApplied?: string;
+  refundStatus?: "NOT_REQUIRED" | "PENDING" | "PROCESSING" | "REFUNDED" | "FAILED";
+}
+
+export interface IAppointmentWorkProgress {
+  hair: WorkProgressStatus;
+  care: WorkProgressStatus;
+  hairStartedAt?: Date;
+  hairCompletedAt?: Date;
+  careStartedAt?: Date;
+  careCompletedAt?: Date;
+}
+
+export interface ICancellationPolicySnapshot {
+  fullRefundHours: number;
+  shopCancellationRefundPercent: number;
+  lateCancellationRefundPercent: number;
+  noShowRefundPercent: number;
+  capturedAt: Date;
 }
 
 export interface IAppointment extends Document {
@@ -83,6 +110,12 @@ export interface IAppointment extends Document {
   confirmedAt?: Date;
   startedAt?: Date;
   completedAt?: Date;
+  workProgress: IAppointmentWorkProgress;
+  cancellationPolicySnapshot: ICancellationPolicySnapshot;
+  voucherAppliedAt?: Date;
+  finalPrice?: number;
+  finalDiscountAmount?: number;
+  barberViewedAt?: Date;
 
   createdAt: Date;
   updatedAt: Date;
@@ -193,6 +226,14 @@ const cancellationSchema =
       refundBankName: { type: String, trim: true, maxlength: 100, default: "" },
       refundAccountNumber: { type: String, trim: true, maxlength: 40, default: "" },
       refundAccountName: { type: String, trim: true, maxlength: 120, default: "" },
+      refundEligible: { type: Boolean, default: false },
+      refundAmount: { type: Number, min: 0, default: 0 },
+      policyApplied: { type: String, trim: true, default: "" },
+      refundStatus: {
+        type: String,
+        enum: ["NOT_REQUIRED", "PENDING", "PROCESSING", "REFUNDED", "FAILED"],
+        default: "NOT_REQUIRED",
+      },
     },
     {
       _id: false,
@@ -394,6 +435,36 @@ const appointmentSchema =
         type: Date,
         default: null,
       },
+
+      workProgress: {
+        hair: {
+          type: String,
+          enum: ["NOT_REQUIRED", "PENDING", "IN_PROGRESS", "COMPLETED"],
+          default: "PENDING",
+        },
+        care: {
+          type: String,
+          enum: ["NOT_REQUIRED", "PENDING", "IN_PROGRESS", "COMPLETED"],
+          default: "NOT_REQUIRED",
+        },
+        hairStartedAt: { type: Date, default: null },
+        hairCompletedAt: { type: Date, default: null },
+        careStartedAt: { type: Date, default: null },
+        careCompletedAt: { type: Date, default: null },
+      },
+
+      cancellationPolicySnapshot: {
+        fullRefundHours: { type: Number, min: 0, default: 24 },
+        shopCancellationRefundPercent: { type: Number, min: 0, max: 100, default: 100 },
+        lateCancellationRefundPercent: { type: Number, min: 0, max: 100, default: 0 },
+        noShowRefundPercent: { type: Number, min: 0, max: 100, default: 0 },
+        capturedAt: { type: Date, default: Date.now },
+      },
+
+      voucherAppliedAt: { type: Date, default: null },
+      finalPrice: { type: Number, min: 0, default: null },
+      finalDiscountAmount: { type: Number, min: 0, default: 0 },
+      barberViewedAt: { type: Date, default: null },
     },
     {
       timestamps: true,

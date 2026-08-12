@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
@@ -52,6 +54,7 @@ interface BarberFormState {
   bio: string;
   experienceYears: number;
   specialtyIds: string[];
+  staffType: "HAIR" | "CARE";
 }
 
 const emptyForm: BarberFormState = {
@@ -63,6 +66,7 @@ const emptyForm: BarberFormState = {
   bio: "",
   experienceYears: 0,
   specialtyIds: [],
+  staffType: "HAIR",
 };
 
 const statusLabels: Record<
@@ -135,6 +139,7 @@ const mapBarberToForm = (
     barber.profile?.specialties.map(
       (service) => service.id
     ) ?? [],
+  staffType: barber.profile?.staffType || "HAIR",
 });
 
 function Barbers() {
@@ -202,7 +207,14 @@ function Barbers() {
         setError("");
 
         const response =
-          await getAdminBarbers({
+          await fetchBusinessQuery("admin-barbers", () => getAdminBarbers({
+            keyword:
+              submittedKeyword ||
+              undefined,
+            status: statusFilter,
+            page: pagination.page,
+            limit: pagination.limit,
+          }), {
             keyword:
               submittedKeyword ||
               undefined,
@@ -236,7 +248,7 @@ function Barbers() {
     useCallback(async (): Promise<void> => {
       try {
         const response =
-          await getCatalogServices();
+          await fetchBusinessQuery("catalog-services", () => getCatalogServices());
 
         setServices(
           response.services
@@ -250,6 +262,11 @@ function Barbers() {
         );
       }
     }, []);
+
+  useRealtimeRefresh(() => {
+    void loadBarbers();
+    void loadServices();
+  });
 
   useEffect(() => {
     if (authLoading) {
@@ -444,6 +461,8 @@ function Barbers() {
               form.experienceYears,
             specialtyIds:
               form.specialtyIds,
+            staffType:
+              form.staffType,
           };
 
         const response =
@@ -476,6 +495,8 @@ function Barbers() {
               form.experienceYears,
             specialtyIds:
               form.specialtyIds,
+            staffType:
+              form.staffType,
           };
 
         const response =
@@ -843,6 +864,9 @@ function Barbers() {
                         ]
                       }
                     </span>
+                    <small className={`admin-staff-type ${barber.profile?.staffType === "CARE" ? "care" : "hair"}`}>
+                      {barber.profile?.staffType === "CARE" ? "Nhân viên chăm sóc" : "Barber làm tóc"}
+                    </small>
                   </div>
                 </div>
 
@@ -1230,6 +1254,18 @@ function Barbers() {
                 </div>
               </div>
 
+              <div className="admin-staff-type-picker">
+                <span>Phân loại nhân viên</span>
+                <div>
+                  <button type="button" className={form.staffType === "HAIR" ? "selected" : ""} onClick={() => updateForm("staffType", "HAIR")}>
+                    <b>Barber làm tóc</b><small>Thực hiện cắt, uốn, nhuộm và tạo kiểu</small>
+                  </button>
+                  <button type="button" className={form.staffType === "CARE" ? "selected" : ""} onClick={() => updateForm("staffType", "CARE")}>
+                    <b>Nhân viên chăm sóc</b><small>Thực hiện gội đầu, massage và chăm sóc</small>
+                  </button>
+                </div>
+              </div>
+
               <div className="admin-barbers-field">
                 <label htmlFor="barberBio">
                   Giới thiệu
@@ -1270,7 +1306,7 @@ function Barbers() {
                 </div>
 
                 <section>
-                  {services.map(
+                  {services.filter((service) => service.staffType === form.staffType).map(
                     (service) => {
                       const selected =
                         form.specialtyIds.includes(

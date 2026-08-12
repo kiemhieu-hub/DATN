@@ -32,6 +32,11 @@ import reviewRoutes from "./routes/review.routes";
 import staffNotificationRoutes from "./routes/staffNotification.routes";
 import vnpayRoutes from "./routes/vnpay.routes";
 import favoriteHairstyleRoutes from "./routes/favoriteHairstyle.routes";
+import refundRoutes from "./routes/refund.routes";
+import {
+  emitBusinessChanged,
+  emitStaffDataChanged,
+} from "./realtime/socket";
 
 const app = express();
 
@@ -43,6 +48,32 @@ app.use(
   })
 );
 app.use(express.json());
+
+// Phát tín hiệu realtime sau khi API thay đổi lịch hẹn hoặc thông báo.
+// Frontend nhận tín hiệu rồi tải lại dữ liệu bằng API có xác thực.
+app.use((req, res, next) => {
+  const isMutation = !["GET", "HEAD", "OPTIONS"].includes(req.method);
+
+  if (isMutation) {
+    res.on("finish", () => {
+      if (res.statusCode >= 200 && res.statusCode < 400) {
+        const isStaffOperation =
+          req.path.includes("/appointments") ||
+          req.path.includes("/notifications") ||
+          req.path.includes("/payments") ||
+          req.path.includes("/refunds");
+
+        if (isStaffOperation) {
+          emitStaffDataChanged();
+        } else {
+          emitBusinessChanged();
+        }
+      }
+    });
+  }
+
+  next();
+});
 
 // Test API
 app.get("/", (_req, res) => {
@@ -57,7 +88,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/hairstyle-gallery", hairstyleGalleryRoutes);
-app.use("/api/favorites", favoriteHairstyleRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/catalog",catalogRoutes);
 app.use("/api/barber", barberRoutes);
@@ -78,6 +108,8 @@ app.use("/api/admin", adminContentRoutes);
 app.use("/api/receptionist", receptionistRoutes);
 app.use("/api/staff/notifications", staffNotificationRoutes);
 app.use("/api/payments/vnpay", vnpayRoutes);
+app.use("/api/favorites", favoriteHairstyleRoutes);
+app.use("/api/admin/refunds", refundRoutes);
 
 
 

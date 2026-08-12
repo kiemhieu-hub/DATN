@@ -679,10 +679,12 @@ export const replaceAppointmentServices = async (
   appointment.subtotal = services.reduce((sum, item) => sum + item.price, 0);
   // Giữ nguyên snapshot voucher đã áp dụng. Voucher phần trăm được tính lại
   // theo tổng dịch vụ mới; voucher cố định giữ nguyên số tiền giảm ban đầu.
-  appointment.discountAmount = appointment.discountPercent > 0
-    ? Math.round(appointment.subtotal * appointment.discountPercent / 100)
-    : Math.min(appointment.discountAmount, appointment.subtotal);
-  appointment.totalPrice = appointment.subtotal - appointment.discountAmount;
+  // Voucher chỉ được áp dụng ở bước thanh toán cuối cùng. Khi lễ tân thay
+  // đổi dịch vụ, tổng tạm tính luôn phản ánh đúng dịch vụ thực tế.
+  appointment.totalPrice = appointment.subtotal;
+  appointment.finalPrice = undefined;
+  appointment.finalDiscountAmount = 0;
+  appointment.voucherAppliedAt = undefined;
   if (!appointment.depositPaid) {
     appointment.depositRequired = appointment.subtotal > 200000;
     appointment.depositAmount = appointment.depositRequired
@@ -807,3 +809,68 @@ export const deleteAdminAppointment = async (appointmentId: string) => {
     405
   );
 };
+
+export const updateAppointmentWorkProgress = async (
+  appointmentId: string,
+  segment: "HAIR" | "CARE",
+  progress: "IN_PROGRESS" | "COMPLETED",
+  actorId: string,
+  actorRole: StaffRole
+) => {
+  assertId(appointmentId, "Mã lịch hẹn không hợp lệ");
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) throw new AppError("Không tìm thấy lịch hẹn", 404);
+
+  if (!["CHECKED_IN", "IN_PROGRESS"].includes(appointment.status)) {
+    throw new AppError("Khách hàng phải check-in trước khi cập nhật tiến độ", 400);
+  }
+
+  if (!appointment.workProgress) {
+    const hasHair = appointment.staffAssignments.some((item) => item.staffType === "HAIR");
+    const hasCare = appointment.staffAssignments.some((item) => item.staffType === "CARE");
+    appointment.workProgress = {
+      hair: hasHair ? "PENDING" : "NOT_REQUIRED",
+      care: hasCare ? "PENDING" : "NOT_REQUIRED",
+    };
+  }
+
+  const key = segment === "HAIR" ? "hair" : "care";
+  if (appointment.workProgress[key] === "NOT_REQUIRED") {
+    throw new AppError(`Lịch hẹn không có phần việc ${segment}`, 400);
+  }
+
+  const now = new Date();
+  appointment.workProgress[key] = progress;
+
+  if (segment === "HAIR") {
+    if (progress === "IN_PROGRESS") appointment.workProgress.hairStartedAt = now;
+    if (progress === "COMPLETED") appointment.workProgress.hairCompletedAt = now;
+  } else {
+    if (progress === "IN_PROGRESS") appointment.workProgress.careStartedAt = now;
+    if (progress === "COMPLETED") appointment.workProgress.careCompletedAt = now;
+  }
+
+  appointment.status = "IN_PROGRESS";
+  appointment.startedAt ??= now;
+
+  const allDone = [appointment.workProgress.hair, appointment.workProgress.care]
+    .every((value) => value === "NOT_REQUIRED" || value === "COMPLETED");
+
+  if (allDone) {
+    appointment.status = "COMPLETED";
+    appointment.completedAt = now;
+  }
+
+  await appointment.save();
+  await recordAppointmentActivity({
+    appointmentId,
+    action: "WORK_PROGRESS_CHANGED",
+    description: `${segment === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc"} chuyển sang ${progress}`,
+    actorId,
+    actorRole,
+    metadata: { segment, progress, allDone },
+  });
+
+  return getAdminAppointmentDetail(appointmentId);
+};
+  

@@ -1,5 +1,7 @@
 import axios from "axios";
-import {useCallback,useEffect,useState,} from "react";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
+import {useCallback,useEffect,useMemo,useState,} from "react";
 import {Link,useLocation,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import ReviewModal from "../../components/ReviewModal";
@@ -125,6 +127,10 @@ function BookingHistory() {
   const [refundAccountNumber, setRefundAccountNumber] = useState("");
   const [refundAccountName, setRefundAccountName] = useState("");
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [keyword, setKeyword] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [barberFilter, setBarberFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "ALL">("ALL");
 
   const [
     cancellingId,
@@ -138,8 +144,8 @@ function BookingHistory() {
         setError("");
 
         const [response, reviewResponse] = await Promise.all([
-          getMyAppointments(),
-          getMyReviews(),
+          fetchBusinessQuery("my-appointments", () => getMyAppointments()),
+          fetchBusinessQuery("my-reviews", () => getMyReviews()),
         ]);
 
         setAppointments(
@@ -159,6 +165,10 @@ function BookingHistory() {
         setLoading(false);
       }
     }, []);
+
+  useRealtimeRefresh(() => {
+    void loadAppointments();
+  }, isAuthenticated);
 
   useEffect(() => {
     if (authLoading) {
@@ -193,6 +203,21 @@ function BookingHistory() {
     const leadTime = startsAt.getTime() - Date.now();
     return appointment.status === "PENDING" ? leadTime > 0 : leadTime >= 24 * 60 * 60 * 1000;
   };
+
+  const filteredAppointments = useMemo(() => {
+    const search = keyword.trim().toLowerCase();
+    return [...appointments]
+      .filter((appointment) => {
+        const barber = getBarberName(appointment).toLowerCase();
+        const code = (appointment.appointmentCode || appointment._id).toLowerCase();
+        const customer = appointment.customer?.fullName?.toLowerCase() || "";
+        return (!search || code.includes(search) || customer.includes(search))
+          && (!dateFilter || appointment.appointmentDate === dateFilter)
+          && (!barberFilter || barber.includes(barberFilter.toLowerCase()))
+          && (statusFilter === "ALL" || appointment.status === statusFilter);
+      })
+      .sort((first, second) => new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime());
+  }, [appointments, keyword, dateFilter, barberFilter, statusFilter]);
 
   const handleCancel = async (
     appointment: Appointment
@@ -296,6 +321,16 @@ function BookingHistory() {
           </Link>
         </div>
 
+        <section className="history-filters">
+          <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="Tên khách hoặc mã lịch" />
+          <input value={barberFilter} onChange={(event) => setBarberFilter(event.target.value)} placeholder="Tên Barber" />
+          <input type="date" value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} />
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as AppointmentStatus | "ALL")}>
+            <option value="ALL">Tất cả trạng thái</option>
+            {Object.entries(appointmentStatusLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+          </select>
+        </section>
+
         {message && (
           <p className="history-message history-success">
             {message}
@@ -335,7 +370,7 @@ function BookingHistory() {
           </section>
         ) : (
           <div className="history-list">
-            {appointments.map(
+            {filteredAppointments.map(
               (appointment) => (
                 <article
                   className="history-card"
@@ -482,18 +517,6 @@ function BookingHistory() {
                         )}
                       </strong>
                     </div>
-                    {appointment.staffAssignments?.map((assignment) => (
-                      <div key={`${assignment.staffType}-${assignment.startTime}`}>
-                        <span>{assignment.staffType === "HAIR" ? "Time 1 · Làm tóc" : "Time 2 · Chăm sóc"}</span>
-                        <strong>
-                          {typeof assignment.barber === "string"
-                            ? "Nhân viên THADS"
-                            : assignment.barber.fullName}
-                        </strong>
-                        <small>{assignment.startTime} – {assignment.endTime}</small>
-                      </div>
-                    ))}
-
                     <div>
                       <span>Tổng tiền</span>
 
@@ -506,13 +529,12 @@ function BookingHistory() {
                     </div>
                     {appointment.voucherCode && (
                       <div className="history-voucher-card">
-                        <span>Voucher đã áp dụng</span>
+                        <span>Voucher đã chọn</span>
                         <strong>{appointment.voucherCode}</strong>
                         <small>
-                          {appointment.discountPercent > 0
-                            ? `Giảm ${appointment.discountPercent}% · `
-                            : "Giảm trực tiếp · "}
-                          -{formatPrice(appointment.discountAmount)}đ
+                          {appointment.voucherAppliedAt
+                            ? `Đã áp dụng khi thanh toán: -${formatPrice(appointment.finalDiscountAmount ?? appointment.discountAmount)}đ`
+                            : "Sẽ được tính trên hóa đơn thực tế khi hoàn thành dịch vụ"}
                         </small>
                       </div>
                     )}

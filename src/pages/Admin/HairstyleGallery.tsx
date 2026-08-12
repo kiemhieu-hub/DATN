@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   createAdminHairstyle,
@@ -39,10 +41,14 @@ function HairstyleGallery() {
     try {
       setLoading(true);
       setError("");
-      setItems((await getAdminHairstyles()).items);
+      setItems((await fetchBusinessQuery("admin-hairstyles", () => getAdminHairstyles())).items);
     } catch (error) { setError(errorMessage(error)); }
     finally { setLoading(false); }
   }, []);
+
+  useRealtimeRefresh(() => {
+    void load();
+  });
 
   useEffect(() => { void load(); }, [load]);
 

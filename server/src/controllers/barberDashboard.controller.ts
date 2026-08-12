@@ -23,7 +23,9 @@ export const getDashboard = async (
 
     const dashboard =
       await barberDashboardService.getBarberDashboard(
-        req.user.userId
+        req.user.userId,
+        typeof req.query.dateFrom === "string" ? req.query.dateFrom : undefined,
+        typeof req.query.dateTo === "string" ? req.query.dateTo : undefined
       );
 
     res.status(200).json({
