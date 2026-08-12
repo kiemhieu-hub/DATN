@@ -18,20 +18,21 @@ function Contact() {
 
     // 2. Tự động lấy thông tin User đã đăng nhập khi trang vừa load
     useEffect(() => {
-        // Lấy thông tin user từ localStorage (thường lưu dạng JSON dưới key 'user' hoặc 'userInfo')
-        const storedUser = localStorage.getItem('user'); // Bạn thay tên key 'user' theo đúng dự án của bạn nhé
-        
+        // Lấy dữ liệu từ key clientUser trong Local Storage
+        const storedUser = localStorage.getItem('clientUser');
+
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
+
                 setFormData(prev => ({
                     ...prev,
-                    name: user.name || user.fullName || user.username || '',
-                    phone: user.phone || user.phoneNumber || '',
+                    name: user.name || user.fullName || user.username || user.full_name || '',
+                    phone: user.phone || user.phoneNumber || user.phone_number || '',
                     email: user.email || ''
                 }));
             } catch (error) {
-                console.error("Lỗi đọc thông tin tài khoản:", error);
+                console.error("Lỗi parse dữ liệu người dùng:", error);
             }
         }
     }, []);
@@ -59,7 +60,7 @@ function Contact() {
 
             if (response.ok) {
                 setStatusMsg({ type: 'success', text: data.message || 'Tin nhắn của bạn đã được gửi thành công!' });
-                
+
                 // Giữ lại tên/phone/email của user nếu đã đăng nhập, chỉ xóa subject & message
                 const storedUser = localStorage.getItem('user');
                 if (storedUser) {
@@ -245,14 +246,14 @@ function Contact() {
                                                 <div className="input1_wrapper">
                                                     <label>Họ và tên</label>
                                                     <div className="input2_inner">
-                                                        <input 
-                                                            type="text" 
+                                                        <input
+                                                            type="text"
                                                             name="name"
                                                             value={formData.name}
                                                             onChange={handleChange}
-                                                            className="form-control input" 
-                                                            placeholder="Họ và tên" 
-                                                            required 
+                                                            className="form-control input"
+                                                            placeholder="Họ và tên"
+                                                            required
                                                         />
                                                     </div>
                                                 </div>
@@ -261,14 +262,14 @@ function Contact() {
                                                 <div className="input1_wrapper">
                                                     <label>Số điện thoại</label>
                                                     <div className="input2_inner">
-                                                        <input 
-                                                            type="text" 
+                                                        <input
+                                                            type="text"
                                                             name="phone"
                                                             value={formData.phone}
                                                             onChange={handleChange}
-                                                            className="form-control input" 
-                                                            placeholder="Số điện thoại" 
-                                                            required 
+                                                            className="form-control input"
+                                                            placeholder="Số điện thoại"
+                                                            required
                                                         />
                                                     </div>
                                                 </div>
@@ -277,14 +278,14 @@ function Contact() {
                                                 <div className="input1_wrapper">
                                                     <label>Email</label>
                                                     <div className="input2_inner">
-                                                        <input 
-                                                            type="email" 
+                                                        <input
+                                                            type="email"
                                                             name="email"
                                                             value={formData.email}
                                                             onChange={handleChange}
-                                                            className="form-control input" 
-                                                            placeholder="Email" 
-                                                            required 
+                                                            className="form-control input"
+                                                            placeholder="Email"
+                                                            required
                                                         />
                                                     </div>
                                                 </div>
@@ -293,27 +294,27 @@ function Contact() {
                                                 <div className="input1_wrapper">
                                                     <label>Tiêu đề</label>
                                                     <div className="input2_inner">
-                                                        <input 
-                                                            type="text" 
+                                                        <input
+                                                            type="text"
                                                             name="subject"
                                                             value={formData.subject}
                                                             onChange={handleChange}
-                                                            className="form-control input" 
-                                                            placeholder="Tiêu đề" 
-                                                            required 
+                                                            className="form-control input"
+                                                            placeholder="Tiêu đề"
+                                                            required
                                                         />
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="col-md-12 form-group">
-                                                <textarea 
-                                                    name="message" 
-                                                    id="message" 
-                                                    cols={30} 
-                                                    rows={4} 
+                                                <textarea
+                                                    name="message"
+                                                    id="message"
+                                                    cols={30}
+                                                    rows={4}
                                                     value={formData.message}
                                                     onChange={handleChange}
-                                                    placeholder="Nội dung tin nhắn" 
+                                                    placeholder="Nội dung tin nhắn"
                                                     required
                                                 ></textarea>
                                             </div>
@@ -410,13 +411,13 @@ function Contact() {
                                         <div className="col-md-12">
                                             <p>Đăng ký để nhận các ưu đãi hấp dẫn và phiếu quà tặng từ chúng tôi.</p>
                                             <form onSubmit={handleSubscribe}>
-                                                <input 
-                                                    type="email" 
-                                                    name="subscribe_email" 
-                                                    placeholder="Email của bạn" 
+                                                <input
+                                                    type="email"
+                                                    name="subscribe_email"
+                                                    placeholder="Email của bạn"
                                                     value={subscribeEmail}
                                                     onChange={(e: ChangeEvent<HTMLInputElement>) => setSubscribeEmail(e.target.value)}
-                                                    required 
+                                                    required
                                                 />
                                                 <button type="submit" disabled={subLoading}>
                                                     {subLoading ? '...' : 'Đăng ký'}
