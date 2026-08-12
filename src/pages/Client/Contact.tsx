@@ -1,6 +1,22 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 function Contact() {
+    const navigate = useNavigate();
+
+    const {
+        user,
+        isAuthenticated,
+        logout,
+    } = useAuth();
+
+    const handleLogout = (): void => {
+        logout();
+
+        navigate("/", {
+            replace: true,
+        });
+    };
     // 1. State quản lý Form Liên Hệ
     const [formData, setFormData] = useState({
         name: '',
@@ -124,9 +140,9 @@ function Contact() {
             <nav className="navbar navbar-expand-lg">
                 <div className="container">
                     <div className="logo-wrapper">
-                        <a className="logo" href="index.html">
-                            <img src="img/logo.png" className="logo-img" alt="Logo" />
-                        </a>
+                        <Link className="logo" to="/index">
+                            <img src="/img/logo.png" className="logo-img" alt="Logo" />
+                        </Link>
                     </div>
 
                     <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Chuyển đổi menu">
@@ -135,49 +151,151 @@ function Contact() {
 
                     <div className="collapse navbar-collapse" id="navbar">
                         <ul className="navbar-nav ms-auto">
-                            <li className="nav-item"><a className="nav-link" href="index.html">Trang chủ</a></li>
-                            <li className="nav-item"><a className="nav-link" href="about.html">Giới thiệu</a></li>
-                            <li className="nav-item"><a className="nav-link" href="services.html">Dịch vụ</a></li>
-                            <li className="nav-item"><a className="nav-link" href="pricing.html">Bảng giá</a></li>
+                            <li className="nav-item"><Link className="nav-link" to="/index">Trang chủ</Link></li>
+                            <li className="nav-item"><Link className="nav-link" to="/about">Giới thiệu</Link></li>
+                            <li className="nav-item"><Link className="nav-link" to="/services">Dịch vụ</Link></li>
+                            <li className="nav-item"><Link className="nav-link" to="/pricing">Bảng giá</Link></li>
                             <li className="nav-item dropdown">
-                                <a className="nav-link dropdown-toggle" href="#0" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                    Trang <i className="ti-angle-down"></i>
-                                </a>
+                                <button
+                                    className="nav-link dropdown-toggle navbar-dropdown-button"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
+                                    aria-expanded="false"
+                                >
+                                    Khám phá{" "}
+                                    <i className="ti-angle-down" />
+                                </button>
+
                                 <ul className="dropdown-menu">
-                                    <li><a href="portfolio.html" className="dropdown-item"><span>Dự án</span></a></li>
-                                    <li><a href="team.html" className="dropdown-item"><span>Đội ngũ</span></a></li>
-                                    <li><a href="faq.html" className="dropdown-item"><span>Hỏi đáp</span></a></li>
-                                    <li><a href="services-page.html" className="dropdown-item"><span>Trang dịch vụ</span></a></li>
-                                    <li><a href="team-details.html" className="dropdown-item"><span>Chi tiết đội ngũ</span></a></li>
-                                    <li><a href="post.html" className="dropdown-item"><span>Bài viết chi tiết</span></a></li>
-                                    <li><a href="404.html" className="dropdown-item"><span>Lỗi 404</span></a></li>
-                                    <li><a href="coming-soon.html" className="dropdown-item"><span>Sắp ra mắt</span></a></li>
-                                    <li className="dropdown-submenu dropdown">
-                                        <a className="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" href="#0">
-                                            <span>Menu phụ <i className="ti-angle-right"></i></span>
-                                        </a>
-                                        <ul className="dropdown-menu">
-                                            <li><a href="#0" className="dropdown-item"><span>Danh mục con</span></a></li>
-                                            <li><a href="#0" className="dropdown-item"><span>Danh mục con</span></a></li>
-                                        </ul>
+                                    <li>
+                                        <Link
+                                            to="/portfolio"
+                                            className="dropdown-item"
+                                        >
+                                            <span>Thư viện kiểu tóc</span>
+                                        </Link>
+                                    </li>
+
+                                    <li>
+                                        <Link
+                                            to="/team.html"
+                                            className="dropdown-item"
+                                        >
+                                            <span>Đội ngũ Barber</span>
+                                        </Link>
+                                    </li>
+
+                                    <li>
+                                        <Link
+                                            to="/faq"
+                                            className="dropdown-item"
+                                        >
+                                            <span>Câu hỏi thường gặp</span>
+                                        </Link>
+                                    </li>
+
+                                    <li>
+                                        <Link
+                                            to="/services-page"
+                                            className="dropdown-item"
+                                        >
+                                            <span>Chi tiết dịch vụ</span>
+                                        </Link>
+                                    </li>
+
+                                    <li>
+                                        <Link
+                                            to="/team-details"
+                                            className="dropdown-item"
+                                        >
+                                            <span>Thông tin Barber</span>
+                                        </Link>
+                                    </li>
+
+                                    <li>
+                                        <Link
+                                            to="/blog.html"
+                                            className="dropdown-item"
+                                        >
+                                            <span>Tin tức & bài viết</span>
+                                        </Link>
                                     </li>
                                 </ul>
                             </li>
-                            <li className="nav-item dropdown">
-                                <a className="nav-link dropdown-toggle" href="#0" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                    Tin tức <i className="ti-angle-down"></i>
-                                </a>
-                                <ul className="dropdown-menu">
-                                    <li><a href="blog.html" className="dropdown-item"><span>Tin tức 01</span></a></li>
-                                    <li><a href="blog2.html" className="dropdown-item"><span>Tin tức 02</span></a></li>
-                                    <li><a href="blog3.html" className="dropdown-item"><span>Tin tức 03</span></a></li>
-                                </ul>
-                            </li>
+
                             <li className="nav-item"><a className="nav-link active" href="contact.html">Liên hệ</a></li>
+
+                            {isAuthenticated && user ? (
+                                <li className="nav-item dropdown">
+                                    <button
+                                        className="nav-link dropdown-toggle auth-user-button"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        aria-expanded="false"
+                                    >
+                                        <i className="ti-user" />{" "}
+                                        {user.fullName}{" "}
+                                        <i className="ti-angle-down" />
+                                    </button>
+
+                                    <ul className="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <Link
+                                                className="dropdown-item"
+                                                to="/profile"
+                                            >
+                                                <span>Hồ sơ cá nhân</span>
+                                            </Link>
+                                        </li>
+
+                                        <li>
+                                            <Link
+                                                className="dropdown-item"
+                                                to="/booking-history"
+                                            >
+                                                <span>Lịch sử đặt lịch</span>
+                                            </Link>
+                                        </li>
+
+                                        <li>
+                                            <button
+                                                type="button"
+                                                className="dropdown-item logout-menu-button"
+                                                onClick={handleLogout}
+                                            >
+                                                <span>Đăng xuất</span>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </li>
+                            ) : (
+                                <>
+                                    <li className="nav-item">
+                                        <Link
+                                            className="nav-link"
+                                            to="/login"
+                                        >
+                                            Đăng nhập
+                                        </Link>
+                                    </li>
+
+                                    <li className="nav-item">
+                                        <Link
+                                            className="nav-link"
+                                            to="/register"
+                                        >
+                                            Đăng ký
+                                        </Link>
+                                    </li>
+                                </>
+                            )}
                         </ul>
                     </div>
                 </div>
             </nav>
+
 
             {/* Header Banner */}
             <div className="banner-header valign bg-img bg-fixed" data-overlay-dark="4" data-background="img/slider/11.jpg">

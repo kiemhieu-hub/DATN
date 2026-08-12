@@ -139,7 +139,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/faq.html"
+                      to="/faq"
                       className="dropdown-item"
                     >
                       <span>Câu hỏi thường gặp</span>

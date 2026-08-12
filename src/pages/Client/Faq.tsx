@@ -394,7 +394,7 @@ function Faq() {
               </p>
 
               <Link
-                to="/contact.html"
+                to="/contact"
                 className="button-1 mt-15"
               >
                 Liên hệ THADS Barber
