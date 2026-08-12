@@ -1535,3 +1535,53 @@
 .appointment-receipt{width:min(620px,100%);max-height:90vh;padding:30px;overflow:auto;color:#111;background:#fff}.appointment-receipt h2{text-align:center}.appointment-receipt ul{padding:0;list-style:none}.appointment-receipt li{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid #ddd}.appointment-receipt img{display:block;width:220px;height:220px;margin:20px auto}.appointment-receipt>div{display:flex;justify-content:flex-end;gap:10px}.appointment-receipt button{padding:10px 16px;cursor:pointer}
 .appointment-work-progress{margin:18px 0;padding:18px;border:1px solid #d4c1a8;border-radius:14px;background:#f8efe3}.appointment-work-progress>div{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #dfcfbc}.appointment-work-progress button{border:0;border-radius:8px;background:#287653;color:#fff;padding:9px 13px;font-weight:700;cursor:pointer}.appointment-work-progress small{display:block;color:#725f4b;margin-top:9px}
   
+.appointment-start-work-modal {
+  width: min(620px, 100%);
+}
+
+.appointment-start-work-modal > p:not(.appointment-modal-brand) {
+  color: #655545;
+  line-height: 1.6;
+}
+
+.appointment-start-work-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.appointment-start-work-options button {
+  display: flex;
+  min-height: 112px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #c99b50;
+  border-radius: 14px;
+  background: #211b16;
+  color: #fff8ef;
+  cursor: pointer;
+  font: inherit;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.appointment-start-work-options button:hover {
+  transform: translateY(-2px);
+  background: #33271d;
+}
+
+.appointment-start-work-options button strong {
+  color: #efc36c;
+  font-size: 17px;
+}
+
+.appointment-start-work-options button span {
+  color: #d8cabb;
+}
+
+@media (max-width: 600px) {
+  .appointment-start-work-options {
+    grid-template-columns: 1fr;
+  }
+}

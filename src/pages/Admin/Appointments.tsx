@@ -97,12 +97,7 @@ const nextActions: Partial<
   CHECKED_IN: [
     { status: "IN_PROGRESS", label: "Bắt đầu" },
   ],
-  IN_PROGRESS: [
-    {
-      status: "COMPLETED",
-      label: "Hoàn thành",
-    },
-  ],
+  IN_PROGRESS: [],
 };
 
 const cancellationReasons = [
@@ -161,7 +156,7 @@ const getTransferQrUrl = (
       ? import.meta.env.VITE_ZALOPAY_QR_URL?.trim()
       : import.meta.env.VITE_VNPAY_QR_URL?.trim();
 
-  if (configuredQr) return configuredQr;
+  if (configuredQr && isDirectImageUrl(configuredQr)) return configuredQr;
 
   const bankId = import.meta.env.VITE_BANK_ID?.trim();
   const accountNumber = import.meta.env.VITE_BANK_ACCOUNT_NO?.trim();
@@ -220,6 +215,30 @@ const getUserName = (
   }
 
   return value.fullName;
+};
+
+const getCustomerName = (appointment: Appointment): string => {
+  return appointment.customer?.fullName?.trim() || getUserName(appointment.client);
+};
+
+const getCustomerPhone = (appointment: Appointment): string => {
+  if (appointment.customer?.phone?.trim()) return appointment.customer.phone;
+  return typeof appointment.client === "string" ? "" : appointment.client.phone;
+};
+
+const getCustomerEmail = (appointment: Appointment): string => {
+  if (appointment.customer?.email?.trim()) return appointment.customer.email;
+  return typeof appointment.client === "string" ? "" : appointment.client.email;
+};
+
+const isDirectImageUrl = (value?: string): boolean => {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return /\.(png|jpe?g|webp|gif|svg)$/i.test(url.pathname) || url.hostname === "img.vietqr.io";
+  } catch {
+    return false;
+  }
 };
 
 const getErrorMessage = (
@@ -317,6 +336,7 @@ function Appointments() {
     startTime: string;
     customerConsent: boolean;
   } | null>(null);
+  const [startWorkDialog, setStartWorkDialog] = useState<Appointment | null>(null);
 
   const loadAppointments = useCallback(async () => {
     try {
@@ -534,6 +554,10 @@ function Appointments() {
     appointment: Appointment,
     targetStatus: AppointmentStatus
   ): Promise<void> => {
+    if (targetStatus === "IN_PROGRESS") {
+      setStartWorkDialog(appointment);
+      return;
+    }
     if (targetStatus === "CANCELLED") {
       setCancelDialog({
         appointment,
@@ -867,6 +891,31 @@ function Appointments() {
     }
   };
 
+  const startFirstWorkSegment = async (
+    segment: "HAIR" | "CARE"
+  ): Promise<void> => {
+    if (!startWorkDialog) return;
+
+    const appointment = startWorkDialog;
+    try {
+      setProcessingId(appointment._id);
+      setError("");
+      const response = await updateAdminAppointmentWorkProgress(
+        appointment._id,
+        segment,
+        "START"
+      );
+      setStartWorkDialog(null);
+      setSelectedAppointment(response.appointment);
+      setMessage(response.message);
+      await loadAppointments();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể bắt đầu phần việc"));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   if (authLoading || (loading && appointments.length === 0)) {
     return (
       <div className="admin-appointments-page">
@@ -1074,15 +1123,13 @@ function Appointments() {
                   <tr key={appointment._id}>
                     <td>
                       <strong className="appointment-customer-name">
-                        {getUserName(appointment.client)}
+                        {getCustomerName(appointment)}
                       </strong>
 
-                      {typeof appointment.client !== "string" && (
-                        <div className="appointment-customer-contact">
-                          <span>{appointment.client.phone}</span>
-                          <span>{appointment.client.email}</span>
-                        </div>
-                      )}
+                      <div className="appointment-customer-contact">
+                        <span>{getCustomerPhone(appointment)}</span>
+                        <span>{getCustomerEmail(appointment)}</span>
+                      </div>
                     </td>
 
                     <td>{getUserName(appointment.barber)}</td>
@@ -1276,7 +1323,7 @@ function Appointments() {
             <div className="appointment-detail-grid">
               <div>
                 <span>Khách hàng</span>
-                <strong>{getUserName(selectedAppointment.client)}</strong>
+                <strong>{getCustomerName(selectedAppointment)}</strong>
               </div>
 
               <div>
@@ -1508,7 +1555,7 @@ function Appointments() {
             <p className="appointment-modal-brand">THADS BARBER</p>
             <h2>Xác nhận thanh toán</h2>
             <p className="appointment-payment-description">
-              {paymentDialog.appointment.appointmentCode} · {getUserName(paymentDialog.appointment.client)}
+              {paymentDialog.appointment.appointmentCode} · {getCustomerName(paymentDialog.appointment)}
             </p>
 
             <div className="appointment-payment-summary">
@@ -1595,14 +1642,14 @@ function Appointments() {
                   )}
                   alt={`QR thanh toán lịch ${paymentDialog.appointment.appointmentCode}`}
                 />
-                {!(paymentDialog.provider === "MOMO"
+                {!isDirectImageUrl(paymentDialog.provider === "MOMO"
                   ? import.meta.env.VITE_MOMO_QR_URL
                   : paymentDialog.provider === "ZALOPAY"
                     ? import.meta.env.VITE_ZALOPAY_QR_URL
                     : import.meta.env.VITE_VNPAY_QR_URL) && (
                   <small className="appointment-qr-config-note">
-                    Để dùng mã nhận tiền thật, cấu hình VITE_{paymentDialog.provider}_QR_URL
-                    bằng ảnh QR merchant tương ứng.
+                    URL hiện tại không phải ảnh trực tiếp. Hãy dùng đường dẫn ảnh
+                    kết thúc bằng .png, .jpg hoặc .webp (ví dụ https://i.ibb.co/.../qr.png).
                   </small>
                 )}
               </div>
@@ -1657,7 +1704,7 @@ function Appointments() {
             <p className="appointment-modal-brand">THADS BARBER</p>
             <h2>Thêm hoặc bớt dịch vụ</h2>
             <p className="appointment-service-editor-description">
-              {serviceEditor.appointment.appointmentCode} · {getUserName(serviceEditor.appointment.client)}
+              {serviceEditor.appointment.appointmentCode} · {getCustomerName(serviceEditor.appointment)}
             </p>
 
             <div className="appointment-service-editor-heading">
@@ -1852,7 +1899,7 @@ function Appointments() {
             <p className="appointment-modal-brand">THADS BARBER</p>
             <h2>Hủy lịch hẹn</h2>
             <p className="appointment-dialog-description">
-              {cancelDialog.appointment.appointmentCode} · {getUserName(cancelDialog.appointment.client)}
+              {cancelDialog.appointment.appointmentCode} · {getCustomerName(cancelDialog.appointment)}
             </p>
             <label className="appointment-dialog-field">
               Lý do hủy
@@ -1921,7 +1968,7 @@ function Appointments() {
             <p className="appointment-modal-brand">THADS BARBER</p>
             <h2>Bật lại lịch vắng mặt</h2>
             <p className="appointment-reopen-description">
-              {reopenForm.appointment.appointmentCode} · {getUserName(reopenForm.appointment.client)}
+              {reopenForm.appointment.appointmentCode} · {getCustomerName(reopenForm.appointment)}
             </p>
 
             <div className="appointment-reopen-options">
@@ -2014,6 +2061,60 @@ function Appointments() {
               >
                 {processingId ? "Đang xử lý..." : "Xác nhận bật lại"}
               </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {startWorkDialog && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setStartWorkDialog(null)}
+        >
+          <section
+            className="appointment-modal appointment-start-work-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              disabled={Boolean(processingId)}
+              onClick={() => setStartWorkDialog(null)}
+            >
+              ×
+            </button>
+
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2>Chọn phần thực hiện trước</h2>
+            <p className="appointment-dialog-description">
+              {startWorkDialog.appointmentCode} · {getCustomerName(startWorkDialog)}
+            </p>
+            <p>
+              Chọn theo mong muốn của khách hàng. Phần còn lại chỉ được bắt đầu
+              sau khi nhân viên hiện tại đã hoàn thành và được giải phóng.
+            </p>
+
+            <div className="appointment-start-work-options">
+              {startWorkDialog.workProgress?.hair !== "NOT_REQUIRED" && (
+                <button
+                  type="button"
+                  disabled={Boolean(processingId)}
+                  onClick={() => void startFirstWorkSegment("HAIR")}
+                >
+                  <strong>Barber làm tóc trước</strong>
+                  <span>{getAssignmentTime(startWorkDialog, "HAIR")}</span>
+                </button>
+              )}
+
+              {startWorkDialog.workProgress?.care !== "NOT_REQUIRED" && (
+                <button
+                  type="button"
+                  disabled={Boolean(processingId)}
+                  onClick={() => void startFirstWorkSegment("CARE")}
+                >
+                  <strong>Nhân viên chăm sóc trước</strong>
+                  <span>{getAssignmentTime(startWorkDialog, "CARE")}</span>
+                </button>
+              )}
             </div>
           </section>
         </div>
