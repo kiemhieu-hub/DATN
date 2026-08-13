@@ -7,6 +7,8 @@ import User from "../models/User";
 import { recordAppointmentActivity } from "./appointmentActivity.service";
 import { sendAppointmentLifecycleEmail } from "./email.service";
 import { createStaffNotification } from "./staffNotification.service";
+import Voucher from "../models/Voucher";
+import { consumeVoucher } from "./voucher.service";
 
 interface GetPaymentsInput {
   keyword?: string;
@@ -100,10 +102,41 @@ export const confirmCashPayment = async (
       const depositCredit = appointment.depositPaid
         ? appointment.depositAmount
         : 0;
-      const remainingAmount = Math.max(
+      let finalDiscountAmount = appointment.finalDiscountAmount || 0;
+
+      if (appointment.voucherCode && !appointment.voucherAppliedAt) {
+        const voucher = await Voucher.findOne({
+          code: appointment.voucherCode,
+          isActive: true,
+        }).session(session);
+
+        if (voucher) {
+          const billSubtotal = appointment.subtotal || appointment.totalPrice;
+          finalDiscountAmount = voucher.type === "PERCENT"
+            ? Math.round(billSubtotal * voucher.value / 100)
+            : Math.round(voucher.value);
+
+          if (voucher.type === "PERCENT" && voucher.maxDiscount > 0) {
+            finalDiscountAmount = Math.min(finalDiscountAmount, voucher.maxDiscount);
+          }
+
+          finalDiscountAmount = Math.min(finalDiscountAmount, billSubtotal);
+          await consumeVoucher(String(voucher._id));
+          appointment.voucherAppliedAt = new Date();
+        }
+      }
+
+      const finalPrice = Math.max(
         0,
-        appointment.totalPrice - depositCredit
+        (appointment.subtotal || appointment.totalPrice) - finalDiscountAmount
       );
+
+      appointment.finalDiscountAmount = finalDiscountAmount;
+      appointment.finalPrice = finalPrice;
+      appointment.discountAmount = finalDiscountAmount;
+      appointment.totalPrice = finalPrice;
+
+      const remainingAmount = Math.max(0, finalPrice - depositCredit);
 
       const [payment] = await Payment.create(
         [
@@ -143,7 +176,10 @@ export const confirmCashPayment = async (
         metadata: {
           method,
           amount: remainingAmount,
-          depositCredit,
+              depositCredit,
+              finalDiscountAmount,
+              finalPrice,
+              voucherCode: appointment.voucherCode || undefined,
           paymentStatus: "PAID",
           transactionCode: payment.transactionCode,
         },

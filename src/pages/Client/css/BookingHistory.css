@@ -6,6 +6,7 @@
     radial-gradient(circle at 15% 0%, #2b251a 0, transparent 28%),
     #10100f;
 }
+.history-filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;background:#fffaf4;border:1px solid #d9c4aa;border-radius:16px;padding:16px;margin:16px 0}.history-filters input,.history-filters select{padding:12px;border:1px solid #cdb89e;border-radius:9px;background:#fff;color:#211b16}.history-card,.history-time-banner,.history-services,.history-details>div{border-radius:14px!important}.history-services strong{color:#211b16!important}.history-cancel-button{background:#a93232!important;color:#fff!important;border-color:#a93232!important;border-radius:9px!important}@media(max-width:800px){.history-filters{grid-template-columns:1fr}}
 
 .history-container {
   width: 100%;

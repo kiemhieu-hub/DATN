@@ -64,7 +64,7 @@ function About() {
               <li className="nav-item">
                 <Link
                   className="nav-link active"
-                  to="/about.html"
+                  to="/about"
                 >
                   Giới thiệu
                 </Link>
@@ -73,7 +73,7 @@ function About() {
               <li className="nav-item">
                 <Link
                   className="nav-link"
-                  to="/services.html"
+                  to="/services"
                 >
                   Dịch vụ
                 </Link>
@@ -82,7 +82,7 @@ function About() {
               <li className="nav-item">
                 <Link
                   className="nav-link"
-                  to="/pricing.html"
+                  to="/pricing"
                 >
                   Bảng giá
                 </Link>
@@ -102,7 +102,7 @@ function About() {
                 <ul className="dropdown-menu">
                   <li>
                     <Link
-                      to="/portfolio.html"
+                      to="/portfolio"
                       className="dropdown-item"
                     >
                       <span>Thư viện kiểu tóc</span>
@@ -111,7 +111,7 @@ function About() {
 
                   <li>
                     <Link
-                      to="/team.html"
+                      to="/team"
                       className="dropdown-item"
                     >
                       <span>Đội ngũ Barber</span>
@@ -120,7 +120,7 @@ function About() {
 
                   <li>
                     <Link
-                      to="/faq.html"
+                      to="/faq"
                       className="dropdown-item"
                     >
                       <span>Câu hỏi thường gặp</span>
@@ -129,7 +129,7 @@ function About() {
 
                   <li>
                     <Link
-                      to="/services-page.html"
+                      to="/services-page"
                       className="dropdown-item"
                     >
                       <span>Chi tiết dịch vụ</span>
@@ -138,7 +138,7 @@ function About() {
 
                   <li>
                     <Link
-                      to="/team-details.html"
+                      to="/team-details"
                       className="dropdown-item"
                     >
                       <span>Thông tin Barber</span>
@@ -147,7 +147,7 @@ function About() {
 
                   <li>
                     <Link
-                      to="/blog.html"
+                      to="/blog"
                       className="dropdown-item"
                     >
                       <span>Tin tức và bài viết</span>
@@ -159,7 +159,7 @@ function About() {
               <li className="nav-item">
                 <Link
                   className="nav-link"
-                  to="/contact.html"
+                  to="/contact"
                 >
                   Liên hệ
                 </Link>
@@ -504,7 +504,7 @@ function About() {
                   Đội ngũ của chúng tôi
                 </div>
 
-                <div className="section-title black">
+                <div className="section-title white">
                   Barber chuyên nghiệp
                 </div>
               </div>
@@ -547,7 +547,7 @@ function About() {
                     </div>
 
                     <Link
-                      to="/team-details.html"
+                      to="/team-details"
                       className="button-1 mt-20"
                     >
                       Xem thông tin
@@ -596,7 +596,7 @@ function About() {
                     </div>
 
                     <Link
-                      to="/team-details.html"
+                      to="/team-details"
                       className="button-1 mt-20"
                     >
                       Xem thông tin
@@ -645,7 +645,7 @@ function About() {
                     </div>
 
                     <Link
-                      to="/team-details.html"
+                      to="/team-details"
                       className="button-1 mt-20"
                     >
                       Xem thông tin
@@ -694,7 +694,7 @@ function About() {
                     </div>
 
                     <Link
-                      to="/team-details.html"
+                      to="/team-details"
                       className="button-1 mt-20"
                     >
                       Xem thông tin

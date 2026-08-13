@@ -185,19 +185,19 @@ function Faq() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/about.html">
+                <Link className="nav-link" to="/about">
                   Giới thiệu
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/services.html">
+                <Link className="nav-link" to="/services">
                   Dịch vụ
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/pricing.html">
+                <Link className="nav-link" to="/pricing">
                   Bảng giá
                 </Link>
               </li>
@@ -217,7 +217,7 @@ function Faq() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/portfolio.html"
+                      to="/portfolio"
                     >
                       <span>Thư viện kiểu tóc</span>
                     </Link>
@@ -226,7 +226,7 @@ function Faq() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team.html"
+                      to="/team"
                     >
                       <span>Đội ngũ Barber</span>
                     </Link>
@@ -235,7 +235,7 @@ function Faq() {
                   <li>
                     <Link
                       className="dropdown-item active"
-                      to="/faq.html"
+                      to="/faq"
                     >
                       <span>Câu hỏi thường gặp</span>
                     </Link>
@@ -244,7 +244,7 @@ function Faq() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/services-page.html"
+                      to="/services-page"
                     >
                       <span>Chi tiết dịch vụ</span>
                     </Link>
@@ -253,7 +253,7 @@ function Faq() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team-details.html"
+                      to="/team-details"
                     >
                       <span>Thông tin Barber</span>
                     </Link>
@@ -262,7 +262,7 @@ function Faq() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/blog.html"
+                      to="/blog"
                     >
                       <span>Tin tức và bài viết</span>
                     </Link>
@@ -271,7 +271,7 @@ function Faq() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/contact.html">
+                <Link className="nav-link" to="/contact">
                   Liên hệ
                 </Link>
               </li>

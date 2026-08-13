@@ -1,68 +1,44 @@
 import axios from "axios";
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
-
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
+import {useCallback,useEffect,useMemo,useState,} from "react";
+import {Link,useLocation,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-
-import {
-  cancelAppointment,
-  getMyAppointments,
-} from "../../services/appointment.service";
-
-import type {
-  Appointment,
-  AppointmentStatus,
-  PaymentStatus,
-} from "../../types/Appoinment";
-
+import ReviewModal from "../../components/ReviewModal";
+import {cancelAppointment,getMyAppointments,} from "../../services/appointment.service";
+import { getMyReviews } from "../../services/review.service";
+import { createVnpayPayment, type VnpayPurpose } from "../../services/vnpay.service";
+import type {Appointment,AppointmentStatus,PaymentStatus,} from "../../types/Appointment";
+import ClientHeader from "../../components/ClientHeader";
 import "./css/BookingHistory.css";
 
 interface LocationState {
   message?: string;
 }
 
-const appointmentStatusLabels: Record<
-  AppointmentStatus,
-  string
-> = {
+const appointmentStatusLabels: Record<AppointmentStatus,string> = {
   PENDING: "Đang chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
+  CHECKED_IN: "Đã check-in",
   IN_PROGRESS: "Đang thực hiện",
   COMPLETED: "Đã hoàn thành",
+  NO_SHOW: "Vắng mặt",
   CANCELLED: "Đã hủy",
 };
 
-const paymentStatusLabels: Record<
-  PaymentStatus,
-  string
-> = {
+const paymentStatusLabels: Record<PaymentStatus,string> = {
   UNPAID: "Chưa thanh toán",
   PENDING: "Đang xử lý",
   PAID: "Đã thanh toán",
   REFUNDED: "Đã hoàn tiền",
 };
 
-const formatPrice = (
-  amount: number
-): string =>
-  new Intl.NumberFormat("vi-VN").format(
-    amount
-  );
+const formatPrice = (amount: number): string =>
+  new Intl.NumberFormat("vi-VN").format(amount);
 
-const formatDuration = (
-  minutes: number
-): string => {
+const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
-  const remainingMinutes =
-    minutes % 60;
+  const remainingMinutes = minutes % 60;
 
   if (hours > 0 && remainingMinutes > 0) {
     return `${hours} giờ ${remainingMinutes} phút`;
@@ -75,11 +51,8 @@ const formatDuration = (
   return `${remainingMinutes} phút`;
 };
 
-const formatDate = (
-  dateValue: string
-): string => {
-  const [year, month, day] =
-    dateValue.split("-");
+const formatDate = (dateValue: string): string => {
+  const [year, month, day] = dateValue.split("-");
 
   if (!year || !month || !day) {
     return dateValue;
@@ -88,9 +61,7 @@ const formatDate = (
   return `${day}/${month}/${year}`;
 };
 
-const formatDateTime = (
-  dateValue: string
-): string => {
+const formatDateTime = (dateValue: string): string => {
   const date = new Date(dateValue);
 
   if (Number.isNaN(date.getTime())) {
@@ -100,12 +71,9 @@ const formatDateTime = (
   return date.toLocaleString("vi-VN");
 };
 
-const getBarberName = (
-  appointment: Appointment
-): string => {
+const getBarberName = (appointment: Appointment): string => {
   if (
-    typeof appointment.barber ===
-    "string"
+    typeof appointment.barber ==="string"
   ) {
     return "Barber";
   }
@@ -113,17 +81,9 @@ const getBarberName = (
   return appointment.barber.fullName;
 };
 
-const getErrorMessage = (
-  error: unknown,
-  fallback: string
-): string => {
+const getErrorMessage = (error: unknown,fallback: string): string => {
   if (axios.isAxiosError(error)) {
-    const data =
-      error.response?.data as
-        | {
-            message?: string;
-          }
-        | undefined;
+    const data = error.response?.data as | {message?: string;} | undefined;
 
     return data?.message || fallback;
   }
@@ -159,6 +119,19 @@ function BookingHistory() {
       locationState?.message ?? ""
     );
 
+  const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<Appointment | null>(null);
+  const [reviewedAppointmentIds, setReviewedAppointmentIds] = useState<Set<string>>(new Set());
+  const [cancelReason, setCancelReason] = useState("");
+  const [refundBankName, setRefundBankName] = useState("");
+  const [refundAccountNumber, setRefundAccountNumber] = useState("");
+  const [refundAccountName, setRefundAccountName] = useState("");
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [keyword, setKeyword] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [barberFilter, setBarberFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "ALL">("ALL");
+
   const [
     cancellingId,
     setCancellingId,
@@ -170,11 +143,16 @@ function BookingHistory() {
         setLoading(true);
         setError("");
 
-        const response =
-          await getMyAppointments();
+        const [response, reviewResponse] = await Promise.all([
+          fetchBusinessQuery("my-appointments", () => getMyAppointments()),
+          fetchBusinessQuery("my-reviews", () => getMyReviews()),
+        ]);
 
         setAppointments(
           response.appointments
+        );
+        setReviewedAppointmentIds(
+          new Set(reviewResponse.reviews.map((review) => String(review.appointment)))
         );
       } catch (requestError) {
         setError(
@@ -187,6 +165,10 @@ function BookingHistory() {
         setLoading(false);
       }
     }, []);
+
+  useRealtimeRefresh(() => {
+    void loadAppointments();
+  }, isAuthenticated);
 
   useEffect(() => {
     if (authLoading) {
@@ -215,33 +197,32 @@ function BookingHistory() {
 
   const canCancel = (
     appointment: Appointment
-  ): boolean =>
-    appointment.status === "PENDING" ||
-    appointment.status === "CONFIRMED";
+  ): boolean => {
+    if (!["PENDING", "CONFIRMED"].includes(appointment.status)) return false;
+    const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+    const leadTime = startsAt.getTime() - Date.now();
+    return appointment.status === "PENDING" ? leadTime > 0 : leadTime >= 24 * 60 * 60 * 1000;
+  };
+
+  const filteredAppointments = useMemo(() => {
+    const search = keyword.trim().toLowerCase();
+    return [...appointments]
+      .filter((appointment) => {
+        const barber = getBarberName(appointment).toLowerCase();
+        const code = (appointment.appointmentCode || appointment._id).toLowerCase();
+        const customer = appointment.customer?.fullName?.toLowerCase() || "";
+        return (!search || code.includes(search) || customer.includes(search))
+          && (!dateFilter || appointment.appointmentDate === dateFilter)
+          && (!barberFilter || barber.includes(barberFilter.toLowerCase()))
+          && (statusFilter === "ALL" || appointment.status === statusFilter);
+      })
+      .sort((first, second) => new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime());
+  }, [appointments, keyword, dateFilter, barberFilter, statusFilter]);
 
   const handleCancel = async (
     appointment: Appointment
   ): Promise<void> => {
-    const reason = window.prompt(
-      "Nhập lý do hủy lịch:",
-      "Tôi có việc đột xuất"
-    );
-
-    if (reason === null) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Bạn có chắc muốn hủy lịch ngày ${formatDate(
-        appointment.appointmentDate
-      )}, từ ${appointment.startTime} đến ${
-        appointment.endTime
-      } không?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
+    if (!cancelReason.trim()) { setError("Vui lòng nhập lý do hủy lịch."); return; }
 
     try {
       setCancellingId(appointment._id);
@@ -252,22 +233,19 @@ function BookingHistory() {
         await cancelAppointment(
           appointment._id,
           {
-            reason:
-              reason.trim() ||
-              "Khách hàng hủy lịch",
+              reason: cancelReason.trim(),
+              refundBankName: refundBankName.trim() || undefined,
+              refundAccountNumber: refundAccountNumber.trim() || undefined,
+              refundAccountName: refundAccountName.trim() || undefined,
           }
         );
 
       setMessage(response.message);
+      setCancelTarget(null);
+      setCancelReason("");
 
       setAppointments(
-        (currentAppointments) =>
-          currentAppointments.map(
-            (currentAppointment) =>
-              currentAppointment._id ===
-              response.appointment._id
-                ? response.appointment
-                : currentAppointment
+        (currentAppointments) => currentAppointments.map((currentAppointment) => currentAppointment._id === response.appointment._id ? response.appointment : currentAppointment
           )
       );
     } catch (requestError) {
@@ -279,6 +257,21 @@ function BookingHistory() {
       );
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const startVnpayPayment = async (
+    appointment: Appointment,
+    purpose: VnpayPurpose
+  ): Promise<void> => {
+    try {
+      setPayingId(appointment._id);
+      setError("");
+      const result = await createVnpayPayment(appointment._id, purpose);
+      window.location.assign(result.paymentUrl);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể tạo giao dịch VNPay."));
+      setPayingId(null);
     }
   };
 
@@ -297,7 +290,7 @@ function BookingHistory() {
   }
 
   return (
-    <div className="history-page">
+    <><ClientHeader /><div className="history-page">
       <main className="history-container">
         <header className="history-heading">
           <p className="history-brand">
@@ -327,6 +320,16 @@ function BookingHistory() {
             Quay về trang chủ
           </Link>
         </div>
+
+        <section className="history-filters">
+          <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="Tên khách hoặc mã lịch" />
+          <input value={barberFilter} onChange={(event) => setBarberFilter(event.target.value)} placeholder="Tên Barber" />
+          <input type="date" value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} />
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as AppointmentStatus | "ALL")}>
+            <option value="ALL">Tất cả trạng thái</option>
+            {Object.entries(appointmentStatusLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+          </select>
+        </section>
 
         {message && (
           <p className="history-message history-success">
@@ -367,7 +370,7 @@ function BookingHistory() {
           </section>
         ) : (
           <div className="history-list">
-            {appointments.map(
+            {filteredAppointments.map(
               (appointment) => (
                 <article
                   className="history-card"
@@ -377,9 +380,7 @@ function BookingHistory() {
                     <div>
                       <p className="history-code">
                         Mã lịch:{" "}
-                        {appointment._id.slice(
-                          -8
-                        )}
+                        {appointment.appointmentCode || appointment._id.slice(-8)}
                       </p>
 
                       <h2>
@@ -503,6 +504,11 @@ function BookingHistory() {
 
                   <div className="history-details">
                     <div>
+                      <span>Khách sử dụng</span>
+                      <strong>{appointment.customer?.fullName || "Chưa có"}</strong>
+                      <small>{appointment.customer?.phone}</small>
+                    </div>
+                    <div>
                       <span>Barber</span>
 
                       <strong>
@@ -511,7 +517,6 @@ function BookingHistory() {
                         )}
                       </strong>
                     </div>
-
                     <div>
                       <span>Tổng tiền</span>
 
@@ -522,6 +527,18 @@ function BookingHistory() {
                         đ
                       </strong>
                     </div>
+                    {appointment.voucherCode && (
+                      <div className="history-voucher-card">
+                        <span>Voucher đã chọn</span>
+                        <strong>{appointment.voucherCode}</strong>
+                        <small>
+                          {appointment.voucherAppliedAt
+                            ? `Đã áp dụng khi thanh toán: -${formatPrice(appointment.finalDiscountAmount ?? appointment.discountAmount)}đ`
+                            : "Sẽ được tính trên hóa đơn thực tế khi hoàn thành dịch vụ"}
+                        </small>
+                      </div>
+                    )}
+                    <div><span>Đặt cọc</span><strong>{appointment.depositRequired ? `${formatPrice(appointment.depositAmount)}đ · ${appointment.depositPaid ? "Đã cọc" : "Chưa cọc"}` : "Không yêu cầu"}</strong></div>
 
                     <div>
                       <span>Trạng thái lịch</span>
@@ -605,17 +622,53 @@ function BookingHistory() {
                           cancellingId ===
                           appointment._id
                         }
-                        onClick={() =>
-                          void handleCancel(
-                            appointment
-                          )
-                        }
+                        onClick={() => { setCancelTarget(appointment); setCancelReason(""); }}
                       >
                         {cancellingId ===
                         appointment._id
                           ? "Đang hủy..."
                           : "Hủy lịch"}
                       </button>
+                    )}
+                    {appointment.depositRequired &&
+                      !appointment.depositPaid &&
+                      !["CANCELLED", "COMPLETED", "NO_SHOW"].includes(appointment.status) && (
+                        <button
+                          type="button"
+                          className="history-payment-button"
+                          disabled={payingId === appointment._id}
+                          onClick={() => void startVnpayPayment(appointment, "DEPOSIT")}
+                        >
+                          {payingId === appointment._id
+                            ? "Đang chuyển hướng..."
+                            : `Thanh toán cọc ${formatPrice(appointment.depositAmount)}đ`}
+                        </button>
+                      )}
+                    {appointment.status === "COMPLETED" &&
+                      appointment.paymentStatus !== "PAID" && (
+                        <button
+                          type="button"
+                          className="history-payment-button"
+                          disabled={payingId === appointment._id}
+                          onClick={() => void startVnpayPayment(appointment, "BALANCE")}
+                        >
+                          {payingId === appointment._id
+                            ? "Đang chuyển hướng..."
+                            : "Thanh toán qua VNPay"}
+                        </button>
+                      )}
+                    {appointment.status === "COMPLETED" && (
+                      reviewedAppointmentIds.has(appointment._id) ? (
+                        <span className="history-reviewed-label">✓ Đã gửi đánh giá</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="history-review-button"
+                          onClick={() => setReviewTarget(appointment)}
+                        >
+                          Đánh giá dịch vụ
+                        </button>
+                      )
                     )}
                   </footer>
                 </article>
@@ -624,7 +677,21 @@ function BookingHistory() {
           </div>
         )}
       </main>
-    </div>
+      {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label>{cancelTarget.depositPaid && <fieldset><legend>Tài khoản nhận hoàn cọc</legend><label>Ngân hàng<input value={refundBankName} onChange={(event) => setRefundBankName(event.target.value)} /></label><label>Số tài khoản<input value={refundAccountNumber} onChange={(event) => setRefundAccountNumber(event.target.value)} /></label><label>Chủ tài khoản<input value={refundAccountName} onChange={(event) => setRefundAccountName(event.target.value)} /></label></fieldset>}<small>Lịch chưa xác nhận được hủy trước giờ hẹn. Lịch đã xác nhận phải hủy trước 24 giờ; hoàn cọc nếu hủy trước ít nhất 3 ngày.</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id}>Xác nhận hủy</button></div></form></div>}
+      {reviewTarget && (
+        <ReviewModal
+          appointment={reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          onError={(reviewError) => setError(reviewError)}
+          onSuccess={(appointmentId, successMessage) => {
+            setReviewedAppointmentIds((current) => new Set(current).add(appointmentId));
+            setMessage(successMessage);
+            setError("");
+            setReviewTarget(null);
+          }}
+        />
+      )}
+    </div></>
   );
 }
 

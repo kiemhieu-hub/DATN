@@ -1,7 +1,7 @@
 import type {
   AppointmentStatus,
   PaymentStatus,
-} from "./Appoinment";
+} from "./Appointment";
 
 export interface AdminDashboardStatistics {
   totalUsers: number;

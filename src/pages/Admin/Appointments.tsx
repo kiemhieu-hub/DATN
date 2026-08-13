@@ -1,4 +1,7 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { realtimeSocket } from "../../lib/realtime";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
@@ -15,13 +18,13 @@ import { useAuth } from "../../contexts/AuthContext";
 
 import {
   changeAdminAppointmentBarber,
-  deleteAdminAppointment,
   getAdminAppointment,
   getAdminAppointments,
   reopenAdminNoShowAppointment,
   rescheduleAdminAppointment,
   updateAdminAppointmentServices,
   updateAdminAppointmentStatus,
+  updateAdminAppointmentWorkProgress,
 } from "../../services/adminAppointment.service";
 import { getCatalogBarbers, getCatalogServices } from "../../services/catalog.service";
 import { confirmBankTransfer, confirmCashPayment } from "../../services/payment.service";
@@ -29,7 +32,7 @@ import { confirmBankTransfer, confirmCashPayment } from "../../services/payment.
 import type {
   Appointment,
   AppointmentStatus,
-} from "../../types/Appoinment";
+} from "../../types/Appointment";
 import type { CatalogBarber, CatalogService } from "../../types/Catalog";
 
 import "./css/Appointments.css";
@@ -37,6 +40,11 @@ import "./css/Appointments.css";
 interface StatusAction {
   status: AppointmentStatus;
   label: string;
+}
+
+interface ServiceEditorState {
+  appointment: Appointment;
+  selectedIds: string[];
 }
 
 const statusLabels: Record<AppointmentStatus, string> = {
@@ -101,8 +109,67 @@ const nextActions: Partial<
   ],
 };
 
+const statusActionIcons: Record<AppointmentStatus, string> = {
+  PENDING: "…",
+  CONFIRMED: "✓",
+  CHECKED_IN: "↳",
+  IN_PROGRESS: "▶",
+  COMPLETED: "✓",
+  NO_SHOW: "!",
+  CANCELLED: "×",
+};
+
 const formatMoney = (value: number): string => {
   return new Intl.NumberFormat("vi-VN").format(value);
+};
+
+const getPaidDeposit = (appointment: Appointment): number => {
+  return appointment.depositPaid ? appointment.depositAmount : 0;
+};
+
+const getRemainingPayment = (appointment: Appointment): number => {
+  return Math.max(0, appointment.totalPrice - getPaidDeposit(appointment));
+};
+
+const getTransferQrUrl = (appointment: Appointment): string => {
+  const amount = getRemainingPayment(appointment);
+  const description = appointment.appointmentCode;
+  const bankId = import.meta.env.VITE_BANK_ID?.trim();
+  const accountNumber = import.meta.env.VITE_BANK_ACCOUNT_NO?.trim();
+  const accountName = import.meta.env.VITE_BANK_ACCOUNT_NAME?.trim();
+
+  if (bankId && accountNumber) {
+    const params = new URLSearchParams({
+      amount: String(amount),
+      addInfo: description,
+    });
+
+    if (accountName) params.set("accountName", accountName);
+
+    return `https://img.vietqr.io/image/${encodeURIComponent(
+      bankId
+    )}-${encodeURIComponent(accountNumber)}-compact2.png?${params.toString()}`;
+  }
+
+  const fallbackData = JSON.stringify({
+    merchant: "THADS BARBER",
+    appointmentCode: description,
+    amount,
+  });
+
+  return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
+    fallbackData
+  )}`;
+};
+
+const getPaymentLabel = (appointment: Appointment): string => {
+  if (appointment.paymentStatus === "PAID") return "Đã thanh toán";
+  if (appointment.paymentStatus === "REFUNDED") return "Đã hoàn tiền";
+  if (appointment.depositPaid) {
+    return `Đã cọc: ${formatMoney(appointment.depositAmount)}đ`;
+  }
+
+  return "Chưa thanh toán";
 };
 
 const formatDate = (value: string): string => {
@@ -202,13 +269,28 @@ function Appointments() {
     appointment: Appointment;
     method: "CASH" | "BANK_TRANSFER";
   } | null>(null);
+  const [serviceEditor, setServiceEditor] =
+    useState<ServiceEditorState | null>(null);
+  const [paymentDialog, setPaymentDialog] = useState<{
+    appointment: Appointment;
+    method: "CASH" | "BANK_TRANSFER";
+  } | null>(null);
 
   const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await getAdminAppointments({
+      const response = await fetchBusinessQuery("admin-appointments", () => getAdminAppointments({
+        keyword: submittedKeyword || undefined,
+        status: statusFilter,
+        barberId: barberFilter || undefined,
+        appointmentDate: dateFilter || undefined,
+        appointmentTime: timeFilter || undefined,
+        sortOrder,
+        page,
+        limit: 10,
+      }), {
         keyword: submittedKeyword || undefined,
         status: statusFilter,
         barberId: barberFilter || undefined,
@@ -243,7 +325,7 @@ function Appointments() {
 
   const loadBarbers = useCallback(async () => {
     try {
-      const response = await getCatalogBarbers();
+      const response = await fetchBusinessQuery("catalog-barbers", () => getCatalogBarbers());
       setBarbers(response.barbers);
     } catch (requestError) {
       setError(
@@ -257,7 +339,7 @@ function Appointments() {
 
   const loadServices = useCallback(async () => {
     try {
-      const response = await getCatalogServices();
+      const response = await fetchBusinessQuery("catalog-services", () => getCatalogServices());
       setServices(response.services);
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Không thể tải danh sách dịch vụ"));
@@ -299,12 +381,26 @@ function Appointments() {
   ]);
 
   useEffect(() => {
-    if (!isAuthenticated || !user || user.role !== authRole) return;
-    const refreshTimer = window.setInterval(() => {
+    if (!isAuthenticated || !user || user.role !== authRole) {
+      return;
+    }
+
+    const handleAppointmentsChanged = (): void => {
       void loadAppointments();
-    }, 60_000);
-    return () => window.clearInterval(refreshTimer);
+    };
+
+    realtimeSocket.on("appointments:changed", handleAppointmentsChanged);
+
+    return () => {
+      realtimeSocket.off("appointments:changed", handleAppointmentsChanged);
+    };
   }, [authRole, isAuthenticated, loadAppointments, user]);
+
+  useRealtimeRefresh(() => {
+    void loadAppointments();
+    void loadBarbers();
+    void loadServices();
+  }, Boolean(isAuthenticated && user?.role === authRole));
 
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== authRole) {
@@ -324,7 +420,7 @@ function Appointments() {
         setProcessingId(appointmentId);
         setError("");
 
-        const response = await getAdminAppointment(appointmentId);
+        const response = await fetchBusinessQuery("admin-appointment-detail", () => getAdminAppointment(appointmentId), appointmentId, 0);
         setSelectedAppointment(response.appointment);
 
         const currentBarberId =
@@ -363,7 +459,7 @@ function Appointments() {
     try {
       setProcessingId(appointment._id);
       setError("");
-      const response = await getAdminAppointment(appointment._id);
+      const response = await fetchBusinessQuery("admin-appointment-detail", () => getAdminAppointment(appointment._id), appointment._id, 0);
       setSelectedAppointment(response.appointment);
 
       const currentBarberId =
@@ -493,16 +589,6 @@ function Appointments() {
   const handleCashPayment = async (
     appointment: Appointment
   ): Promise<void> => {
-    const confirmed = window.confirm(
-      `Xác nhận đã nhận ${formatMoney(
-        appointment.totalPrice
-      )}đ tiền mặt từ khách hàng?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     try {
       setProcessingId(appointment._id);
       setError("");
@@ -513,6 +599,7 @@ function Appointments() {
       );
 
       setMessage(response.message);
+      setPaymentDialog(null);
       setReceipt({ appointment: response.appointment, method: "CASH" });
 
       if (selectedAppointment?._id === appointment._id) {
@@ -581,12 +668,12 @@ function Appointments() {
   };
 
   const handleBankTransfer = async (appointment: Appointment): Promise<void> => {
-    if (!window.confirm("Xác nhận khách hàng đã chuyển khoản?")) return;
     try {
       setProcessingId(appointment._id);
       setError("");
       const response = await confirmBankTransfer(appointment._id);
       setMessage(response.message);
+      setPaymentDialog(null);
       setReceipt({ appointment: response.appointment, method: "BANK_TRANSFER" });
       if (selectedAppointment?._id === appointment._id) {
         setSelectedAppointment(response.appointment);
@@ -617,22 +704,61 @@ function Appointments() {
     }
   };
 
-  const handleUpdateServices = async (appointment: Appointment): Promise<void> => {
+  const openServiceEditor = (appointment: Appointment): void => {
     const currentIds = appointment.services.map((item) =>
       typeof item.service === "string" ? item.service : item.service._id
     );
-    const available = services.map((item) => `${item.name}: ${item.id}`).join("\n");
-    const input = window.prompt(
-      `Nhập ID dịch vụ, cách nhau bằng dấu phẩy. Không được nhập trùng.\n\n${available}`,
-      currentIds.join(",")
-    );
-    if (!input) return;
-    const serviceIds = input.split(",").map((id) => id.trim()).filter(Boolean);
+
+    setError("");
+    setServiceEditor({ appointment, selectedIds: currentIds });
+  };
+
+  const addEditorService = (serviceId: string): void => {
+    setServiceEditor((current) => {
+      if (!current || current.selectedIds.includes(serviceId)) return current;
+
+      return {
+        ...current,
+        selectedIds: [...current.selectedIds, serviceId],
+      };
+    });
+  };
+
+  const removeEditorService = (serviceId: string): void => {
+    setServiceEditor((current) => {
+      if (!current) return current;
+
+      return {
+        ...current,
+        selectedIds: current.selectedIds.filter((id) => id !== serviceId),
+      };
+    });
+  };
+
+  const saveEditorServices = async (): Promise<void> => {
+    if (!serviceEditor) return;
+
+    if (serviceEditor.selectedIds.length === 0) {
+      setError("Lịch hẹn phải có ít nhất một dịch vụ");
+      return;
+    }
+
     try {
-      setProcessingId(appointment._id);
-      const response = await updateAdminAppointmentServices(appointment._id, serviceIds);
+      setProcessingId(serviceEditor.appointment._id);
+      setError("");
+
+      const response = await updateAdminAppointmentServices(
+        serviceEditor.appointment._id,
+        serviceEditor.selectedIds
+      );
+
       setMessage(response.message);
-      if (selectedAppointment?._id === appointment._id) setSelectedAppointment(response.appointment);
+      setServiceEditor(null);
+
+      if (selectedAppointment?._id === response.appointment._id) {
+        setSelectedAppointment(response.appointment);
+      }
+
       await loadAppointments();
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Không thể cập nhật dịch vụ"));
@@ -641,25 +767,21 @@ function Appointments() {
     }
   };
 
-  const canCompleteNow = (appointment: Appointment): boolean => {
-    const now = Date.now();
-    const start = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`).getTime();
-    const end = new Date(`${appointment.appointmentDate}T${appointment.endTime}:00`).getTime();
-    return now >= start && now <= end;
-  };
-
-  const handleDeleteAppointment = async (appointment: Appointment): Promise<void> => {
-    if (!window.confirm(`Xóa vĩnh viễn lịch hẹn ${appointment.appointmentCode || appointment._id}? Hóa đơn và review liên quan cũng sẽ bị xóa.`)) return;
+  const changeWorkProgress = async (
+    segment: "HAIR" | "CARE",
+    action: "START" | "COMPLETE"
+  ): Promise<void> => {
+    if (!selectedAppointment) return;
+    const label = `${action === "START" ? "bắt đầu" : "hoàn thành"} phần ${segment === "HAIR" ? "làm tóc" : "chăm sóc"}`;
+    if (!window.confirm(`Xác nhận ${label}?`)) return;
     try {
-      setProcessingId(appointment._id);
-      setError("");
-      setMessage("");
-      const response = await deleteAdminAppointment(appointment._id);
+      setProcessingId(selectedAppointment._id);
+      const response = await updateAdminAppointmentWorkProgress(selectedAppointment._id, segment, action);
+      setSelectedAppointment(response.appointment);
       setMessage(response.message);
-      if (selectedAppointment?._id === appointment._id) setSelectedAppointment(null);
       await loadAppointments();
     } catch (requestError) {
-      setError(getErrorMessage(requestError, "Không thể xóa lịch hẹn."));
+      setError(getErrorMessage(requestError, `Không thể ${label}`));
     } finally {
       setProcessingId(null);
     }
@@ -852,6 +974,7 @@ function Appointments() {
                 <th>Thời gian</th>
                 <th>Tổng tiền</th>
                 <th>Trạng thái</th>
+                <th>Thanh toán</th>
                 <th>Thao tác</th>
               </tr>
             </thead>
@@ -860,7 +983,7 @@ function Appointments() {
               {appointments.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="appointment-empty"
                   >
                     Không có lịch hẹn phù hợp.
@@ -906,52 +1029,39 @@ function Appointments() {
                     </td>
 
                     <td>
-                      <div className="appointment-status-list">
-                        <span
-                          className={`appointment-status appointment-status-${appointment.status.toLowerCase()}`}
-                        >
-                          {statusLabels[appointment.status]}
-                        </span>
+                      <span className={`appointment-status appointment-status-${appointment.status.toLowerCase()}`}>
+                        {statusLabels[appointment.status]}
+                      </span>
+                    </td>
 
-                        <span
-                          className={`appointment-payment-status appointment-payment-${appointment.paymentStatus.toLowerCase()}`}
-                        >
-                          {paymentStatusLabels[appointment.paymentStatus]}
-                        </span>
-                      </div>
+                    <td>
+                      <span className={`appointment-payment-status ${appointment.depositPaid && appointment.paymentStatus !== "PAID" ? "appointment-payment-deposit" : `appointment-payment-${appointment.paymentStatus.toLowerCase()}`}`}>
+                        {getPaymentLabel(appointment)}
+                      </span>
                     </td>
 
                     <td>
                       <div className="appointment-actions">
                         <button
                           type="button"
-                          className="appointment-action-detail"
+                          className="appointment-icon-button appointment-icon-detail"
+                          title="Xem chi tiết"
+                          aria-label="Xem chi tiết"
                           onClick={() => void openDetail(appointment)}
                         >
-                          Chi tiết
+                          ⓘ
                         </button>
-
-                        {!(["COMPLETED", "CANCELLED"] as AppointmentStatus[]).includes(
-                          appointment.status
-                        ) && (
-                          <button
-                            type="button"
-                            className="appointment-action-detail"
-                            disabled={processingId === appointment._id}
-                            onClick={() => void openDetail(appointment)}
-                          >
-                            Đổi Barber
-                          </button>
-                        )}
 
                         {appointment.status === "NO_SHOW" && (
                           <button
                             type="button"
-                            className="appointment-action-primary"
+                            className="appointment-icon-button appointment-icon-reopen"
+                            title="Bật lại lịch vắng mặt"
+                            aria-label="Bật lại lịch vắng mặt"
                             disabled={processingId === appointment._id}
                             onClick={() => openReopenModal(appointment)}
                           >
-                            Bật lại
+                            ↻
                           </button>
                         )}
 
@@ -961,17 +1071,11 @@ function Appointments() {
                               type="button"
                               key={action.status}
                               disabled={
-                                processingId === appointment._id ||
-                                (action.status === "COMPLETED" && !canCompleteNow(appointment))
+                                processingId === appointment._id
                               }
-                              title={action.status === "COMPLETED" && !canCompleteNow(appointment)
-                                ? "Chỉ được hoàn thành trong khung giờ của lịch hẹn"
-                                : undefined}
-                              className={
-                                action.status === "CANCELLED"
-                                  ? "appointment-action-cancel"
-                                  : "appointment-action-primary"
-                              }
+                              title={action.label}
+                              aria-label={action.label}
+                              className={`appointment-icon-button ${action.status === "CANCELLED" ? "appointment-icon-cancel" : `appointment-icon-${action.status.toLowerCase()}`}`}
                               onClick={() =>
                                 void handleChangeStatus(
                                   appointment,
@@ -979,7 +1083,7 @@ function Appointments() {
                                 )
                               }
                             >
-                              {action.label}
+                              {statusActionIcons[action.status]}
                             </button>
                           )
                         )}
@@ -987,61 +1091,46 @@ function Appointments() {
                         {!(["COMPLETED", "CANCELLED"] as AppointmentStatus[]).includes(appointment.status) && (
                           <button
                             type="button"
-                            className="appointment-action-detail"
+                            className="appointment-icon-button appointment-icon-reschedule"
+                            title="Đổi lịch hẹn"
+                            aria-label="Đổi lịch hẹn"
                             disabled={processingId === appointment._id}
                             onClick={() => void handleReschedule(appointment)}
                           >
-                            Đổi lịch
+                            ◷
                           </button>
                         )}
 
                         {(["CHECKED_IN", "IN_PROGRESS"] as AppointmentStatus[]).includes(appointment.status) && (
                           <button
                             type="button"
-                            className="appointment-action-detail"
+                            className="appointment-icon-button appointment-icon-services"
+                            title="Thêm hoặc bớt dịch vụ"
+                            aria-label="Thêm hoặc bớt dịch vụ"
                             disabled={processingId === appointment._id}
-                            onClick={() => void handleUpdateServices(appointment)}
+                            onClick={() => openServiceEditor(appointment)}
                           >
-                            Sửa dịch vụ
+                            ±
                           </button>
                         )}
 
-                        {["IN_PROGRESS", "COMPLETED"].includes(
-                          appointment.status
-                        ) && appointment.paymentStatus !== "PAID" && (
+                        {appointment.status === "COMPLETED" &&
+                          appointment.paymentStatus !== "PAID" && (
                           <button
                             type="button"
-                            className="appointment-action-payment"
+                            className="appointment-icon-button appointment-icon-payment"
+                            title="Thanh toán"
+                            aria-label="Thanh toán"
                             disabled={processingId === appointment._id}
-                            onClick={() =>
-                              void handleCashPayment(appointment)
-                            }
+                            onClick={() => setPaymentDialog({
+                              appointment,
+                              method: "CASH",
+                            })}
                           >
-                            Thu tiền
+                            ₫
                           </button>
                         )}
 
-                        {(["IN_PROGRESS", "COMPLETED"] as AppointmentStatus[]).includes(
-                          appointment.status
-                        ) && appointment.paymentStatus !== "PAID" && (
-                          <button
-                            type="button"
-                            className="appointment-action-payment"
-                            disabled={processingId === appointment._id}
-                            onClick={() => void handleBankTransfer(appointment)}
-                          >
-                            Chuyển khoản
-                          </button>
-                        )}
-
-                        {!isReceptionistPage && <button
-                          type="button"
-                          className="appointment-action-delete"
-                          disabled={processingId === appointment._id}
-                          onClick={() => void handleDeleteAppointment(appointment)}
-                        >
-                          Xóa
-                        </button>}
                       </div>
                     </td>
                   </tr>
@@ -1148,7 +1237,7 @@ function Appointments() {
             </ul>
 
             <div className="appointment-detail-total">
-              <span>Tổng tiền</span>
+              <span>Tổng dịch vụ: {formatMoney(selectedAppointment.subtotal)}đ{selectedAppointment.voucherCode ? ` · Voucher ${selectedAppointment.voucherCode}: -${formatMoney(selectedAppointment.discountAmount)}đ` : ""}<br />Đặt cọc: {selectedAppointment.depositRequired ? `${formatMoney(selectedAppointment.depositAmount)}đ (${selectedAppointment.depositPaid ? "đã cọc" : "chưa cọc"})` : "không yêu cầu"}<br />Còn phải thu</span>
               <strong>
                 {formatMoney(selectedAppointment.totalPrice)}đ
               </strong>
@@ -1159,10 +1248,28 @@ function Appointments() {
               <span>{selectedAppointment.note || "Không có ghi chú"}</span>
             </div>
 
+            {selectedAppointment.workProgress && ["CHECKED_IN", "IN_PROGRESS"].includes(selectedAppointment.status) && (
+              <section className="appointment-work-progress">
+                <h3>Tiến độ thực hiện</h3>
+                {(["HAIR", "CARE"] as const).map((segment) => {
+                  const key = segment === "HAIR" ? "hair" : "care";
+                  const value = selectedAppointment.workProgress?.[key];
+                  if (value === "NOT_REQUIRED") return null;
+                  return <div key={segment}>
+                    <span>{segment === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc"}</span>
+                    <b>{value === "PENDING" ? "Chưa bắt đầu" : value === "IN_PROGRESS" ? "Đang thực hiện" : "Đã hoàn thành"}</b>
+                    {value === "PENDING" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "START")}>Bắt đầu</button>}
+                    {value === "IN_PROGRESS" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "COMPLETE")}>Hoàn thành phần việc</button>}
+                  </div>;
+                })}
+                <small>Lịch chỉ hoàn thành khi tất cả phần việc bắt buộc đều đã hoàn thành.</small>
+              </section>
+            )}
+
             {selectedAppointment.cancellation && (
               <div className="appointment-cancel-reason">
                 <strong>Lý do hủy:</strong>
-                <span>{selectedAppointment.cancellation.reason}</span>
+                <span>{selectedAppointment.cancellation.reason}<br />Hoàn cọc: {selectedAppointment.cancellation.depositRefundStatus === "ELIGIBLE" ? `Đủ điều kiện · ${formatMoney(selectedAppointment.cancellation.depositRefundAmount ?? 0)}đ` : selectedAppointment.cancellation.depositRefundStatus === "REFUNDED" ? "Đã hoàn" : selectedAppointment.cancellation.depositRefundStatus === "NOT_ELIGIBLE" ? "Không đủ điều kiện" : "Không áp dụng"}</span>
               </div>
             )}
 
@@ -1206,22 +1313,22 @@ function Appointments() {
               )}
             </section>
 
-            {["IN_PROGRESS", "COMPLETED"].includes(
-              selectedAppointment.status
-            ) && selectedAppointment.paymentStatus !== "PAID" && (
+            {selectedAppointment.status === "COMPLETED" &&
+              selectedAppointment.paymentStatus !== "PAID" && (
               <button
                 type="button"
                 className="appointment-modal-payment-button"
                 disabled={processingId === selectedAppointment._id}
-                onClick={() =>
-                  void handleCashPayment(selectedAppointment)
-                }
+                onClick={() => setPaymentDialog({
+                  appointment: selectedAppointment,
+                  method: "CASH",
+                })}
               >
                 {processingId === selectedAppointment._id
                   ? "Đang xác nhận..."
-                  : `Xác nhận thu ${formatMoney(
-                      selectedAppointment.totalPrice
-                    )}đ tiền mặt`}
+                  : `Thanh toán ${formatMoney(
+                      getRemainingPayment(selectedAppointment)
+                    )}đ`}
               </button>
             )}
 
@@ -1260,6 +1367,255 @@ function Appointments() {
                 </button>
               </div>
             )}
+          </section>
+        </div>
+      )}
+      {paymentDialog && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setPaymentDialog(null)}
+        >
+          <section
+            className="appointment-modal appointment-payment-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              aria-label="Đóng"
+              disabled={Boolean(processingId)}
+              onClick={() => setPaymentDialog(null)}
+            >
+              ×
+            </button>
+
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2>Xác nhận thanh toán</h2>
+            <p className="appointment-payment-description">
+              {paymentDialog.appointment.appointmentCode} · {getUserName(paymentDialog.appointment.client)}
+            </p>
+
+            <div className="appointment-payment-summary">
+              <div>
+                <span>Tổng hóa đơn</span>
+                <strong>{formatMoney(paymentDialog.appointment.totalPrice)}đ</strong>
+              </div>
+              <div>
+                <span>Đã đặt cọc</span>
+                <strong>-{formatMoney(getPaidDeposit(paymentDialog.appointment))}đ</strong>
+              </div>
+              <div className="appointment-payment-remaining">
+                <span>Số tiền còn phải thu</span>
+                <strong>{formatMoney(getRemainingPayment(paymentDialog.appointment))}đ</strong>
+              </div>
+            </div>
+
+            <h3>Chọn phương thức thanh toán</h3>
+            <div className="appointment-payment-methods">
+              <button
+                type="button"
+                className={paymentDialog.method === "CASH" ? "active" : ""}
+                onClick={() => setPaymentDialog({
+                  ...paymentDialog,
+                  method: "CASH",
+                })}
+              >
+                <span>₫</span>
+                <div>
+                  <strong>Tiền mặt</strong>
+                  <small>Thu tiền trực tiếp tại quầy</small>
+                </div>
+                <b>{paymentDialog.method === "CASH" ? "✓" : ""}</b>
+              </button>
+
+              <button
+                type="button"
+                className={paymentDialog.method === "BANK_TRANSFER" ? "active" : ""}
+                onClick={() => setPaymentDialog({
+                  ...paymentDialog,
+                  method: "BANK_TRANSFER",
+                })}
+              >
+                <span>⇄</span>
+                <div>
+                  <strong>Chuyển khoản</strong>
+                  <small>Xác nhận giao dịch ngân hàng</small>
+                </div>
+                <b>{paymentDialog.method === "BANK_TRANSFER" ? "✓" : ""}</b>
+              </button>
+            </div>
+
+            {paymentDialog.method === "BANK_TRANSFER" && (
+              <div className="appointment-transfer-qr">
+                <div>
+                  <span>Quét mã để chuyển khoản</span>
+                  <strong>
+                    {formatMoney(getRemainingPayment(paymentDialog.appointment))}đ
+                  </strong>
+                  <small>
+                    Nội dung: {paymentDialog.appointment.appointmentCode}
+                  </small>
+                </div>
+
+                <img
+                  src={getTransferQrUrl(paymentDialog.appointment)}
+                  alt={`QR thanh toán lịch ${paymentDialog.appointment.appointmentCode}`}
+                />
+              </div>
+            )}
+
+            <div className="appointment-payment-actions">
+              <button
+                type="button"
+                className="appointment-payment-cancel"
+                disabled={Boolean(processingId)}
+                onClick={() => setPaymentDialog(null)}
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                className="appointment-payment-confirm"
+                disabled={Boolean(processingId)}
+                onClick={() => paymentDialog.method === "CASH"
+                  ? void handleCashPayment(paymentDialog.appointment)
+                  : void handleBankTransfer(paymentDialog.appointment)}
+              >
+                {processingId
+                  ? "Đang xác nhận..."
+                  : `Xác nhận đã thu ${formatMoney(
+                      getRemainingPayment(paymentDialog.appointment)
+                    )}đ`}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {serviceEditor && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setServiceEditor(null)}
+        >
+          <section
+            className="appointment-modal appointment-services-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              aria-label="Đóng"
+              disabled={Boolean(processingId)}
+              onClick={() => setServiceEditor(null)}
+            >
+              ×
+            </button>
+
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2>Thêm hoặc bớt dịch vụ</h2>
+            <p className="appointment-service-editor-description">
+              {serviceEditor.appointment.appointmentCode} · {getUserName(serviceEditor.appointment.client)}
+            </p>
+
+            <div className="appointment-service-editor-heading">
+              <div>
+                <strong>Dịch vụ đang sử dụng</strong>
+                <span>Thứ tự bên dưới cũng là thứ tự thực hiện dịch vụ.</span>
+              </div>
+              <b>{serviceEditor.selectedIds.length} dịch vụ</b>
+            </div>
+
+            <div className="appointment-selected-services">
+              {serviceEditor.selectedIds.map((serviceId, index) => {
+                const service = services.find((item) => item.id === serviceId);
+
+                if (!service) return null;
+
+                return (
+                  <article className="appointment-selected-service" key={service.id}>
+                    <span className="appointment-service-order">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="appointment-service-editor-info">
+                      <strong>{service.name}</strong>
+                      <small>
+                        {service.durationMinutes} phút · {formatMoney(service.price)}đ
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      title={`Bỏ ${service.name}`}
+                      aria-label={`Bỏ ${service.name}`}
+                      onClick={() => removeEditorService(service.id)}
+                    >
+                      ×
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="appointment-service-editor-heading appointment-available-heading">
+              <div>
+                <strong>Thêm dịch vụ</strong>
+                <span>Chọn theo tên dịch vụ, không cần nhập mã ID.</span>
+              </div>
+            </div>
+
+            <div className="appointment-available-services">
+              {services
+                .filter(
+                  (service) =>
+                    service.isActive &&
+                    !serviceEditor.selectedIds.includes(service.id)
+                )
+                .map((service) => (
+                  <button
+                    type="button"
+                    className="appointment-available-service"
+                    key={service.id}
+                    onClick={() => addEditorService(service.id)}
+                  >
+                    <span className="appointment-service-add-icon">+</span>
+                    <span className="appointment-service-editor-info">
+                      <strong>{service.name}</strong>
+                      <small>
+                        {service.durationMinutes} phút · {formatMoney(service.price)}đ
+                      </small>
+                    </span>
+                  </button>
+                ))}
+            </div>
+
+            <div className="appointment-service-editor-total">
+              <span>Tạm tính dịch vụ đã chọn</span>
+              <strong>
+                {formatMoney(
+                  serviceEditor.selectedIds.reduce((total, serviceId) => {
+                    const service = services.find((item) => item.id === serviceId);
+                    return total + (service?.price ?? 0);
+                  }, 0)
+                )}đ
+              </strong>
+            </div>
+
+            <div className="appointment-service-editor-actions">
+              <button
+                type="button"
+                className="appointment-service-editor-cancel"
+                disabled={Boolean(processingId)}
+                onClick={() => setServiceEditor(null)}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="appointment-service-editor-save"
+                disabled={Boolean(processingId) || serviceEditor.selectedIds.length === 0}
+                onClick={() => void saveEditorServices()}
+              >
+                {processingId ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            </div>
           </section>
         </div>
       )}

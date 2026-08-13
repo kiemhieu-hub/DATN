@@ -1,11 +1,11 @@
 import bcrypt from "bcrypt";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 
-import User from "../models/User";
-import Service from "../models/Service";
 import BarberProfile from "../models/BarberProfile";
 import BarberSchedule from "../models/BarberSchedule";
+import Service from "../models/Service";
+import User from "../models/User";
 
 dotenv.config();
 
@@ -22,8 +22,16 @@ interface SeedService {
     | "CARE"
     | "OTHER";
   isExclusiveInGroup: boolean;
+  staffType: "HAIR" | "CARE";
   image: string;
   isActive: boolean;
+}
+
+interface SeedAdmin {
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
 }
 
 interface SeedBarber {
@@ -33,6 +41,7 @@ interface SeedBarber {
   password: string;
   bio: string;
   experienceYears: number;
+  staffType: "HAIR" | "CARE";
 }
 
 const services: SeedService[] = [
@@ -45,7 +54,8 @@ const services: SeedService[] = [
     durationMinutes: 45,
     group: "HAIRCUT",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/1.jpg",
     isActive: true,
   },
   {
@@ -57,7 +67,8 @@ const services: SeedService[] = [
     durationMinutes: 60,
     group: "HAIRCUT",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/2.jpg",
     isActive: true,
   },
   {
@@ -69,7 +80,8 @@ const services: SeedService[] = [
     durationMinutes: 90,
     group: "HAIRCUT",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/3.jpg",
     isActive: true,
   },
   {
@@ -81,7 +93,8 @@ const services: SeedService[] = [
     durationMinutes: 30,
     group: "BEARD",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/1.jpg",
     isActive: true,
   },
   {
@@ -93,7 +106,8 @@ const services: SeedService[] = [
     durationMinutes: 45,
     group: "BEARD",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/2.jpg",
     isActive: true,
   },
   {
@@ -105,7 +119,8 @@ const services: SeedService[] = [
     durationMinutes: 60,
     group: "BEARD",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/3.jpg",
     isActive: true,
   },
   {
@@ -117,7 +132,8 @@ const services: SeedService[] = [
     durationMinutes: 30,
     group: "CARE",
     isExclusiveInGroup: false,
-    image: "",
+    staffType: "CARE",
+    image: "/img/services/1.jpg",
     isActive: true,
   },
   {
@@ -129,7 +145,8 @@ const services: SeedService[] = [
     durationMinutes: 30,
     group: "CARE",
     isExclusiveInGroup: false,
-    image: "",
+    staffType: "CARE",
+    image: "/img/services/2.jpg",
     isActive: true,
   },
   {
@@ -141,7 +158,8 @@ const services: SeedService[] = [
     durationMinutes: 60,
     group: "CARE",
     isExclusiveInGroup: false,
-    image: "",
+    staffType: "CARE",
+    image: "/img/services/3.jpg",
     isActive: true,
   },
   {
@@ -153,7 +171,8 @@ const services: SeedService[] = [
     durationMinutes: 120,
     group: "OTHER",
     isExclusiveInGroup: false,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/1.jpg",
     isActive: true,
   },
   {
@@ -165,7 +184,8 @@ const services: SeedService[] = [
     durationMinutes: 90,
     group: "COLOR",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/2.jpg",
     isActive: true,
   },
   {
@@ -177,10 +197,27 @@ const services: SeedService[] = [
     durationMinutes: 180,
     group: "COLOR",
     isExclusiveInGroup: true,
-    image: "",
+    staffType: "HAIR",
+    image: "/img/services/3.jpg",
     isActive: true,
   },
 ];
+
+const admins: SeedAdmin[] = [
+  {
+    fullName: "Administrator",
+    email: "admin@thads.com",
+    phone: "0900000000",
+    password: "123456",
+  },
+];
+
+const receptionists: SeedAdmin[] = [{
+  fullName: "Lễ tân THADS",
+  email: "letan@thads.com",
+  phone: "0900000099",
+  password: "123456",
+}];
 
 const barbers: SeedBarber[] = [
   {
@@ -190,6 +227,7 @@ const barbers: SeedBarber[] = [
     password: "123456",
     bio: "Chuyên Fade, cắt tóc nam hiện đại và tạo kiểu.",
     experienceYears: 5,
+    staffType: "HAIR",
   },
   {
     fullName: "Đức Anh",
@@ -198,6 +236,7 @@ const barbers: SeedBarber[] = [
     password: "123456",
     bio: "Chuyên tóc cổ điển, chăm sóc râu và cạo mặt.",
     experienceYears: 4,
+    staffType: "HAIR",
   },
   {
     fullName: "Thành Nam",
@@ -206,6 +245,7 @@ const barbers: SeedBarber[] = [
     password: "123456",
     bio: "Chuyên uốn, nhuộm và tư vấn kiểu tóc.",
     experienceYears: 6,
+    staffType: "HAIR",
   },
   {
     fullName: "Hoàng Sơn",
@@ -214,14 +254,26 @@ const barbers: SeedBarber[] = [
     password: "123456",
     bio: "Chuyên combo cắt tóc cao cấp và chăm sóc tóc.",
     experienceYears: 3,
+    staffType: "CARE",
   },
 ];
+
+const hashPassword = async (
+  password: string
+): Promise<string> => {
+  return bcrypt.hash(password, 10);
+};
 
 const createDefaultSchedules = async (
   barberId: mongoose.Types.ObjectId
 ): Promise<void> => {
-  for (let dayOfWeek = 0; dayOfWeek <= 6; dayOfWeek += 1) {
-    const isSunday = dayOfWeek === 0;
+  for (
+    let dayOfWeek = 0;
+    dayOfWeek <= 6;
+    dayOfWeek += 1
+  ) {
+    const isSunday =
+      dayOfWeek === 0;
 
     await BarberSchedule.findOneAndUpdate(
       {
@@ -229,23 +281,18 @@ const createDefaultSchedules = async (
         dayOfWeek,
       },
       {
-        barber: barberId,
-        dayOfWeek,
-        startTime: "09:00",
-        endTime: "21:00",
-        breaks: isSunday
-          ? []
-          : [
-              {
-                startTime: "12:00",
-                endTime: "13:00",
-              },
-            ],
-        isWorking: !isSunday,
+        $set: {
+          barber: barberId,
+          dayOfWeek,
+          startTime: "09:00",
+          endTime: "21:00",
+          breaks: [],
+          isWorking: !isSunday,
+        },
       },
       {
         upsert: true,
-        new: true,
+        returnDocument: "after",
         setDefaultsOnInsert: true,
       }
     );
@@ -256,19 +303,24 @@ const seedServices = async () => {
   const serviceDocuments = [];
 
   for (const serviceData of services) {
-    const service = await Service.findOneAndUpdate(
-      {
-        name: serviceData.name,
-      },
-      serviceData,
-      {
-        upsert: true,
-        new: true,
-        setDefaultsOnInsert: true,
-      }
-    );
+    const service =
+      await Service.findOneAndUpdate(
+        {
+          name: serviceData.name,
+        },
+        {
+          $set: serviceData,
+        },
+        {
+          upsert: true,
+          returnDocument: "after",
+          setDefaultsOnInsert: true,
+        }
+      );
 
-    serviceDocuments.push(service);
+    if (service) {
+      serviceDocuments.push(service);
+    }
   }
 
   console.log(
@@ -278,42 +330,125 @@ const seedServices = async () => {
   return serviceDocuments;
 };
 
+const seedAdmins =
+  async (): Promise<void> => {
+    for (const adminData of admins) {
+      const normalizedEmail =
+        adminData.email
+          .toLowerCase()
+          .trim();
+
+      let admin =
+        await User.findOne({
+          email: normalizedEmail,
+        }).select("+password");
+
+      if (!admin) {
+        const hashedPassword =
+          await hashPassword(
+            adminData.password
+          );
+
+        admin = await User.create({
+          fullName:
+            adminData.fullName,
+          email:
+            normalizedEmail,
+          phone:
+            adminData.phone,
+          password:
+            hashedPassword,
+          avatar: "",
+          role: "ADMIN",
+          status: "ACTIVE",
+        });
+      } else {
+        admin.fullName =
+          adminData.fullName;
+
+        admin.phone =
+          adminData.phone;
+
+        admin.avatar =
+          admin.avatar ?? "";
+
+        admin.role =
+          "ADMIN";
+
+        admin.status =
+          "ACTIVE";
+
+        await admin.save();
+      }
+
+      console.log(
+        `Đã tạo hoặc cập nhật Admin: ${admin.fullName}`
+      );
+    }
+  };
+
+const seedReceptionists = async (): Promise<void> => {
+  for (const data of receptionists) {
+    const email = data.email.toLowerCase().trim();
+    const existing = await User.findOne({ email }).select("+password");
+    if (existing) {
+      existing.fullName = data.fullName; existing.phone = data.phone; existing.role = "RECEPTIONIST"; existing.status = "ACTIVE"; await existing.save();
+    } else {
+      await User.create({ ...data, email, password: await hashPassword(data.password), avatar: "", role: "RECEPTIONIST", status: "ACTIVE" });
+    }
+  }
+};
+
 const seedBarbers = async (
   serviceDocuments: Awaited<
     ReturnType<typeof seedServices>
   >
 ): Promise<void> => {
-  const allServiceIds = serviceDocuments.map(
-    (service) => service._id
-  );
-
   for (const barberData of barbers) {
     const normalizedEmail =
-      barberData.email.toLowerCase().trim();
+      barberData.email
+        .toLowerCase()
+        .trim();
 
-    let barber = await User.findOne({
-      email: normalizedEmail,
-    }).select("+password");
+    let barber =
+      await User.findOne({
+        email: normalizedEmail,
+      }).select("+password");
 
     if (!barber) {
-      const hashedPassword = await bcrypt.hash(
-        barberData.password,
-        10
-      );
+      const hashedPassword =
+        await hashPassword(
+          barberData.password
+        );
 
       barber = await User.create({
-        fullName: barberData.fullName,
-        email: normalizedEmail,
-        phone: barberData.phone,
-        password: hashedPassword,
+        fullName:
+          barberData.fullName,
+        email:
+          normalizedEmail,
+        phone:
+          barberData.phone,
+        password:
+          hashedPassword,
+        avatar: "",
         role: "BARBER",
         status: "ACTIVE",
       });
     } else {
-      barber.fullName = barberData.fullName;
-      barber.phone = barberData.phone;
-      barber.role = "BARBER";
-      barber.status = "ACTIVE";
+      barber.fullName =
+        barberData.fullName;
+
+      barber.phone =
+        barberData.phone;
+
+      barber.avatar =
+        barber.avatar ?? "";
+
+      barber.role =
+        "BARBER";
+
+      barber.status =
+        "ACTIVE";
 
       await barber.save();
     }
@@ -323,19 +458,24 @@ const seedBarbers = async (
         user: barber._id,
       },
       {
-        user: barber._id,
-        bio: barberData.bio,
-        avatar: "",
-        experienceYears:
-          barberData.experienceYears,
-        specialties: allServiceIds,
-        averageRating: 0,
-        reviewCount: 0,
-        isActive: true,
+        $set: {
+          user: barber._id,
+          bio: barberData.bio,
+          avatar:
+            barber.avatar ?? "",
+          experienceYears:
+            barberData.experienceYears,
+          specialties:
+            serviceDocuments.filter((service) => (service.staffType ?? (service.group === "CARE" ? "CARE" : "HAIR")) === barberData.staffType).map((service) => service._id),
+          staffType: barberData.staffType,
+          averageRating: 0,
+          reviewCount: 0,
+          isActive: true,
+        },
       },
       {
         upsert: true,
-        new: true,
+        returnDocument: "after",
         setDefaultsOnInsert: true,
       }
     );
@@ -350,34 +490,59 @@ const seedBarbers = async (
   }
 };
 
-const runSeed = async (): Promise<void> => {
-  const mongodbUri = process.env.MONGO_URI;
+const runSeed =
+  async (): Promise<void> => {
+    const mongodbUri =
+      process.env.MONGO_URI;
 
     if (!mongodbUri) {
-    throw new Error(
-    "Thiếu MONGO_URI trong file .env"
-  );
-}
+      throw new Error(
+        "Thiếu MONGO_URI trong file .env"
+      );
+    }
 
-  try {
-    await mongoose.connect(mongodbUri);
+    try {
+      await mongoose.connect(
+        mongodbUri
+      );
 
-    console.log(
-      "MongoDB Atlas connected successfully"
-    );
+      console.log(
+        "MongoDB Atlas connected successfully"
+      );
 
-    const serviceDocuments =
-      await seedServices();
+      const serviceDocuments =
+        await seedServices();
 
-    await seedBarbers(serviceDocuments);
+      await seedAdmins();
 
-    console.log("Seed dữ liệu thành công");
-  } catch (error) {
-    console.error("Seed dữ liệu thất bại:", error);
-    process.exitCode = 1;
-  } finally {
-    await mongoose.disconnect();
-  }
-};
+      await seedReceptionists();
+
+      await seedBarbers(
+        serviceDocuments
+      );
+
+      console.log(
+        "Seed dữ liệu thành công"
+      );
+
+      console.log(
+        "Tài khoản Admin: admin@thads.com / 123456"
+      );
+
+      console.log(
+        "Mật khẩu Barber mặc định: 123456"
+      );
+      console.log("Tài khoản Lễ tân: letan@thads.com / 123456");
+    } catch (error) {
+      console.error(
+        "Seed dữ liệu thất bại:",
+        error
+      );
+
+      process.exitCode = 1;
+    } finally {
+      await mongoose.disconnect();
+    }
+  };
 
 void runSeed();

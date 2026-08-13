@@ -1,10 +1,11 @@
-/* Import font Montserrat hỗ trợ tiếng Việt chuẩn */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
-/* Ghi đè font chữ toàn bộ giao diện */
-body, 
-h1, h2, h3, h4, h5, h6, 
-p, span, a, input, textarea, button, 
-.section-title, .section-subtitle, .footer-title, .caption {
-    font-family: 'Montserrat', sans-serif !important;
+:root,
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif !important;
 }

@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
@@ -161,8 +163,8 @@ function Profile() {
           profileResponse,
           servicesResponse,
         ] = await Promise.all([
-          getMyBarberProfile(),
-          getCatalogServices(),
+          fetchBusinessQuery("barber-profile", () => getMyBarberProfile()),
+          fetchBusinessQuery("catalog-services", () => getCatalogServices()),
         ]);
 
         setProfileData(
@@ -189,6 +191,10 @@ function Profile() {
         setLoading(false);
       }
     }, []);
+
+  useRealtimeRefresh(() => {
+    void loadData();
+  }, isAuthenticated);
 
   useEffect(() => {
     if (authLoading) {

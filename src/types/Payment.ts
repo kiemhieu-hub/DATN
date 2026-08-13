@@ -1,4 +1,4 @@
-import type { Appointment } from "./Appoinment";
+import type { Appointment } from "./Appointment";
 
 export type PaymentMethod =| "CASH"| "VNPAY"| "MOMO"| "BANK_TRANSFER";
 

@@ -2,38 +2,45 @@ import api from "./api";
 
 export interface FavoriteHairstyle {
   _id: string;
-  imageUrl: string;
-  title: string;
-  category: string;
-  createdAt: string;
-}
-
-export interface AddFavoritePayload {
+  userId: string;
   imageUrl: string;
   title: string;
   category?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+interface FavoriteListResponse {
+  success: boolean;
+  items: FavoriteHairstyle[];
+}
+
+interface FavoriteMutationResponse {
+  success: boolean;
+  message: string;
+  favorite: FavoriteHairstyle;
 }
 
 export const getMyFavorites = async (): Promise<FavoriteHairstyle[]> => {
-  const response = await api.get<{
-    success: boolean;
-    items: FavoriteHairstyle[];
-  }>("/favorites");
+  const response = await api.get<FavoriteListResponse>("/favorites");
   return response.data.items;
 };
 
-export const addFavorite = async (payload: AddFavoritePayload) => {
-  const response = await api.post<{
-    success: boolean;
-    message: string;
-    item: FavoriteHairstyle;
-  }>("/favorites", payload);
-  return response.data;
+export const addFavorite = async (payload: {
+  imageUrl: string;
+  title: string;
+  category?: string;
+}): Promise<FavoriteHairstyle> => {
+  const response = await api.post<FavoriteMutationResponse>(
+    "/favorites",
+    payload
+  );
+
+  return response.data.favorite;
 };
 
-export const removeFavorite = async (id: string) => {
-  const response = await api.delete<{ success: boolean; message: string }>(
-    `/favorites/${id}`
-  );
-  return response.data;
+export const removeFavorite = async (
+  favoriteId: string
+): Promise<void> => {
+  await api.delete(`/favorites/${favoriteId}`);
 };

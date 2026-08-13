@@ -130,7 +130,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/team.html"
+                      to="/team"
                       className="dropdown-item"
                     >
                       <span>Đội ngũ Barber</span>
@@ -166,7 +166,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/blog.html"
+                      to="/blog"
                       className="dropdown-item"
                     >
                       <span>Tin tức & bài viết</span>

@@ -1,5 +1,5 @@
 import api from "./api";
-import type { AppointmentStatus } from "../types/Appoinment";
+import type { AppointmentStatus } from "../types/Appointment";
 import type { AdminAppointmentMutationResponse, AdminAppointmentParams, GetAdminAppointmentResponse, GetAdminAppointmentsResponse } from "../types/AdminAppointment";
 
 export const getAdminAppointments = async (params: AdminAppointmentParams = {}) =>
@@ -23,5 +23,13 @@ export const rescheduleAdminAppointment = async (id: string, appointmentDate: st
   (await api.patch<AdminAppointmentMutationResponse>(`/admin/appointments/${id}/reschedule`, { appointmentDate, startTime, customerConsent })).data;
 export const updateAdminAppointmentServices = async (id: string, serviceIds: string[]) =>
   (await api.patch<AdminAppointmentMutationResponse>(`/admin/appointments/${id}/services`, { serviceIds })).data;
+export const updateAdminAppointmentWorkProgress = async (
+  id: string,
+  segment: "HAIR" | "CARE",
+  action: "START" | "COMPLETE"
+) => (await api.patch<AdminAppointmentMutationResponse>(`/admin/appointments/${id}/work-progress`, {
+  segment,
+  progress: action === "START" ? "IN_PROGRESS" : "COMPLETED",
+})).data;
 export const deleteAdminAppointment = async (id: string) =>
   (await api.delete<{ success: boolean; message: string }>(`/admin/appointments/${id}`)).data;

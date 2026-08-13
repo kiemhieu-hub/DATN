@@ -1,6 +1,6 @@
 import api from "./api";
 
-import type { Appointment } from "../types/Appoinment";
+import type { Appointment } from "../types/Appointment";
 
 export interface CreateAppointmentPayload {
   barberId: string;

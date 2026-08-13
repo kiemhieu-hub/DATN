@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../contexts/AuthContext";
 import { getStaffNotifications } from "../services/staffNotification.service";
+import { realtimeSocket } from "../lib/realtime";
 import "./AdminLayout.css";
 
 function ReceptionistLayout() {
@@ -32,11 +33,11 @@ function ReceptionistLayout() {
     };
 
     void loadCount();
-    const timer = window.setInterval(() => {
-      void loadCount();
-    }, 30_000);
+    realtimeSocket.on("notifications:changed", loadCount);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      realtimeSocket.off("notifications:changed", loadCount);
+    };
   }, [isAuthenticated, user?.role]);
 
   if (isLoading) return <div className="admin-shell-loading">Đang kiểm tra phiên đăng nhập...</div>;
@@ -60,20 +61,17 @@ function ReceptionistLayout() {
           {collapsed ? "›" : "‹"}
         </button>
         <nav className="admin-shell-navigation">
-          <NavLink to="/receptionist/notifications" className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
-            <span className="admin-nav-icon">TB</span>
-            <span className="admin-nav-label">Thông báo</span>
-            {notificationCount > 0 && (
-              <span className="admin-nav-badge">
-                {notificationCount > 99 ? "99+" : notificationCount}
-              </span>
-            )}
-          </NavLink>
           <NavLink to="/receptionist/dashboard" className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
             <span className="admin-nav-icon">LH</span><span className="admin-nav-label">Quản lý lịch hẹn</span>
           </NavLink>
           <NavLink to="/receptionist/barbers" className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
             <span className="admin-nav-icon">BB</span><span className="admin-nav-label">Lịch làm việc Barber</span>
+          </NavLink>
+          <NavLink to="/receptionist/barber-day-schedule" className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
+            <span className="admin-nav-icon">CT</span><span className="admin-nav-label">Lịch chi tiết Barber</span>
+          </NavLink>
+          <NavLink to="/receptionist/refunds" className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
+            <span className="admin-nav-icon">HT</span><span className="admin-nav-label">Yêu cầu hoàn tiền</span>
           </NavLink>
         </nav>
         <div className="admin-shell-user">
@@ -85,6 +83,10 @@ function ReceptionistLayout() {
           </button>
         </div>
       </aside>
+      <NavLink className="reception-floating-bell" to="/receptionist/notifications" title="Thông báo">
+        <span aria-hidden="true">🔔</span>
+        {notificationCount > 0 && <b>{notificationCount > 99 ? "99+" : notificationCount}</b>}
+      </NavLink>
       <main className="admin-shell-content"><Outlet /></main>
     </div>
   );

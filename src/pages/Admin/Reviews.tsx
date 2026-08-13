@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
   deleteAdminReview,
@@ -59,7 +61,13 @@ function Reviews() {
     try {
       setLoading(true);
       setError("");
-      const response = await getAdminReviews({
+      const response = await fetchBusinessQuery("admin-reviews", () => getAdminReviews({
+        keyword: search || undefined,
+        status,
+        rating,
+        page,
+        limit: 10,
+      }), {
         keyword: search || undefined,
         status,
         rating,
@@ -75,6 +83,10 @@ function Reviews() {
       setLoading(false);
     }
   }, [page, rating, search, status]);
+
+  useRealtimeRefresh(() => {
+    void loadReviews();
+  });
 
   useEffect(() => {
     void loadReviews();

@@ -1,9 +1,19 @@
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { getMyAppointments } from "../services/appointment.service";
 import "./ClientHeader.css";
 
 export default function ClientHeader() {
   const { user, logout } = useAuth("CLIENT");
+  const notifications = useQuery({
+    queryKey: ["client-appointment-notifications", user?.id],
+    queryFn: getMyAppointments,
+    enabled: Boolean(user),
+  });
+  const notificationCount = notifications.data?.appointments.filter((item) =>
+    ["PENDING", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"].includes(item.status)
+  ).length ?? 0;
   return (
     <header className="client-site-header">
       <Link className="client-site-brand" to="/"><span>THADS</span><small>BARBER SHOP</small></Link>
@@ -14,6 +24,8 @@ export default function ClientHeader() {
       </nav>
       <div className="client-site-account">
         {user ? (
+          <>
+          <Link className="client-notification-bell" to="/booking-history" title="Thông báo lịch hẹn">♢{notificationCount > 0 && <b>{notificationCount}</b>}</Link>
           <div className="client-account-menu">
             <button className="client-account-trigger" type="button">
               {user.avatar ? <img src={user.avatar} alt="" /> : <i className="ti-user" />}
@@ -26,6 +38,7 @@ export default function ClientHeader() {
               <button type="button" onClick={logout}>Đăng xuất</button>
             </div>
           </div>
+          </>
         ) : <Link to="/login">Đăng nhập</Link>}
       </div>
     </header>

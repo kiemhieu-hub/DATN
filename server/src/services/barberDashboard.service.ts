@@ -1,333 +1,115 @@
 import mongoose from "mongoose";
 
-import Appointment, {
-  type AppointmentStatus,
-} from "../models/Appointment";
-
+import Appointment, { type AppointmentStatus } from "../models/Appointment";
 import User from "../models/User";
 import AppError from "../utils/AppError";
 
-interface DashboardStatistics {
-  total: number;
-  pending: number;
-  confirmed: number;
-  inProgress: number;
-  completed: number;
-  cancelled: number;
-  todayRevenue: number;
-}
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-interface DashboardAppointmentService {
-  name: string;
-  price: number;
-  durationMinutes: number;
-}
+const localDate = (date = new Date()) => [
+  date.getFullYear(),
+  String(date.getMonth() + 1).padStart(2, "0"),
+  String(date.getDate()).padStart(2, "0"),
+].join("-");
 
-interface DashboardAppointment {
-  _id: string;
-
-  client: {
-    _id: string;
-    fullName: string;
-    email: string;
-    phone: string;
-  } | null;
-
-  services: DashboardAppointmentService[];
-
-  appointmentDate: string;
-  startTime: string;
-  endTime: string;
-
-  durationMinutes: number;
-  totalPrice: number;
-
-  status: AppointmentStatus;
-}
-
-interface BarberDashboardResult {
-  date: string;
-  statistics: DashboardStatistics;
-  nextAppointment: DashboardAppointment | null;
-  todayAppointments: DashboardAppointment[];
-}
-
-const ACTIVE_NEXT_APPOINTMENT_STATUSES: AppointmentStatus[] = [
-  "PENDING",
-  "CONFIRMED",
-  "CHECKED_IN",
-  "IN_PROGRESS",
-];
-
-const assertObjectId = (
-  value: string,
-  message: string
-): void => {
-  if (
-    typeof value !== "string" ||
-    !mongoose.Types.ObjectId.isValid(value)
-  ) {
-    throw new AppError(message, 400);
-  }
-};
-
-const getTodayString = (): string => {
-  const now = new Date();
-
-  const year = now.getFullYear();
-
-  const month = String(
-    now.getMonth() + 1
-  ).padStart(2, "0");
-
-  const day = String(
-    now.getDate()
-  ).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
-
-const timeToMinutes = (
-  time: string
-): number => {
-  const [hourText, minuteText] =
-    time.split(":");
-
-  const hours = Number(hourText);
-  const minutes = Number(minuteText);
-
-  return hours * 60 + minutes;
-};
-
-const getCurrentMinutes = (): number => {
-  const now = new Date();
-
-  return (
-    now.getHours() * 60 +
-    now.getMinutes()
-  );
-};
-
-const validateBarberAccount = async (
-  barberId: string
-): Promise<void> => {
-  assertObjectId(
-    barberId,
-    "Tài khoản Barber không hợp lệ"
-  );
-
-  const barber = await User.findOne({
-    _id: barberId,
-    role: "BARBER",
-    status: "ACTIVE",
-  }).select("_id");
-
-  if (!barber) {
-    throw new AppError(
-      "Không tìm thấy tài khoản Barber đang hoạt động",
-      404
-    );
-  }
-};
-
-const normalizeAppointment = (
-  appointment: any,
-  barberId: string
-): DashboardAppointment => {
-  const populatedClient =
-    appointment.client &&
-    typeof appointment.client === "object"
-      ? {
-          _id: String(
-            appointment.client._id
-          ),
-
-          fullName:
-            appointment.client.fullName,
-
-          email:
-            appointment.client.email,
-
-          phone:
-            appointment.client.phone,
-        }
-      : null;
-
+const normalizeAppointment = (appointment: any, barberId: string) => {
   const assignment = appointment.staffAssignments?.find(
     (item: any) => String(item.barber?._id ?? item.barber) === barberId
   );
 
   return {
     _id: String(appointment._id),
-
-    client: populatedClient,
-
-    services:
-      Array.isArray(
-        appointment.services
-      )
-        ? appointment.services.map(
-            (serviceItem: any) => ({
-              name:
-                serviceItem.nameSnapshot,
-
-              price:
-                serviceItem.priceSnapshot,
-
-              durationMinutes:
-                serviceItem.durationSnapshot,
-            })
-          )
-        : [],
-
-    appointmentDate:
-      appointment.appointmentDate,
-
-    startTime:
-      assignment?.startTime ?? appointment.startTime,
-
-    endTime:
-      assignment?.endTime ?? appointment.endTime,
-
-    durationMinutes:
-      appointment.durationMinutes,
-
-    totalPrice:
-      appointment.totalPrice,
-
-    status:
-      appointment.status,
+    appointmentCode: appointment.appointmentCode,
+    client: appointment.client && typeof appointment.client === "object"
+      ? {
+          _id: String(appointment.client._id),
+          fullName: appointment.client.fullName,
+          email: appointment.client.email,
+          phone: appointment.client.phone,
+        }
+      : null,
+    services: (appointment.services ?? []).map((item: any) => ({
+      name: item.nameSnapshot,
+      price: item.priceSnapshot,
+      durationMinutes: item.durationSnapshot,
+    })),
+    appointmentDate: appointment.appointmentDate,
+    startTime: assignment?.startTime ?? appointment.startTime,
+    endTime: assignment?.endTime ?? appointment.endTime,
+    durationMinutes: appointment.durationMinutes,
+    totalPrice: appointment.finalPrice ?? appointment.totalPrice,
+    status: appointment.status as AppointmentStatus,
+    paymentStatus: appointment.paymentStatus,
+    barberViewedAt: appointment.barberViewedAt,
   };
 };
 
-/**
- * Lấy dữ liệu Dashboard của Barber trong ngày hiện tại.
- */
-export const getBarberDashboard =
-  async (
-    barberId: string
-  ): Promise<BarberDashboardResult> => {
-    await validateBarberAccount(
-      barberId
-    );
+export const getBarberDashboard = async (
+  barberId: string,
+  dateFrom?: string,
+  dateTo?: string
+) => {
+  if (!mongoose.Types.ObjectId.isValid(barberId)) {
+    throw new AppError("Tài khoản Barber không hợp lệ", 400);
+  }
 
-    const today = getTodayString();
+  const barber = await User.findOne({ _id: barberId, role: "BARBER", status: "ACTIVE" });
+  if (!barber) throw new AppError("Không tìm thấy Barber đang hoạt động", 404);
 
-    const appointments =
-      await Appointment.find({
-        $or: [
-          { barber: barberId },
-          { "staffAssignments.barber": barberId },
-        ],
-        appointmentDate: today,
-      })
-        .populate(
-          "client",
-          "_id fullName email phone"
-        )
-        .populate(
-          "staffAssignments.barber",
-          "_id fullName"
-        )
-        .sort({
-          startTime: 1,
-        })
-        .lean();
+  const today = localDate();
+  const from = dateFrom && DATE_PATTERN.test(dateFrom) ? dateFrom : today;
+  const to = dateTo && DATE_PATTERN.test(dateTo) ? dateTo : from;
+  if (from > to) throw new AppError("Khoảng ngày không hợp lệ", 400);
 
-    const statistics: DashboardStatistics = {
-      total: appointments.length,
+  const appointments = await Appointment.find({
+    $or: [{ barber: barberId }, { "staffAssignments.barber": barberId }],
+    appointmentDate: { $gte: from, $lte: to },
+  })
+    .populate("client", "_id fullName email phone")
+    .populate("staffAssignments.barber", "_id fullName")
+    .sort({ appointmentDate: 1, startTime: 1 })
+    .lean();
 
-      pending: 0,
+  const revenueByDate = new Map<string, number>();
+  let completed = 0;
+  let cancelled = 0;
+  let noShow = 0;
+  let revenue = 0;
 
-      confirmed: 0,
+  for (const appointment of appointments) {
+    if (appointment.status === "COMPLETED") completed += 1;
+    if (appointment.status === "CANCELLED") cancelled += 1;
+    if (appointment.status === "NO_SHOW") noShow += 1;
 
-      inProgress: 0,
-
-      completed: 0,
-
-      cancelled: 0,
-
-      todayRevenue: 0,
-    };
-
-    for (const appointment of appointments) {
-      switch (appointment.status) {
-        case "PENDING":
-          statistics.pending += 1;
-          break;
-
-        case "CONFIRMED":
-          statistics.confirmed += 1;
-          break;
-
-        case "IN_PROGRESS":
-          statistics.inProgress += 1;
-          break;
-
-        case "COMPLETED":
-          statistics.completed += 1;
-
-          if (
-            appointment.paymentStatus ===
-            "PAID"
-          ) {
-            statistics.todayRevenue +=
-              appointment.totalPrice;
-          }
-
-          break;
-
-        case "CANCELLED":
-          statistics.cancelled += 1;
-          break;
-
-        default:
-          break;
-      }
-    }
-
-    const currentMinutes =
-      getCurrentMinutes();
-
-    const nextAppointment =
-      appointments.find(
-        (appointment) => {
-          if (
-            !ACTIVE_NEXT_APPOINTMENT_STATUSES.includes(
-              appointment.status
-            )
-          ) {
-            return false;
-          }
-
-          const appointmentEnd =
-            timeToMinutes(
-              appointment.endTime
-            );
-
-          return (
-            appointmentEnd >=
-            currentMinutes
-          );
-        }
+    if (appointment.status === "COMPLETED" && appointment.paymentStatus === "PAID") {
+      const value = appointment.finalPrice ?? appointment.totalPrice;
+      revenue += value;
+      revenueByDate.set(
+        appointment.appointmentDate,
+        (revenueByDate.get(appointment.appointmentDate) ?? 0) + value
       );
+    }
+  }
 
-    return {
-      date: today,
-
-      statistics,
-
-      nextAppointment:
-        nextAppointment
-          ? normalizeAppointment(
-              nextAppointment,
-              barberId
-            )
-          : null,
-
-      todayAppointments:
-        appointments.map((appointment) =>
-          normalizeAppointment(appointment, barberId)
-        ),
-    };
+  const resolved = completed + cancelled + noShow;
+  return {
+    dateFrom: from,
+    dateTo: to,
+    today,
+    revenue,
+    revenueSeries: Array.from({ length: Math.floor((new Date(`${to}T00:00:00`).getTime() - new Date(`${from}T00:00:00`).getTime()) / 86400000) + 1 }, (_, index) => {
+      const date = new Date(`${from}T00:00:00`);
+      date.setDate(date.getDate() + index);
+      const key = localDate(date);
+      return { date: key, amount: revenueByDate.get(key) ?? 0 };
+    }),
+    outcomes: {
+      completed,
+      cancelled,
+      noShow,
+      completionRate: resolved ? Math.round((completed / resolved) * 100) : 0,
+      cancellationRate: resolved ? Math.round(((cancelled + noShow) / resolved) * 100) : 0,
+    },
+    appointments: appointments.map((item) => normalizeAppointment(item, barberId)),
   };
+};

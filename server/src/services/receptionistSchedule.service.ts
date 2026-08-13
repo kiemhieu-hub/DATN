@@ -5,7 +5,7 @@ import AppError from "../utils/AppError";
 import Appointment from "../models/Appointment";
 import BarberScheduleOverride from "../models/BarberScheduleOverride";
 import BarberProfile from "../models/BarberProfile";
-import BarberScheduleChangeLog from './../models/BarberScheduleChaneLog';
+import BarberScheduleChangeLog from "../models/BarberScheduleChangeLog";
 
 const ACTIVE_STATUSES = ["PENDING", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"];
 const timeToMinutes = (value: string) => {

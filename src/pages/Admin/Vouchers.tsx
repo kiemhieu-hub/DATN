@@ -1,5 +1,7 @@
 import axios from "axios";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState, type FormEvent } from "react";
+import { queryKeys } from "../../lib/queryKeys";
 import {createAdminVoucher,deleteAdminVoucher,getAdminVouchers,updateAdminVoucher,updateAdminVoucherStatus,} from "../../services/adminVoucher.service";
 import { getCatalogBarbers } from "../../services/catalog.service";
 import type { CatalogBarber, ServiceGroup } from "../../types/Catalog";
@@ -39,34 +41,33 @@ const errorMessage = (error: unknown) => axios.isAxiosError(error)
   : "Có lỗi xảy ra";
 
 function Vouchers() {
-  const [items, setItems] = useState<Voucher[]>([]);
-  const [barbers, setBarbers] = useState<CatalogBarber[]>([]);
   const [form, setForm] = useState<VoucherPayload>(emptyForm);
   const [editing, setEditing] = useState<Voucher | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const vouchersQuery = useQuery({
+    queryKey: queryKeys.vouchers,
+    queryFn: async () => {
       const [voucherResponse, barberResponse] = await Promise.all([
         getAdminVouchers(),
         getCatalogBarbers(),
       ]);
-      setItems(voucherResponse.items);
-      setBarbers(barberResponse.barbers);
-    } catch (error) {
-      setError(errorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return {
+        items: voucherResponse.items,
+        barbers: barberResponse.barbers,
+      };
+    },
+  });
 
-  useEffect(() => { void load(); }, [load]);
+  const items: Voucher[] = vouchersQuery.data?.items ?? [];
+  const barbers: CatalogBarber[] = vouchersQuery.data?.barbers ?? [];
+  const loading = vouchersQuery.isPending;
+  const load = async () => {
+    await vouchersQuery.refetch();
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -148,7 +149,7 @@ function Vouchers() {
       setError("");
       const response = await deleteAdminVoucher(voucher._id);
       setMessage(response.message);
-      setItems((current) => current.filter((item) => item._id !== voucher._id));
+      await load();
     } catch (error) {
       setError(errorMessage(error));
     } finally {
@@ -164,6 +165,11 @@ function Vouchers() {
       </header>
 
       {error && <div className="voucher-alert error">{error}</div>}
+      {vouchersQuery.isError && (
+        <div className="voucher-alert error">
+          {errorMessage(vouchersQuery.error)}
+        </div>
+      )}
       {message && <div className="voucher-alert success">{message}</div>}
 
       <div className="voucher-table-wrap">

@@ -10,6 +10,9 @@ import {
   getMe,
   login as loginApi,
 } from "../services/authService";
+import { fetchBusinessQuery } from "../lib/queryApi";
+import { queryClient } from "../lib/queryClient";
+import { queryKeys } from "../lib/queryKeys";
 import type {
   AuthUser,
   LoginPayload,
@@ -26,6 +29,7 @@ interface AuthContextValue {
     data: LoginPayload
   ) => Promise<AuthUser>;
   logout: (role: UserRole) => void;
+  updateSession: (role: UserRole, user: AuthUser) => void;
 }
 
 interface RoleAuthValue {
@@ -34,6 +38,7 @@ interface RoleAuthValue {
   isLoading: boolean;
   login: (data: LoginPayload) => Promise<AuthUser>;
   logout: () => void;
+  updateUser: (user: AuthUser) => void;
 }
 
 const emptySessions: AuthSessions = {
@@ -91,7 +96,12 @@ export function AuthProvider({
           }
 
           try {
-            const currentUser = await getMe(accessToken);
+            const currentUser = await fetchBusinessQuery(
+              "auth-session",
+              () => getMe(accessToken),
+              role,
+              30_000
+            );
 
             if (currentUser.role !== role) {
               throw new Error("Phiên đăng nhập sai quyền");
@@ -142,6 +152,7 @@ export function AuthProvider({
       ...current,
       [role]: result.user,
     }));
+    queryClient.setQueryData(queryKeys.auth(role), result.user);
 
     return result.user;
   };
@@ -154,11 +165,18 @@ export function AuthProvider({
       ...current,
       [role]: null,
     }));
+    queryClient.removeQueries({ queryKey: queryKeys.auth(role) });
+  };
+
+  const updateSession = (role: UserRole, user: AuthUser): void => {
+    localStorage.setItem(userKey(role), JSON.stringify(user));
+    setSessions((current) => ({ ...current, [role]: user }));
+    queryClient.setQueryData(queryKeys.auth(role), user);
   };
 
   return (
     <AuthContext.Provider
-      value={{ sessions, isLoading, login, logout }}
+      value={{ sessions, isLoading, login, logout, updateSession }}
     >
       {children}
     </AuthContext.Provider>
@@ -182,5 +200,6 @@ export function useAuth(
     isLoading: context.isLoading,
     login: (data) => context.login(role, data),
     logout: () => context.logout(role),
+    updateUser: (nextUser) => context.updateSession(role, nextUser),
   };
 }

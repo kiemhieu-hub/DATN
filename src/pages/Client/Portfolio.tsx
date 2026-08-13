@@ -1,14 +1,133 @@
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../../contexts/AuthContext";
+import {
+  addFavorite,
+  getMyFavorites,
+  removeFavorite,
+  type FavoriteHairstyle,
+} from "../../services/favoriteService";
+import { getPublicHairstyles } from "../../services/hairstyleGallery.service";
+import type { HairstyleGalleryItem } from "../../types/HairstyleGallery";
+import "./css/Portfolio.css";
 
 function Portfolio() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const [hairstyles, setHairstyles] = useState<HairstyleGalleryItem[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [galleryCategory, setGalleryCategory] = useState("ALL");
+  const [favoritesByImage, setFavoritesByImage] = useState<
+    Map<string, FavoriteHairstyle>
+  >(new Map());
+  const [favoriteLoadingImages, setFavoriteLoadingImages] = useState<
+    Set<string>
+  >(new Set());
+  const [favoriteMessage, setFavoriteMessage] = useState("");
+
+  const loadGallery = useCallback(() => {
+    fetchBusinessQuery("public-hairstyles", () => getPublicHairstyles())
+      .then((response) => setHairstyles(response.items))
+      .catch(() => setHairstyles([]))
+      .finally(() => setGalleryLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadGallery();
+  }, [loadGallery]);
+
+  const loadFavorites = useCallback(() => {
+    if (!isAuthenticated) {
+      setFavoritesByImage(new Map());
+      return;
+    }
+
+    void fetchBusinessQuery("my-favorites", () => getMyFavorites())
+      .then((items) => {
+        setFavoritesByImage(
+          new Map(items.map((favorite) => [favorite.imageUrl, favorite]))
+        );
+      })
+      .catch(() => setFavoriteMessage("Không thể tải danh sách yêu thích"));
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
+
+  useRealtimeRefresh(() => {
+    loadGallery();
+    loadFavorites();
+  });
+
+  const galleryCategories = useMemo(
+    () => [...new Set(hairstyles.map((item) => item.category).filter(Boolean))],
+    [hairstyles]
+  );
+  const visibleHairstyles = galleryCategory === "ALL"
+    ? hairstyles
+    : hairstyles.filter((item) => item.category === galleryCategory);
 
   const handleLogout = (): void => {
     logout();
     navigate("/", { replace: true });
+  };
+
+  const toggleFavorite = async (
+    item: HairstyleGalleryItem
+  ): Promise<void> => {
+    if (!isAuthenticated) {
+      navigate("/login", {
+        state: { from: "/portfolio" },
+      });
+      return;
+    }
+
+    if (favoriteLoadingImages.has(item.image)) {
+      return;
+    }
+
+    setFavoriteMessage("");
+    setFavoriteLoadingImages((current) => {
+      const next = new Set(current);
+      next.add(item.image);
+      return next;
+    });
+
+    try {
+      const existing = favoritesByImage.get(item.image);
+
+      if (existing) {
+        await removeFavorite(existing._id);
+        setFavoritesByImage((current) => {
+          const next = new Map(current);
+          next.delete(item.image);
+          return next;
+        });
+      } else {
+        const favorite = await addFavorite({
+          imageUrl: item.image,
+          title: item.title,
+          category: item.category,
+        });
+
+        setFavoritesByImage((current) => {
+          const next = new Map(current);
+          next.set(item.image, favorite);
+          return next;
+        });
+      }
+    } catch {
+      setFavoriteMessage("Không thể cập nhật kiểu tóc yêu thích");
+    } finally {
+      setFavoriteLoadingImages((current) => {
+        const next = new Set(current);
+        next.delete(item.image);
+        return next;
+      });
+    }
   };
 
   return (
@@ -61,19 +180,19 @@ function Portfolio() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/about.html">
+                <Link className="nav-link" to="/about">
                   Giới thiệu
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/services.html">
+                <Link className="nav-link" to="/services">
                   Dịch vụ
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/pricing.html">
+                <Link className="nav-link" to="/pricing">
                   Bảng giá
                 </Link>
               </li>
@@ -93,7 +212,7 @@ function Portfolio() {
                   <li>
                     <Link
                       className="dropdown-item active"
-                      to="/portfolio.html"
+                      to="/portfolio"
                     >
                       <span>Thư viện kiểu tóc</span>
                     </Link>
@@ -102,7 +221,7 @@ function Portfolio() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team.html"
+                      to="/team"
                     >
                       <span>Đội ngũ Barber</span>
                     </Link>
@@ -111,7 +230,7 @@ function Portfolio() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/faq.html"
+                      to="/faq"
                     >
                       <span>Câu hỏi thường gặp</span>
                     </Link>
@@ -120,7 +239,7 @@ function Portfolio() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/services-page.html"
+                      to="/services-page"
                     >
                       <span>Chi tiết dịch vụ</span>
                     </Link>
@@ -129,7 +248,7 @@ function Portfolio() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team-details.html"
+                      to="/team-details"
                     >
                       <span>Thông tin Barber</span>
                     </Link>
@@ -138,7 +257,7 @@ function Portfolio() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/blog.html"
+                      to="/blog"
                     >
                       <span>Tin tức và bài viết</span>
                     </Link>
@@ -147,7 +266,7 @@ function Portfolio() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/contact.html">
+                <Link className="nav-link" to="/contact">
                   Liên hệ
                 </Link>
               </li>
@@ -173,6 +292,15 @@ function Portfolio() {
                         to="/profile"
                       >
                         <span>Hồ sơ cá nhân</span>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/favorites"
+                      >
+                        <span>Kiểu tóc yêu thích</span>
                       </Link>
                     </li>
 
@@ -235,7 +363,84 @@ function Portfolio() {
       {/* Image Gallery */}
       <section className="section-padding">
         <div className="container">
+          {favoriteMessage && (
+            <div className="portfolio-favorite-alert">
+              {favoriteMessage}
+            </div>
+          )}
+
+          <div className="portfolio-gallery-filter">
+            <button
+              type="button"
+              className={galleryCategory === "ALL" ? "active" : ""}
+              onClick={() => setGalleryCategory("ALL")}
+            >
+              Tất cả
+            </button>
+
+            {galleryCategories.map((category) => (
+              <button
+                type="button"
+                key={category}
+                className={galleryCategory === category ? "active" : ""}
+                onClick={() => setGalleryCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
           <div className="row">
+            {galleryLoading ? (
+              <p className="portfolio-gallery-empty">Đang tải thư viện...</p>
+            ) : visibleHairstyles.length === 0 ? (
+              <p className="portfolio-gallery-empty">
+                Chưa có hình ảnh trong thư viện.
+              </p>
+            ) : (
+              visibleHairstyles.map((item) => (
+                <div
+                  className={item.isFeatured ? "col-md-6" : "col-md-4"}
+                  key={item._id}
+                >
+                  <article className="portfolio-dynamic-card">
+                    <a href={item.image} className="img-zoom" title={item.title}>
+                      <img src={item.image} alt={item.title} />
+                    </a>
+
+                    <button
+                      type="button"
+                      className={`portfolio-favorite-button ${
+                        favoritesByImage.has(item.image) ? "active" : ""
+                      }`}
+                      disabled={favoriteLoadingImages.has(item.image)}
+                      aria-label={
+                        favoritesByImage.has(item.image)
+                          ? "Bỏ khỏi kiểu tóc yêu thích"
+                          : "Thêm vào kiểu tóc yêu thích"
+                      }
+                      title={
+                        favoritesByImage.has(item.image)
+                          ? "Bỏ yêu thích"
+                          : "Thêm vào yêu thích"
+                      }
+                      onClick={() => void toggleFavorite(item)}
+                    >
+                      <span aria-hidden="true">♥</span>
+                    </button>
+
+                    <div className="portfolio-dynamic-info">
+                      <span>{item.category || "THADS STYLE"}</span>
+                      <h3>{item.title}</h3>
+                      {item.description && <p>{item.description}</p>}
+                    </div>
+                  </article>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="row" style={{ display: "none" }} aria-hidden="true">
             <div className="col-md-12">
               <div className="section-head text-center">
                 <div className="section-subtitle">
@@ -249,151 +454,6 @@ function Portfolio() {
             </div>
           </div>
 
-          <div className="row">
-            <div className="col-md-4 gallery-item">
-              <a
-                href="/img/slider/3.jpg"
-                title="Không gian THADS Barber"
-                className="img-zoom"
-              >
-                <div className="gallery-box">
-                  <div className="gallery-img">
-                    <img
-                      src="/img/slider/3.jpg"
-                      className="img-fluid mx-auto d-block"
-                      alt="Không gian THADS Barber"
-                    />
-                  </div>
-                </div>
-              </a>
-            </div>
-
-            <div className="col-md-4 gallery-item">
-              <a
-                href="/img/slider/4.jpg"
-                title="Dịch vụ chăm sóc râu"
-                className="img-zoom"
-              >
-                <div className="gallery-box">
-                  <div className="gallery-img">
-                    <img
-                      src="/img/slider/4.jpg"
-                      className="img-fluid mx-auto d-block"
-                      alt="Dịch vụ chăm sóc râu"
-                    />
-                  </div>
-                </div>
-              </a>
-            </div>
-
-            <div className="col-md-4 gallery-item">
-              <a
-                href="/img/slider/5.jpg"
-                title="Cắt tóc nam chuyên nghiệp"
-                className="img-zoom"
-              >
-                <div className="gallery-box">
-                  <div className="gallery-img">
-                    <img
-                      src="/img/slider/5.jpg"
-                      className="img-fluid mx-auto d-block"
-                      alt="Cắt tóc nam chuyên nghiệp"
-                    />
-                  </div>
-                </div>
-              </a>
-            </div>
-
-            <div className="col-md-6 gallery-item">
-              <a
-                href="/img/slider/16.jpg"
-                title="Kiểu tóc hiện đại"
-                className="img-zoom"
-              >
-                <div className="gallery-box">
-                  <div className="gallery-img">
-                    <img
-                      src="/img/slider/16.jpg"
-                      className="img-fluid mx-auto d-block"
-                      alt="Kiểu tóc hiện đại"
-                    />
-                  </div>
-                </div>
-              </a>
-            </div>
-
-            <div className="col-md-6 gallery-item">
-              <a
-                href="/img/slider/14.jpg"
-                title="Barber đang tạo kiểu"
-                className="img-zoom"
-              >
-                <div className="gallery-box">
-                  <div className="gallery-img">
-                    <img
-                      src="/img/slider/14.jpg"
-                      className="img-fluid mx-auto d-block"
-                      alt="Barber đang tạo kiểu"
-                    />
-                  </div>
-                </div>
-              </a>
-            </div>
-
-            <div className="col-md-4 gallery-item">
-              <a
-                href="/img/slider/8.jpg"
-                title="Phong cách Fade"
-                className="img-zoom"
-              >
-                <div className="gallery-box">
-                  <div className="gallery-img">
-                    <img
-                      src="/img/slider/8.jpg"
-                      className="img-fluid mx-auto d-block"
-                      alt="Phong cách Fade"
-                    />
-                  </div>
-                </div>
-              </a>
-            </div>
-
-            <div className="col-md-4 gallery-item">
-              <a
-                href="/img/slider/9.jpg"
-                title="Không gian cắt tóc"
-                className="img-zoom"
-              >
-                <div className="gallery-box">
-                  <div className="gallery-img">
-                    <img
-                      src="/img/slider/9.jpg"
-                      className="img-fluid mx-auto d-block"
-                      alt="Không gian cắt tóc"
-                    />
-                  </div>
-                </div>
-              </a>
-            </div>
-
-            <div className="col-md-4 gallery-item">
-              <a
-                href="/img/slider/10.jpg"
-                title="Dịch vụ tạo kiểu tóc"
-                className="img-zoom"
-              >
-                <div className="gallery-box">
-                  <div className="gallery-img">
-                    <img
-                      src="/img/slider/10.jpg"
-                      className="img-fluid mx-auto d-block"
-                      alt="Dịch vụ tạo kiểu tóc"
-                    />
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
         </div>
       </section>
 
