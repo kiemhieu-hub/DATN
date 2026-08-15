@@ -1,0 +1,124 @@
+.admin-module-page {
+  min-height: 100vh;
+  padding-top: 34px;
+  padding-bottom: 50px;
+  color: #eee;
+  background: #10100f;
+}
+
+.admin-module-container {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.admin-module-header {
+  display: flex;
+  gap: 30px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.admin-module-header span,
+.admin-module-empty span {
+  color: #c6a15b;
+  font-size: 11px;
+  letter-spacing: 2.5px;
+}
+
+.admin-module-header h1 {
+  margin: 8px 0;
+  font-size: clamp(30px, 4vw, 43px);
+}
+
+.admin-module-header p {
+  max-width: 700px;
+  margin: 0;
+  color: #96938d;
+}
+
+.admin-module-header a {
+  flex: 0 0 auto;
+  padding: 11px 15px;
+  color: #eee;
+  text-decoration: none;
+  border: 1px solid #514b3e;
+}
+
+.admin-module-empty {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  padding: 34px;
+  background: #191918;
+  border: 1px solid #34322d;
+}
+
+.admin-module-mark {
+  display: grid;
+  place-items: center;
+  min-height: 130px;
+  color: #111;
+  font-size: 24px;
+  font-weight: 800;
+  background: #c6a15b;
+}
+
+.admin-module-empty h2 {
+  margin: 8px 0;
+  font-size: 25px;
+}
+
+.admin-module-empty p {
+  max-width: 680px;
+  margin: 0;
+  color: #96938d;
+  line-height: 1.7;
+}
+
+.admin-module-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.admin-module-features article {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 72px;
+  padding: 14px;
+  background: #181817;
+  border: 1px solid #302f2b;
+}
+
+.admin-module-features b {
+  color: #c6a15b;
+  font-size: 12px;
+}
+
+.admin-module-features span {
+  color: #cbc8c1;
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .admin-module-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-module-empty {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-module-mark {
+    min-height: 80px;
+  }
+
+  .admin-module-features {
+    grid-template-columns: 1fr;
+  }
+}

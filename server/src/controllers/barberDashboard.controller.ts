@@ -1,0 +1,38 @@
+import {
+  type NextFunction,
+  type Response,
+} from "express";
+
+import type { AuthenticatedRequest } from "../middleware/authenticate";
+
+import * as barberDashboardService from "../services/barberDashboard.service";
+
+export const getDashboard = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Bạn chưa đăng nhập",
+      });
+      return;
+    }
+
+    const dashboard =
+      await barberDashboardService.getBarberDashboard(
+        req.user.userId,
+        typeof req.query.dateFrom === "string" ? req.query.dateFrom : undefined,
+        typeof req.query.dateTo === "string" ? req.query.dateTo : undefined
+      );
+
+    res.status(200).json({
+      success: true,
+      data: dashboard,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
