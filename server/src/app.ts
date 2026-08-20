@@ -33,7 +33,11 @@ import staffNotificationRoutes from "./routes/staffNotification.routes";
 import vnpayRoutes from "./routes/vnpay.routes";
 import favoriteHairstyleRoutes from "./routes/favoriteHairstyle.routes";
 import refundRoutes from "./routes/refund.routes";
+<<<<<<< HEAD
 import userRoutes from "./routes/user.routes"
+=======
+import userRoutes from "./routes/user.routes";
+>>>>>>> 5dbeb45 (fix: team,team detail)
 import {
   emitBusinessChanged,
   emitStaffDataChanged,
@@ -86,7 +90,10 @@ app.get("/", (_req, res) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+<<<<<<< HEAD
 app.use("/api/users", userRoutes);
+=======
+>>>>>>> 5dbeb45 (fix: team,team detail)
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/hairstyle-gallery", hairstyleGalleryRoutes);
@@ -112,7 +119,11 @@ app.use("/api/staff/notifications", staffNotificationRoutes);
 app.use("/api/payments/vnpay", vnpayRoutes);
 app.use("/api/favorites", favoriteHairstyleRoutes);
 app.use("/api/admin/refunds", refundRoutes);
+<<<<<<< HEAD
 
+=======
+app.use("/api/users", userRoutes);
+>>>>>>> 5dbeb45 (fix: team,team detail)
 
 
 // Error Handler

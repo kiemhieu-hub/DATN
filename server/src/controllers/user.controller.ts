@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
+<<<<<<< HEAD
 import User from "./../models/User"; // Đảm bảo đúng tên file user.ts
+=======
+import User from ".././models/User"; // Đảm bảo đúng tên file user.ts
+>>>>>>> 5dbeb45 (fix: team,team detail)
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
