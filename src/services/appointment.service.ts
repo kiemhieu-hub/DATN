@@ -41,6 +41,11 @@ export interface CancelAppointmentResponse {
   appointment: Appointment;
 }
 
+export interface RescheduleAppointmentPayload {
+  appointmentDate: string;
+  startTime: string;
+}
+
 export interface AvailableSlot {
   startTime: string;
   endTime: string;
@@ -87,6 +92,17 @@ export const cancelAppointment = async (
       payload
     );
 
+  return response.data;
+};
+
+export const rescheduleAppointment = async (
+  appointmentId: string,
+  payload: RescheduleAppointmentPayload
+): Promise<CancelAppointmentResponse> => {
+  const response = await api.patch<CancelAppointmentResponse>(
+    `/appointments/${appointmentId}/reschedule`,
+    payload
+  );
   return response.data;
 };
 

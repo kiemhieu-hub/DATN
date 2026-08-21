@@ -662,3 +662,32 @@
   }
 }
 .history-cancel-modal-bg{position:fixed;inset:0;background:#000b;display:grid;place-items:center;padding:20px;z-index:2000}.history-cancel-modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#1f1c19;border:1px solid #66513b;padding:28px;color:#eee}.history-cancel-modal h2{margin-top:0}.history-cancel-modal label{display:grid;gap:8px;margin:14px 0}.history-cancel-modal textarea,.history-cancel-modal input{width:100%;box-sizing:border-box;background:#121110;border:1px solid #514a43;color:#fff;padding:12px;font:inherit}.history-cancel-modal textarea{min-height:110px;resize:vertical}.history-cancel-modal fieldset{margin:16px 0;border:1px solid #514a43}.history-cancel-modal legend{padding:0 8px;color:#d8b272}.history-cancel-modal>small{color:#d8b272}.history-cancel-modal>div{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.history-cancel-modal button{padding:10px 15px;background:#292622;color:#fff;border:1px solid #555;cursor:pointer}.history-cancel-modal button[type=submit]{background:#b84e4e;border-color:#b84e4e}
+.history-reschedule-modal {
+  max-width: 640px;
+}
+
+.history-reschedule-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 10px;
+  margin: 12px 0 22px;
+}
+
+.history-reschedule-slots button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid #d8d0c4;
+  border-radius: 10px;
+  padding: 10px;
+  color: #342a21;
+  background: #fff;
+  cursor: pointer;
+}
+
+.history-reschedule-slots button.selected {
+  border-color: #a9783f;
+  color: #fff;
+  background: #a9783f;
+}

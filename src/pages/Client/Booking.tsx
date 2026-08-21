@@ -34,7 +34,7 @@ const groupNames: Record<ServiceGroup, string> = {
   HAIRCUT: "Cắt tóc",
   BEARD: "Chăm sóc râu",
   COLOR: "Nhuộm tóc",
-  CARE: "Chăm sóc thư giãn",
+  CARE: "Chăm sóc tóc",
   OTHER: "Uốn và tạo kiểu",
 };
 
@@ -172,9 +172,9 @@ function Booking() {
     .filter((service) => service.staffType === "CARE")
     .reduce((sum, service) => sum + service.durationMinutes, 0);
   const totalDuration = hairDuration + careDuration;
-  const total = subtotal;
-  const depositRequired = subtotal > 200000;
-  const depositAmount = depositRequired ? Math.round(subtotal * 0.3) : 0;
+  const total = voucherCalculation?.total ?? subtotal;
+  const depositRequired = total > 200000;
+  const depositAmount = depositRequired ? Math.round(total * 0.3) : 0;
 
   const formatDuration = (minutes: number): string => {
     if (minutes < 60) return `${minutes}p`;
@@ -227,7 +227,7 @@ function Booking() {
   const chooseVoucher = (voucher: AvailableVoucher): void => {
     setVoucherCode(voucher.code);
     setVoucherCalculation(voucher);
-    setVoucherMessage(`Đã chọn ${voucher.code}. Voucher sẽ được tính trên hóa đơn thực tế khi hoàn thành.`);
+    setVoucherMessage(`Đã áp dụng ${voucher.code}: giảm ${money(voucher.discountAmount)}đ.`);
     setVoucherOpen(false);
   };
 
@@ -386,9 +386,10 @@ function Booking() {
 
           {voucherMessage && <small className="booking-voucher-message">{voucherMessage}</small>}
           <div className="booking-totals">
-            <p className="grand-total"><span>Tổng tiền tạm tính</span><b>{money(total)}đ</b></p>
-            {voucherCode && <small>Voucher <b>{voucherCode}</b> sẽ áp dụng khi chốt hóa đơn cuối cùng.</small>}
-            {depositRequired && <small>Đặt cọc 30% tổng đơn ban đầu: <b>{money(depositAmount)}đ</b></small>}
+            <p><span>Tạm tính</span><b>{money(subtotal)}đ</b></p>
+            {voucherCalculation && <p><span>Voucher {voucherCalculation.code}</span><b>-{money(voucherCalculation.discountAmount)}đ</b></p>}
+            <p className="grand-total"><span>Tổng thanh toán</span><b>{money(total)}đ</b></p>
+            {depositRequired && <small>Đặt cọc 30% sau voucher: <b>{money(depositAmount)}đ</b></small>}
           </div>
           <div className="booking-summary-footer">
             <button className="booking-submit" disabled={submitting}>{submitting ? "Đang đặt lịch..." : "Xác nhận đặt lịch"}</button>
@@ -413,13 +414,16 @@ function Booking() {
             <button className="close" type="button" onClick={() => setVoucherOpen(false)}>×</button>
             <span>THADS BARBER</span>
             <h2>Chọn voucher</h2>
-            <p>Voucher chỉ được tính trên hóa đơn thực tế sau khi hoàn thành dịch vụ.</p>
+            <p>Voucher được áp dụng ngay vào tổng tiền tạm tính của lịch hẹn.</p>
             {voucherCode && <button type="button" className="voucher-option" onClick={() => { clearVoucher(); setVoucherOpen(false); }}><b>Không dùng voucher</b></button>}
             {availableVouchers.map((voucher) => (
               <button type="button" className={`voucher-option ${voucher.code === voucherCode ? "selected" : ""}`} key={voucher.code} onClick={() => chooseVoucher(voucher)}>
                 <b>{voucher.code}</b>
                 <strong>{voucher.type === "PERCENT" ? `Giảm ${voucher.value}%` : `Giảm ${money(voucher.value)}đ`}</strong>
                 <small>{voucher.name}{voucher.maxDiscount ? ` · tối đa ${money(voucher.maxDiscount)}đ` : ""}</small>
+                {voucher.description && <small>{voucher.description}</small>}
+                <small>Áp dụng: {voucher.applicableServiceGroups.length ? voucher.applicableServiceGroups.map((group) => groupNames[group]).join(", ") : "Tất cả dịch vụ"}</small>
+                <small>Giảm thực tế {money(voucher.discountAmount)}đ · còn {money(voucher.total)}đ · hết hạn {new Date(voucher.endDate).toLocaleDateString("vi-VN")}</small>
               </button>
             ))}
             {!availableVouchers.length && <p>Không có voucher phù hợp.</p>}

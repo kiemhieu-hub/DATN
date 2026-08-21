@@ -110,6 +110,13 @@ interface CancelAppointmentInput {
   refundAccountName?: string;
 }
 
+interface RescheduleAppointmentInput {
+  appointmentId: string;
+  clientId: string;
+  appointmentDate: string;
+  startTime: string;
+}
+
 interface GetAppointmentsOptions {
   status?: AppointmentStatus;
   appointmentDate?: string;
@@ -172,6 +179,8 @@ const ACTIVE_APPOINTMENT_STATUSES: AppointmentStatus[] = [
   "CONFIRMED",
   "CHECKED_IN",
   "IN_PROGRESS",
+  // Hoàn thành sớm không giải phóng khung giờ đã được giữ cho lịch hẹn.
+  "COMPLETED",
 ];
 
 const TIME_PATTERN =
@@ -923,11 +932,10 @@ export const createAppointment =
 
     const discountPercent = voucherCalculation?.discountPercent ?? 0;
     const discountAmount = voucherCalculation?.discountAmount ?? 0;
-    // Voucher chỉ được ghi nhận khi đặt lịch. Số tiền giảm thực tế được áp
-    // dụng sau khi chốt dịch vụ ở bước thanh toán cuối cùng.
-    const totalPrice = subtotal;
-    const depositRequired = subtotal > 200000;
-    const depositAmount = depositRequired ? Math.round(subtotal * 0.3) : 0;
+    // Voucher được áp dụng ngay trên tổng tạm tính khi đặt lịch.
+    const totalPrice = voucherCalculation?.total ?? subtotal;
+    const depositRequired = totalPrice > 200000;
+    const depositAmount = depositRequired ? Math.round(totalPrice * 0.3) : 0;
 
     const appointment =
       await Appointment.create({
@@ -978,6 +986,8 @@ export const createAppointment =
         discountPercent,
         discountAmount,
         totalPrice,
+        finalPrice: totalPrice,
+        finalDiscountAmount: discountAmount,
         depositRequired,
         depositAmount,
         depositPaid: false,
@@ -1194,7 +1204,9 @@ export const cancelMyAppointment =
       refundAmount: refundEligible ? appointment.depositAmount : 0,
       policyApplied: refundEligible
         ? `Khách hủy trước ít nhất ${policyHours} giờ: hoàn 100% tiền cọc`
-        : `Khách hủy dưới ${policyHours} giờ: không hoàn tiền cọc`,
+        : appointment.depositPaid
+          ? `Khách hủy dưới ${policyHours} giờ: không hoàn tiền cọc`
+          : "Lịch chưa thanh toán cọc nên không phát sinh hoàn tiền",
       refundStatus: refundEligible ? "PENDING" : "NOT_REQUIRED",
     };
 
@@ -1576,9 +1588,102 @@ export const getAdminAppointments =
       .lean();
   };
 
-/**
- * Lấy các khung giờ còn trống.
- */
+/** CLIENT đổi ngày/giờ; chỉ chấp nhận khung giờ nhân viên còn rảnh. */
+export const rescheduleMyAppointment = async (
+  input: RescheduleAppointmentInput
+) => {
+  assertObjectId(input.appointmentId, "Mã lịch hẹn không hợp lệ");
+  assertObjectId(input.clientId, "Tài khoản khách hàng không hợp lệ");
+
+  if (!isDateFormatValid(input.appointmentDate)) {
+    throw new AppError("Ngày hẹn mới không hợp lệ", 400);
+  }
+  if (!TIME_PATTERN.test(input.startTime)) {
+    throw new AppError("Giờ hẹn mới không hợp lệ", 400);
+  }
+  if (isPastAppointment(input.appointmentDate, input.startTime)) {
+    throw new AppError("Không thể đổi sang thời gian trong quá khứ", 400);
+  }
+
+  const latestDate = new Date();
+  latestDate.setHours(23, 59, 59, 999);
+  latestDate.setDate(latestDate.getDate() + 14);
+  if (new Date(`${input.appointmentDate}T${input.startTime}:00`) > latestDate) {
+    throw new AppError("Chỉ được đổi lịch trong vòng 14 ngày tới", 400);
+  }
+
+  const appointment = await Appointment.findOne({
+    _id: input.appointmentId,
+    client: input.clientId,
+  });
+  if (!appointment) throw new AppError("Không tìm thấy lịch hẹn", 404);
+  if (!["PENDING", "CONFIRMED"].includes(appointment.status)) {
+    throw new AppError("Không thể đổi thời gian ở trạng thái hiện tại", 400);
+  }
+
+  const oldDate = appointment.appointmentDate;
+  const oldStartTime = appointment.startTime;
+  const oldEndTime = appointment.endTime;
+  const newStartMinutes = timeToMinutes(input.startTime);
+  let offset = 0;
+
+  for (const assignment of appointment.staffAssignments) {
+    const assignmentDuration =
+      timeToMinutes(assignment.endTime) - timeToMinutes(assignment.startTime);
+    const assignmentStart = minutesToTime(newStartMinutes + offset);
+    const assignmentEnd = minutesToTime(newStartMinutes + offset + assignmentDuration);
+    const employeeId = String(assignment.barber);
+
+    await validateBarberSchedule(employeeId, input.appointmentDate, assignmentStart, assignmentEnd);
+    await validateAppointmentConflict(
+      employeeId,
+      input.appointmentDate,
+      assignmentStart,
+      assignmentEnd,
+      input.appointmentId
+    );
+    assignment.startTime = assignmentStart;
+    assignment.endTime = assignmentEnd;
+    offset += assignmentDuration;
+  }
+
+  const newEndMinutes = newStartMinutes + appointment.durationMinutes;
+  if (newEndMinutes >= 24 * 60) {
+    throw new AppError("Thời gian kết thúc lịch hẹn không hợp lệ", 400);
+  }
+
+  appointment.appointmentDate = input.appointmentDate;
+  appointment.startTime = input.startTime;
+  appointment.endTime = minutesToTime(newEndMinutes);
+  appointment.rescheduleConsent = true;
+  await appointment.save();
+
+  await recordAppointmentActivity({
+    appointmentId: appointment._id,
+    action: "APPOINTMENT_RESCHEDULED",
+    description: "Khách hàng đã đổi thời gian lịch hẹn",
+    actorId: input.clientId,
+    actorRole: "CLIENT",
+    metadata: {
+      oldDate,
+      oldStartTime,
+      oldEndTime,
+      newDate: appointment.appointmentDate,
+      newStartTime: appointment.startTime,
+      newEndTime: appointment.endTime,
+    },
+  });
+
+  queueAppointmentLifecycleEmail(
+    appointment,
+    "RESCHEDULED",
+    `Lịch hẹn đã đổi từ ${oldDate} ${oldStartTime} sang ${appointment.appointmentDate} ${appointment.startTime}.`
+  );
+
+  return populateAppointment(String(appointment._id));
+};
+
+/** Lấy các khung giờ còn trống. */
 export const getAvailableSlots =
   async ({
     barberId,

@@ -8,6 +8,7 @@ import {
   getBarberAppointments,
   markBarberAppointmentViewed,
   getMyAppointments,
+  rescheduleMyAppointment,
   updateAppointmentStatus,
 } from "../services/appointment.service";
 
@@ -142,6 +143,32 @@ export const cancelMine = async (
     res.status(200).json({
       success: true,
       message: "Hủy lịch thành công",
+      appointment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** CLIENT đổi thời gian lịch hẹn. */
+export const rescheduleMine = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
+
+    const appointment = await rescheduleMyAppointment({
+      appointmentId: getStringParam(req.params.id, "Mã lịch hẹn không hợp lệ"),
+      clientId: req.user.userId,
+      appointmentDate: req.body.appointmentDate,
+      startTime: req.body.startTime,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Đổi thời gian lịch hẹn thành công",
       appointment,
     });
   } catch (error) {

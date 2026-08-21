@@ -5,7 +5,13 @@ import {useCallback,useEffect,useMemo,useState,} from "react";
 import {Link,useLocation,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import ReviewModal from "../../components/ReviewModal";
-import {cancelAppointment,getMyAppointments,} from "../../services/appointment.service";
+import {
+  cancelAppointment,
+  getAvailableSlots,
+  getMyAppointments,
+  rescheduleAppointment,
+  type AvailableSlot,
+} from "../../services/appointment.service";
 import { getMyReviews } from "../../services/review.service";
 import { createVnpayPayment, type VnpayPurpose } from "../../services/vnpay.service";
 import type {Appointment,AppointmentStatus,PaymentStatus,} from "../../types/Appointment";
@@ -120,6 +126,11 @@ function BookingHistory() {
     );
 
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
+  const [rescheduleTarget, setRescheduleTarget] = useState<Appointment | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [rescheduleSlots, setRescheduleSlots] = useState<AvailableSlot[]>([]);
+  const [rescheduling, setRescheduling] = useState(false);
   const [reviewTarget, setReviewTarget] = useState<Appointment | null>(null);
   const [reviewedAppointmentIds, setReviewedAppointmentIds] = useState<Set<string>>(new Set());
   const [cancelReason, setCancelReason] = useState("");
@@ -201,7 +212,63 @@ function BookingHistory() {
     if (!["PENDING", "CONFIRMED"].includes(appointment.status)) return false;
     const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
     const leadTime = startsAt.getTime() - Date.now();
-    return appointment.status === "PENDING" ? leadTime > 0 : leadTime >= 24 * 60 * 60 * 1000;
+    return leadTime > 0;
+  };
+
+  const canReschedule = (appointment: Appointment): boolean =>
+    ["PENDING", "CONFIRMED"].includes(appointment.status) &&
+    new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`).getTime() > Date.now();
+
+  const serviceIdsOf = (appointment: Appointment): string[] =>
+    appointment.services.map((item) =>
+      typeof item.service === "string" ? item.service : item.service._id
+    );
+
+  const hairBarberIdOf = (appointment: Appointment): string | undefined => {
+    const hairAssignment = appointment.staffAssignments?.find((item) => item.staffType === "HAIR");
+    if (hairAssignment) {
+      return typeof hairAssignment.barber === "string" ? hairAssignment.barber : hairAssignment.barber._id;
+    }
+    return undefined;
+  };
+
+  useEffect(() => {
+    if (!rescheduleTarget || !rescheduleDate) {
+      setRescheduleSlots([]);
+      return;
+    }
+    setRescheduleTime("");
+    void getAvailableSlots(
+      hairBarberIdOf(rescheduleTarget),
+      serviceIdsOf(rescheduleTarget),
+      rescheduleDate
+    )
+      .then((response) => setRescheduleSlots(response.slots.filter((slot) => slot.available)))
+      .catch((requestError) => setError(getErrorMessage(requestError, "Không thể tải giờ Barber rảnh.")));
+  }, [rescheduleDate, rescheduleTarget]);
+
+  const handleReschedule = async (): Promise<void> => {
+    if (!rescheduleTarget || !rescheduleDate || !rescheduleTime) {
+      setError("Vui lòng chọn ngày và giờ Barber rảnh.");
+      return;
+    }
+    try {
+      setRescheduling(true);
+      setError("");
+      const response = await rescheduleAppointment(rescheduleTarget._id, {
+        appointmentDate: rescheduleDate,
+        startTime: rescheduleTime,
+      });
+      setAppointments((current) => current.map((item) =>
+        item._id === response.appointment._id ? response.appointment : item
+      ));
+      setMessage(response.message);
+      setRescheduleTarget(null);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể đổi thời gian lịch hẹn."));
+    } finally {
+      setRescheduling(false);
+    }
   };
 
   const filteredAppointments = useMemo(() => {
@@ -532,9 +599,7 @@ function BookingHistory() {
                         <span>Voucher đã chọn</span>
                         <strong>{appointment.voucherCode}</strong>
                         <small>
-                          {appointment.voucherAppliedAt
-                            ? `Đã áp dụng khi thanh toán: -${formatPrice(appointment.finalDiscountAmount ?? appointment.discountAmount)}đ`
-                            : "Sẽ được tính trên hóa đơn thực tế khi hoàn thành dịch vụ"}
+                          Đã áp dụng khi đặt lịch: -{formatPrice(appointment.finalDiscountAmount ?? appointment.discountAmount)}đ
                         </small>
                       </div>
                     )}
@@ -630,6 +695,20 @@ function BookingHistory() {
                           : "Hủy lịch"}
                       </button>
                     )}
+                    {canReschedule(appointment) && (
+                      <button
+                        type="button"
+                        className="history-payment-button"
+                        onClick={() => {
+                          setRescheduleTarget(appointment);
+                          setRescheduleDate(appointment.appointmentDate);
+                          setRescheduleTime("");
+                          setError("");
+                        }}
+                      >
+                        Đổi thời gian
+                      </button>
+                    )}
                     {appointment.depositRequired &&
                       !appointment.depositPaid &&
                       !["CANCELLED", "COMPLETED", "NO_SHOW"].includes(appointment.status) && (
@@ -677,7 +756,22 @@ function BookingHistory() {
           </div>
         )}
       </main>
-      {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label>{cancelTarget.depositPaid && <fieldset><legend>Tài khoản nhận hoàn cọc</legend><label>Ngân hàng<input value={refundBankName} onChange={(event) => setRefundBankName(event.target.value)} /></label><label>Số tài khoản<input value={refundAccountNumber} onChange={(event) => setRefundAccountNumber(event.target.value)} /></label><label>Chủ tài khoản<input value={refundAccountName} onChange={(event) => setRefundAccountName(event.target.value)} /></label></fieldset>}<small>Lịch chưa xác nhận được hủy trước giờ hẹn. Lịch đã xác nhận phải hủy trước 24 giờ; hoàn cọc nếu hủy trước ít nhất 3 ngày.</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id}>Xác nhận hủy</button></div></form></div>}
+      {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label>{cancelTarget.depositPaid && new Date(`${cancelTarget.appointmentDate}T${cancelTarget.startTime}:00`).getTime() - Date.now() >= 24 * 60 * 60 * 1000 && <fieldset><legend>Tài khoản nhận hoàn cọc</legend><label>Ngân hàng<select value={refundBankName} onChange={(event) => { setRefundBankName(event.target.value); setRefundAccountName(""); }} required><option value="">Chọn ngân hàng</option><option value="Vietcombank">Vietcombank</option><option value="BIDV">BIDV</option><option value="VietinBank">VietinBank</option><option value="Agribank">Agribank</option><option value="Techcombank">Techcombank</option><option value="MB Bank">MB Bank</option><option value="ACB">ACB</option><option value="VPBank">VPBank</option></select></label><label>Số tài khoản<input inputMode="numeric" pattern="[0-9]{6,20}" value={refundAccountNumber} onChange={(event) => { setRefundAccountNumber(event.target.value.replace(/\D/g, "")); setRefundAccountName(""); }} required /></label><label>Tên chủ tài khoản<input value={refundAccountName} onChange={(event) => setRefundAccountName(event.target.value.toUpperCase())} required placeholder="Tên do ngân hàng xác nhận" /></label></fieldset>}<small>{cancelTarget.depositPaid && new Date(`${cancelTarget.appointmentDate}T${cancelTarget.startTime}:00`).getTime() - Date.now() >= 24 * 60 * 60 * 1000 ? "Hủy trước ít nhất 24 giờ: hoàn 100% tiền cọc." : "Hủy dưới 24 giờ: không hoàn tiền cọc."}</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id}>Xác nhận hủy</button></div></form></div>}
+      {rescheduleTarget && (
+        <div className="history-cancel-modal-bg" onMouseDown={() => setRescheduleTarget(null)}>
+          <section className="history-cancel-modal history-reschedule-modal" onMouseDown={(event) => event.stopPropagation()}>
+            <h2>Đổi thời gian lịch hẹn</h2>
+            <p>Mã lịch: <b>{rescheduleTarget.appointmentCode}</b></p>
+            <label>Ngày hẹn mới<input type="date" min={new Date().toISOString().slice(0, 10)} value={rescheduleDate} onChange={(event) => setRescheduleDate(event.target.value)} /></label>
+            <p>Chỉ hiển thị thời gian Barber rảnh:</p>
+            <div className="history-reschedule-slots">
+              {rescheduleSlots.map((slot) => <button type="button" key={slot.startTime} className={rescheduleTime === slot.startTime ? "selected" : ""} onClick={() => setRescheduleTime(slot.startTime)}>{slot.startTime}<small>{slot.endTime}</small></button>)}
+              {rescheduleDate && !rescheduleSlots.length && <small>Không còn khung giờ phù hợp trong ngày này.</small>}
+            </div>
+            <div><button type="button" onClick={() => setRescheduleTarget(null)}>Đóng</button><button type="button" disabled={rescheduling || !rescheduleTime} onClick={() => void handleReschedule()}>{rescheduling ? "Đang đổi..." : "Xác nhận đổi lịch"}</button></div>
+          </section>
+        </div>
+      )}
       {reviewTarget && (
         <ReviewModal
           appointment={reviewTarget}

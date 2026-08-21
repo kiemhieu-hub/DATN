@@ -5,6 +5,7 @@ import {
   create,
   getSlots,
   getMine,
+  rescheduleMine,
 } from "../controllers/appointment.controller";
 
 
@@ -40,6 +41,13 @@ router.patch(
   authenticate,
   authorize("CLIENT"),
   cancelMine
+);
+
+router.patch(
+  "/:id/reschedule",
+  authenticate,
+  authorize("CLIENT"),
+  rescheduleMine
 );
 
 export default router;

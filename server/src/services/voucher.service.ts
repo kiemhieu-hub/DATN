@@ -34,6 +34,8 @@ export interface AvailableVoucher extends VoucherCalculation {
   name: string;
   description: string;
   endDate: Date;
+  maxDiscount: number;
+  applicableServiceGroups: ServiceGroup[];
 }
 
 const normalizeCode = (code: string): string => {
@@ -206,6 +208,8 @@ export const getAvailableVouchersFromServiceIds = async (
           name: voucher.name,
           description: voucher.description,
           endDate: voucher.endDate,
+          maxDiscount: voucher.maxDiscount,
+          applicableServiceGroups: voucher.applicableServiceGroups,
         };
       } catch {
         return null;
