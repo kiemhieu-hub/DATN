@@ -4,14 +4,14 @@ import type {
   Response,
 } from "express";
 
-import type { UserStatus } from "../models/User";
-import type { UserRole } from "../models/User";
+import type { UserStatus, UserRole } from "../models/User";
 import type { AuthenticatedRequest } from "../middleware/authenticate";
 import AppError from "../utils/AppError";
 import {
   getAdminClientById,
   getAdminClients,
   updateAdminClientStatus,
+  updateAdminUserRole,
   deleteAdminUser,
 } from "../services/adminUser.service";
 
@@ -108,6 +108,32 @@ export const updateClientStatus = async (
       success: true,
       message: "Cập nhật trạng thái người dùng thành công",
       client,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUserRole = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError("Bạn chưa đăng nhập", 401);
+    }
+
+    const user = await updateAdminUserRole(
+      getId(req.params.id),
+      req.body.role,
+      req.user.userId
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Cập nhật vai trò người dùng thành công",
+      user,
     });
   } catch (error) {
     next(error);

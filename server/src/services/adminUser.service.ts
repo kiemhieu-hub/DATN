@@ -1,14 +1,13 @@
 import mongoose from "mongoose";
-
 import Appointment from "../models/Appointment";
 import Payment from "../models/Payment";
 import User, {
   type UserStatus,
+  type UserRole,
 } from "../models/User";
 import AppError from "../utils/AppError";
 import BarberProfile from "../models/BarberProfile";
 import BarberSchedule from "../models/BarberSchedule";
-import type { UserRole } from "../models/User";
 
 interface GetClientsInput {
   keyword?: string;
@@ -33,7 +32,7 @@ const roles: UserRole[] = [
 
 const assertObjectId = (value: string): void => {
   if (!mongoose.Types.ObjectId.isValid(value)) {
-    throw new AppError("Mã khách hàng không hợp lệ", 400);
+    throw new AppError("Mã người dùng không hợp lệ", 400);
   }
 };
 
@@ -304,7 +303,7 @@ export const getAdminClientById = async (
     .lean();
 
   if (!client) {
-    throw new AppError("Không tìm thấy khách hàng", 404);
+    throw new AppError("Không tìm thấy người dùng", 404);
   }
 
   const appointmentFilter =
@@ -391,9 +390,7 @@ export const updateAdminClientStatus = async (
 
   const client = await User.findByIdAndUpdate(
     clientId,
-    {
-      status,
-    },
+    { status },
     {
       new: true,
       runValidators: true,
@@ -405,10 +402,41 @@ export const updateAdminClientStatus = async (
     .lean();
 
   if (!client) {
-    throw new AppError("Không tìm thấy khách hàng", 404);
+    throw new AppError("Không tìm thấy người dùng", 404);
   }
 
   return client;
+};
+
+// Cập nhật đúng logic Backend Database Mongoose
+export const updateAdminUserRole = async (
+  userId: string,
+  role: UserRole,
+  actorId: string
+) => {
+  assertObjectId(userId);
+
+  if (userId === actorId) {
+    throw new AppError("Admin không thể tự thay đổi vai trò của chính mình", 400);
+  }
+
+  if (!roles.includes(role)) {
+    throw new AppError("Vai trò không hợp lệ", 400);
+  }
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { role },
+    { new: true, runValidators: true }
+  )
+    .select("fullName email phone avatar role status lastLoginAt createdAt updatedAt")
+    .lean();
+
+  if (!user) {
+    throw new AppError("Không tìm thấy người dùng", 404);
+  }
+
+  return user;
 };
 
 export const deleteAdminUser = async (userId: string, actorId: string) => {

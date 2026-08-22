@@ -4,6 +4,7 @@ import {
   getClient,
   getClients,
   updateClientStatus,
+  updateUserRole,
 } from "../controllers/adminUser.controller";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
@@ -18,5 +19,6 @@ router.use(
 router.get("/", getClients);
 router.get("/:id", getClient);
 router.patch("/:id/status", updateClientStatus);
+router.patch("/:id/role", updateUserRole);
 
 export default router;

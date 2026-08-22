@@ -41,6 +41,12 @@ export const updateAdminUserStatus = async (
 
   return response.data;
 };
-
+export const updateAdminUserRole = async (
+  userId: string,
+  role: string
+) => {
+  const response = await api.patch(`/admin/users/${userId}/role`, { role });
+  return response.data;
+};
 export const deleteAdminUser = async (userId: string) =>
   (await api.delete<{ success: boolean; message: string }>(`/admin/users/${userId}`)).data;

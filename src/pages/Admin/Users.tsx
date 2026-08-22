@@ -16,6 +16,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import {
   getAdminUserById,
   getAdminUsers,
+  updateAdminUserRole,
   updateAdminUserStatus,
 } from "../../services/adminUser.service";
 
@@ -211,7 +212,6 @@ function UserTable({
                           </button>
                         )}
 
-
                       {account.id !== currentAdminId &&
                         account.status === "BLOCKED" && (
                           <button
@@ -276,9 +276,6 @@ function Users() {
     isLoading: authLoading,
   } = useAuth("ADMIN");
 
-  const [adminGroup, setAdminGroup] =
-    useState<UserGroupState>(emptyGroup);
-
   const [barberGroup, setBarberGroup] =
     useState<UserGroupState>(emptyGroup);
 
@@ -288,7 +285,6 @@ function Users() {
   const [clientGroup, setClientGroup] =
     useState<UserGroupState>(emptyGroup);
 
-  const [adminPage, setAdminPage] = useState(1);
   const [barberPage, setBarberPage] = useState(1);
   const [receptionistPage, setReceptionistPage] = useState(1);
   const [clientPage, setClientPage] = useState(1);
@@ -326,13 +322,8 @@ function Users() {
         limit: 5,
       };
 
-      const [adminResponse, receptionistResponse, barberResponse, clientResponse] =
+      const [receptionistResponse, barberResponse, clientResponse] =
         await Promise.all([
-          fetchBusinessQuery("admin-users", () => getAdminUsers({
-            ...commonParams,
-            role: "ADMIN",
-            page: adminPage,
-          }), { ...commonParams, role: "ADMIN", page: adminPage }),
           fetchBusinessQuery("admin-users", () => getAdminUsers({
             ...commonParams,
             role: "RECEPTIONIST",
@@ -350,11 +341,6 @@ function Users() {
           }), { ...commonParams, role: "CLIENT", page: clientPage }),
         ]);
 
-      setAdminGroup({
-        items: adminResponse.items,
-        pagination: adminResponse.pagination,
-      });
-
       setBarberGroup({
         items: barberResponse.items,
         pagination: barberResponse.pagination,
@@ -370,7 +356,7 @@ function Users() {
         pagination: clientResponse.pagination,
       });
 
-      setSummary(adminResponse.summary);
+      setSummary(clientResponse.summary);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -379,7 +365,6 @@ function Users() {
   }, [
     submittedKeyword,
     status,
-    adminPage,
     barberPage,
     receptionistPage,
     clientPage,
@@ -416,7 +401,6 @@ function Users() {
   const handleSearch = (event: FormEvent): void => {
     event.preventDefault();
 
-    setAdminPage(1);
     setReceptionistPage(1);
     setBarberPage(1);
     setClientPage(1);
@@ -427,7 +411,6 @@ function Users() {
     newStatus: AdminUserStatus | "ALL"
   ): void => {
     setStatus(newStatus);
-    setAdminPage(1);
     setReceptionistPage(1);
     setBarberPage(1);
     setClientPage(1);
@@ -482,6 +465,35 @@ function Users() {
     }
   };
 
+  const handleRoleChange = async (
+    userId: string,
+    newRole: AdminUserRole
+  ): Promise<void> => {
+    if (!selectedUser || selectedUser.role === newRole) return;
+
+    const confirmed = window.confirm(
+      `Bạn có chắc chắn muốn phân quyền tài khoản "${selectedUser.fullName}" sang "${roleLabels[newRole]}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setProcessingId(userId);
+      setError("");
+      setMessage("");
+
+      const response = await updateAdminUserRole(userId, newRole);
+
+      setMessage(response.message || "Cập nhật vai trò thành công");
+      await loadUsers();
+      await openDetail(userId);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   if (authLoading || (loading && summary.totalUsers === 0)) {
     return (
       <div className="admin-users-page">
@@ -504,7 +516,7 @@ function Users() {
             <p className="admin-users-brand">THADS BARBER</p>
             <h1>Quản lý người dùng</h1>
             <p>
-              Admin, Barber và Client được tách thành từng bảng riêng.
+              Lễ tân, Barber và Client được phân tách thành các bảng quản lý riêng biệt.
             </p>
           </div>
 
@@ -526,7 +538,6 @@ function Users() {
 
         <section className="admin-users-summary">
           <article><span>Tổng tài khoản</span><strong>{summary.totalUsers}</strong></article>
-          <article><span>Admin</span><strong>{summary.totalAdmins}</strong></article>
           <article><span>Barber</span><strong>{summary.totalBarbers}</strong></article>
           <article><span>Lễ tân</span><strong>{summary.totalReceptionists || 0}</strong></article>
           <article><span>Client</span><strong>{summary.totalClients}</strong></article>
@@ -569,20 +580,6 @@ function Users() {
             Đang cập nhật dữ liệu...
           </p>
         )}
-
-        <UserTable
-          title="Tài khoản Admin"
-          description="Các tài khoản có quyền quản trị hệ thống."
-          role="ADMIN"
-          group={adminGroup}
-          currentAdminId={user.id}
-          processingId={processingId}
-          onViewDetail={(userId) => void openDetail(userId)}
-          onChangeStatus={(account, newStatus) =>
-            void handleStatus(account, newStatus)
-          }
-          onPageChange={setAdminPage}
-        />
 
         <UserTable
           title="Tài khoản Lễ tân"
@@ -652,7 +649,36 @@ function Users() {
                 <h2>{selectedUser.fullName}</h2>
 
                 <div className="admin-user-detail-grid">
-                  <p><span>Vai trò</span><strong>{roleLabels[selectedUser.role]}</strong></p>
+                  <p>
+                    <span>Vai trò</span>
+                    {selectedUser.role === "ADMIN" ? (
+                      <strong>{roleLabels[selectedUser.role]}</strong>
+                    ) : (
+                      <select
+                        value={selectedUser.role}
+                        disabled={processingId === selectedUser.id}
+                        onChange={(e) =>
+                          void handleRoleChange(
+                            selectedUser.id,
+                            e.target.value as AdminUserRole
+                          )
+                        }
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          color: "#ffffff",
+                          border: "1px solid #333333",
+                          padding: "4px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.9rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <option value="CLIENT">{roleLabels.CLIENT}</option>
+                        <option value="RECEPTIONIST">{roleLabels.RECEPTIONIST}</option>
+                        <option value="BARBER">{roleLabels.BARBER}</option>
+                      </select>
+                    )}
+                  </p>
                   <p><span>Trạng thái</span><strong>{statusLabels[selectedUser.status]}</strong></p>
                   <p><span>Email</span><strong>{selectedUser.email}</strong></p>
                   <p><span>Số điện thoại</span><strong>{selectedUser.phone}</strong></p>
