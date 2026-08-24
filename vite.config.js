@@ -10,5 +10,12 @@ export default defineConfig({
     allowedHosts: [
       "among-added-tears-visit.trycloudflare.com",
     ],
+
+    proxy: {
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
+    },
   },
 });

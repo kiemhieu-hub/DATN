@@ -1,1 +1,23 @@
 .barber-dashboard-page{min-height:100vh;background:#f4ede3;color:#201a16;padding:36px;font-family:Arial,sans-serif}.barber-dashboard-container{max-width:1500px;margin:auto}.barber-dashboard-header,.barber-dashboard-filter,.barber-dashboard-charts article,.dashboard-appointments{background:#fffaf4;border:1px solid #dbc9b3;border-radius:20px;box-shadow:0 12px 30px #422c1512}.barber-dashboard-header{display:flex;justify-content:space-between;align-items:center;padding:30px}.barber-dashboard-header h1{font-size:42px;margin:6px 0}.barber-dashboard-header p{color:#76685b}.eyebrow,.barber-dashboard-charts small,.dashboard-appointments small{color:#a77831!important;letter-spacing:2px;font-weight:700}.barber-dashboard-header nav{display:flex;gap:9px;align-items:center}.barber-dashboard-header a,.barber-dashboard-header button,.barber-dashboard-filter button{padding:12px 15px;border:1px solid #b98743;border-radius:10px;background:#211c18;color:#fff;text-decoration:none;font-weight:700;cursor:pointer}.barber-dashboard-header a:hover,.barber-dashboard-header button:hover{background:#b98743;color:#17120e}.barber-dashboard-header .bell{position:relative;border-radius:50%;width:45px;height:45px;padding:0;display:grid;place-items:center;font-size:23px}.bell b{position:absolute;right:-5px;top:-7px;background:#d94c4c;color:#fff;border-radius:99px;font-size:11px;padding:4px 7px}.barber-dashboard-filter{display:flex;gap:16px;align-items:end;padding:20px;margin:18px 0}.barber-dashboard-filter label{display:grid;gap:8px;font-weight:700}.barber-dashboard-filter input{padding:12px;border:1px solid #cfbda8;border-radius:9px;background:#fff}.barber-dashboard-charts{display:grid;grid-template-columns:3fr 2fr;gap:18px}.barber-dashboard-charts article{padding:26px;min-height:370px}.chart-title h2{font-size:30px;margin:8px 0}.bar-chart{height:270px;display:flex;gap:12px;align-items:end;border-bottom:1px solid #d6c7b4;padding:24px 4px 0}.bar-column{height:100%;flex:1;min-width:34px;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px}.bar-column span{font-size:11px;color:#786b60}.bar-column i{display:block;width:min(48px,70%);background:linear-gradient(#dcb469,#a87931);border-radius:8px 8px 2px 2px}.bar-column small{font-size:10px;letter-spacing:0}.outcome-chart{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}.donut{width:210px;height:210px;border-radius:50%;display:grid;place-content:center;position:relative;margin:25px}.donut:after{content:"";position:absolute;inset:32px;background:#fffaf4;border-radius:50%}.donut strong,.donut span{z-index:1}.donut strong{font-size:40px}.legend{display:flex;gap:20px}.legend span{display:flex;align-items:center;gap:7px}.legend i{width:12px;height:12px;border-radius:50%}.green{background:#258657}.red{background:#d94c4c}.dashboard-appointments{padding:24px;margin-top:18px}.section-heading{display:flex;justify-content:space-between;align-items:center}.section-heading h2{margin:5px 0 18px}.section-heading a{color:#936523;font-weight:700}.dashboard-appointments article{display:grid;grid-template-columns:1fr 1fr 2fr auto;gap:18px;padding:16px;border-top:1px solid #e5d8c9;align-items:center}.dashboard-appointments article div{display:grid;gap:4px}.dashboard-appointments article small{letter-spacing:0;color:#7c7065!important}.dashboard-appointments article.unread{border-left:5px solid #258657;background:#edf8f1}.dashboard-appointments em{background:#258657;color:#fff;border-radius:20px;padding:5px 10px;font-style:normal}.barber-dashboard-error{padding:14px;background:#ffe6e4;color:#9d2929;border-radius:10px}.barber-dashboard-loading{display:grid;place-items:center;font-size:20px}@media(max-width:900px){.barber-dashboard-page{padding:16px}.barber-dashboard-header{align-items:flex-start;flex-direction:column}.barber-dashboard-header nav{flex-wrap:wrap}.barber-dashboard-charts{grid-template-columns:1fr}.barber-dashboard-filter{flex-wrap:wrap}.dashboard-appointments article{grid-template-columns:1fr 1fr}}
+/* Nút Đăng ký nghỉ đồng bộ giao diện Header */
+.barber-dashboard-header nav button.btn-leave-register {
+  background: #1a1918;
+  color: #e5b869;
+  border: 1px solid #c8b8a6;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.barber-dashboard-header nav button.btn-leave-register:hover {
+  background: #2a2826;
+  border-color: #e5b869;
+  color: #ffd885;
+  transform: translateY(-1px);
+}

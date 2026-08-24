@@ -24,10 +24,10 @@ import Booking from "./pages/Client/Booking";
 import BookingHistory from "./pages/Client/BookingHistory";
 import Favorites from "./pages/Client/Favorites";
 import ClientProfile from "./pages/Client/Profile";
-import Schedule from "./pages/barber/Schedule";
-import WorkingSchedule from "./pages/barber/WorkingSchedule";
-import Dashboard from "./pages/barber/Dashboard";
-import Profile from "./pages/barber/Profile";
+import Schedule from "./pages/Barber/Schedule";
+import WorkingSchedule from "./pages/Barber/WorkingSchedule";
+import Dashboard from "./pages/Barber/Dashboard";
+import Profile from "./pages/Barber/Profile";
 
 // Auth
 import Login from './pages/Auth/Login';

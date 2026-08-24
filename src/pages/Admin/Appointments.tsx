@@ -2,6 +2,7 @@ import axios from "axios";
 import { fetchBusinessQuery } from "../../lib/queryApi";
 import { realtimeSocket } from "../../lib/realtime";
 import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
+import { BarberLeaveRegistrationModal } from "../../components/BarberLeaveRegistrationModal"; // Thay đường dẫn tương ứng
 import {
   useCallback,
   useEffect,
@@ -96,6 +97,7 @@ const nextActions: Partial<
   ],
   CHECKED_IN: [
     { status: "IN_PROGRESS", label: "Bắt đầu" },
+    { status: "CANCELLED", label: "Hủy" },
   ],
   IN_PROGRESS: [
     {
@@ -212,7 +214,7 @@ function Appointments() {
   const location = useLocation();
   const isReceptionistPage = location.pathname.startsWith("/receptionist");
   const authRole = isReceptionistPage ? "RECEPTIONIST" : "ADMIN";
-
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const {
     user,
     isAuthenticated,
@@ -274,6 +276,11 @@ function Appointments() {
   const [paymentDialog, setPaymentDialog] = useState<{
     appointment: Appointment;
     method: "CASH" | "BANK_TRANSFER";
+  } | null>(null);
+  const [cancelDialog, setCancelDialog] = useState<{
+    appointment: Appointment;
+    reason: string;
+    presetReason: string;
   } | null>(null);
 
   const loadAppointments = useCallback(async () => {
@@ -492,31 +499,23 @@ function Appointments() {
     appointment: Appointment,
     targetStatus: AppointmentStatus
   ): Promise<void> => {
-    let cancellationReason: string | undefined;
-
+    // Nếu là thao tác HỦY -> Mở Modal Popup, không dùng prompt
     if (targetStatus === "CANCELLED") {
-      const inputReason = window.prompt(
-        "Nhập lý do hủy lịch:"
-      );
+      setCancelDialog({
+        appointment,
+        presetReason: "Khách bận việc đột xuất",
+        reason: "",
+      });
+      return;
+    }
 
-      if (inputReason === null) {
-        return;
-      }
+    // Các trạng thái khác vẫn xác nhận bình thường
+    const confirmed = window.confirm(
+      `Chuyển lịch sang “${statusLabels[targetStatus]}”?`
+    );
 
-      if (!inputReason.trim()) {
-        setError("Lý do hủy không được để trống");
-        return;
-      }
-
-      cancellationReason = inputReason.trim();
-    } else {
-      const confirmed = window.confirm(
-        `Chuyển lịch sang “${statusLabels[targetStatus]}”?`
-      );
-
-      if (!confirmed) {
-        return;
-      }
+    if (!confirmed) {
+      return;
     }
 
     try {
@@ -524,12 +523,10 @@ function Appointments() {
       setError("");
       setMessage("");
 
-      const response =
-        await updateAdminAppointmentStatus(
-          appointment._id,
-          targetStatus,
-          cancellationReason
-        );
+      const response = await updateAdminAppointmentStatus(
+        appointment._id,
+        targetStatus
+      );
 
       setMessage(response.message);
 
@@ -545,6 +542,41 @@ function Appointments() {
           "Không thể cập nhật trạng thái lịch hẹn"
         )
       );
+    } finally {
+      setProcessingId(null);
+    }
+  };
+  const handleConfirmCancel = async (): Promise<void> => {
+    if (!cancelDialog) return;
+
+    const fullReason = cancelDialog.reason.trim()
+      ? `${cancelDialog.presetReason}: ${cancelDialog.reason.trim()}`
+      : cancelDialog.presetReason;
+
+    try {
+      setProcessingId(cancelDialog.appointment._id);
+      setError("");
+      setMessage("");
+
+      const response = await updateAdminAppointmentStatus(
+        cancelDialog.appointment._id,
+        "CANCELLED",
+        fullReason
+      );
+
+      setMessage(response.message || "Đã hủy lịch hẹn thành công");
+      setCancelDialog(null);
+
+      if (selectedAppointment?._id === cancelDialog.appointment._id) {
+        setSelectedAppointment(response.appointment);
+      }
+
+      await loadAppointments();
+    } catch (requestError) {
+      const errorMsg = getErrorMessage(requestError, "Không thể hủy lịch hẹn");
+      setError(errorMsg);
+      // 👉 Thêm alert để biết chính xác backend đang từ chối vì lý do gì
+      alert(`Lỗi khi hủy: ${errorMsg}`);
     } finally {
       setProcessingId(null);
     }
@@ -647,11 +679,11 @@ function Appointments() {
         reopenForm.mode === "CHECK_IN"
           ? { mode: "CHECK_IN" }
           : {
-              mode: "RESCHEDULE",
-              appointmentDate: reopenForm.appointmentDate,
-              startTime: reopenForm.startTime,
-              barberId: reopenForm.barberId,
-            }
+            mode: "RESCHEDULE",
+            appointmentDate: reopenForm.appointmentDate,
+            startTime: reopenForm.startTime,
+            barberId: reopenForm.barberId,
+          }
       );
 
       setMessage(response.message);
@@ -962,6 +994,17 @@ function Appointments() {
           >
             Tìm kiếm
           </button>
+          {/* 👉 CHỈ HIỆN KHI Ở TRANG LỄ TÂN, ADMIN SẼ KHÔNG CÓ NÚT NÀY */}
+          {isReceptionistPage && (
+            <button
+              type="button"
+              className="appointment-search-button"
+              style={{ backgroundColor: "#1a1918", color: "#e5b869", fontWeight: "bold" }}
+              onClick={() => setIsLeaveModalOpen(true)}
+            >
+              + Đăng ký nghỉ
+            </button>
+          )}
         </form>
 
         <div className="appointment-table-wrapper">
@@ -1116,20 +1159,20 @@ function Appointments() {
 
                         {appointment.status === "COMPLETED" &&
                           appointment.paymentStatus !== "PAID" && (
-                          <button
-                            type="button"
-                            className="appointment-icon-button appointment-icon-payment"
-                            title="Thanh toán"
-                            aria-label="Thanh toán"
-                            disabled={processingId === appointment._id}
-                            onClick={() => setPaymentDialog({
-                              appointment,
-                              method: "CASH",
-                            })}
-                          >
-                            ₫
-                          </button>
-                        )}
+                            <button
+                              type="button"
+                              className="appointment-icon-button appointment-icon-payment"
+                              title="Thanh toán"
+                              aria-label="Thanh toán"
+                              disabled={processingId === appointment._id}
+                              onClick={() => setPaymentDialog({
+                                appointment,
+                                method: "CASH",
+                              })}
+                            >
+                              ₫
+                            </button>
+                          )}
 
                       </div>
                     </td>
@@ -1315,58 +1358,58 @@ function Appointments() {
 
             {selectedAppointment.status === "COMPLETED" &&
               selectedAppointment.paymentStatus !== "PAID" && (
-              <button
-                type="button"
-                className="appointment-modal-payment-button"
-                disabled={processingId === selectedAppointment._id}
-                onClick={() => setPaymentDialog({
-                  appointment: selectedAppointment,
-                  method: "CASH",
-                })}
-              >
-                {processingId === selectedAppointment._id
-                  ? "Đang xác nhận..."
-                  : `Thanh toán ${formatMoney(
+                <button
+                  type="button"
+                  className="appointment-modal-payment-button"
+                  disabled={processingId === selectedAppointment._id}
+                  onClick={() => setPaymentDialog({
+                    appointment: selectedAppointment,
+                    method: "CASH",
+                  })}
+                >
+                  {processingId === selectedAppointment._id
+                    ? "Đang xác nhận..."
+                    : `Thanh toán ${formatMoney(
                       getRemainingPayment(selectedAppointment)
                     )}đ`}
-              </button>
-            )}
+                </button>
+              )}
 
             {!["COMPLETED", "CANCELLED"].includes(
               selectedAppointment.status
             ) && (
-              <div className="appointment-change-barber">
-                <label htmlFor="new-barber">
-                  Đổi Barber
-                  <select
-                    id="new-barber"
-                    value={selectedBarberId}
-                    onChange={(event) =>
-                      setSelectedBarberId(event.target.value)
-                    }
-                  >
-                    {barbers.map((barber) => (
-                      <option
-                        key={barber.id}
-                        value={barber.id}
-                      >
-                        {barber.fullName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="appointment-change-barber">
+                  <label htmlFor="new-barber">
+                    Đổi Barber
+                    <select
+                      id="new-barber"
+                      value={selectedBarberId}
+                      onChange={(event) =>
+                        setSelectedBarberId(event.target.value)
+                      }
+                    >
+                      {barbers.map((barber) => (
+                        <option
+                          key={barber.id}
+                          value={barber.id}
+                        >
+                          {barber.fullName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-                <button
-                  type="button"
-                  disabled={processingId === selectedAppointment._id}
-                  onClick={() => void handleChangeBarber()}
-                >
-                  {processingId === selectedAppointment._id
-                    ? "Đang lưu..."
-                    : "Lưu Barber"}
-                </button>
-              </div>
-            )}
+                  <button
+                    type="button"
+                    disabled={processingId === selectedAppointment._id}
+                    onClick={() => void handleChangeBarber()}
+                  >
+                    {processingId === selectedAppointment._id
+                      ? "Đang lưu..."
+                      : "Lưu Barber"}
+                  </button>
+                </div>
+              )}
           </section>
         </div>
       )}
@@ -1484,8 +1527,8 @@ function Appointments() {
                 {processingId
                   ? "Đang xác nhận..."
                   : `Xác nhận đã thu ${formatMoney(
-                      getRemainingPayment(paymentDialog.appointment)
-                    )}đ`}
+                    getRemainingPayment(paymentDialog.appointment)
+                  )}đ`}
               </button>
             </div>
           </section>
@@ -1767,6 +1810,95 @@ function Appointments() {
             </div>
           </section>
         </div>
+      )}
+      {cancelDialog && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setCancelDialog(null)}
+        >
+          <section
+            className="appointment-modal"
+            style={{ maxWidth: "480px" }}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              aria-label="Đóng"
+              disabled={Boolean(processingId)}
+              onClick={() => setCancelDialog(null)}
+            >
+              ×
+            </button>
+
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2 style={{ color: "#dc2626" }}>Xác nhận hủy lịch hẹn</h2>
+            <p className="appointment-payment-description">
+              Mã: <b>{cancelDialog.appointment.appointmentCode}</b> · Khách: <b>{getUserName(cancelDialog.appointment.client)}</b>
+            </p>
+
+            <div style={{ margin: "16px 0", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "14px", fontWeight: "600", marginBottom: "6px" }}>
+                  Lý do hủy
+                </label>
+                <select
+                  value={cancelDialog.presetReason}
+                  onChange={(e) => setCancelDialog({ ...cancelDialog, presetReason: e.target.value })}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #d1d5db" }}
+                >
+                  <option value="Khách bận việc đột xuất">Khách bận việc đột xuất</option>
+                  <option value="Khách không đến (Quá giờ hẹn)">Khách không đến (Quá giờ hẹn)</option>
+                  <option value="Khách đổi ý sau khi Check-in">Khách đổi ý sau khi Check-in</option>
+                  <option value="Barber có sự cố đột xuất">Barber có sự cố đột xuất</option>
+                  <option value="Lý do khác">Lý do khác</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "14px", fontWeight: "600", marginBottom: "6px" }}>
+                  Ghi chú chi tiết (không bắt buộc)
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Nhập thêm chi tiết nếu cần..."
+                  value={cancelDialog.reason}
+                  onChange={(e) => setCancelDialog({ ...cancelDialog, reason: e.target.value })}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #d1d5db" }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "16px" }}>
+              <button
+                type="button"
+                disabled={Boolean(processingId)}
+                onClick={() => setCancelDialog(null)}
+                style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(processingId)}
+                onClick={() => void handleConfirmCancel()}
+                style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "#dc2626", color: "#fff", fontWeight: "600", cursor: "pointer" }}
+              >
+                {processingId ? "Đang hủy..." : "Xác nhận hủy lịch"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {isReceptionistPage && (
+        <BarberLeaveRegistrationModal
+          isOpen={isLeaveModalOpen}
+          onClose={() => setIsLeaveModalOpen(false)}
+          barbers={barbers}
+          currentUser={user}
+          isReceptionist={true}
+          onSuccess={() => void loadAppointments()}
+        />
       )}
     </div>
   );

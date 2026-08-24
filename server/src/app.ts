@@ -112,7 +112,7 @@ app.use("/api/payments/vnpay", vnpayRoutes);
 app.use("/api/favorites", favoriteHairstyleRoutes);
 app.use("/api/admin/refunds", refundRoutes);
 app.use('/api/contacts', contactRoutes);
-
+app.use("/api/barber-schedules", barberScheduleRoutes);
 
 // Error Handler
 app.use(
