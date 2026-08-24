@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../contexts/AuthContext";
 import { getAdminDashboard } from "../../services/adminDashboard.service";
 import { getCatalogBarbers } from "../../services/catalog.service";
+import { getAdminReviews } from "../../services/adminReview.service";
 import {
   getStaffNotifications,
   markAllStaffNotificationsRead,
@@ -27,6 +28,7 @@ import type {
 } from "../../types/AdminDashboard";
 import type { StaffNotification } from "../../types/StaffNotification";
 import type { CatalogBarber } from "../../types/Catalog";
+import type { AdminReview } from "../../types/AdminReview";
 
 import "./css/Dashboard.css";
 
@@ -63,6 +65,7 @@ function Dashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
 
   // Filters for dashboard
   const [period, setPeriod] = useState<"DAY" | "MONTH" | "YEAR">("MONTH");
@@ -109,22 +112,35 @@ function Dashboard() {
     }
   }, []);
 
+  const loadReviews = useCallback(async () => {
+    try {
+      const response = await getAdminReviews({ limit: 5, status: "APPROVED" });
+      setReviews(response.items);
+    } catch {
+      // Không làm gián đoạn Dashboard khi đánh giá lỗi.
+    }
+  }, []);
+
   useEffect(() => {
     void loadNotifications();
+    void loadReviews();
 
     const handleStaffDataChanged = (): void => {
       void loadDashboard();
       void loadNotifications();
+      void loadReviews();
     };
 
     realtimeSocket.on("notifications:changed", handleStaffDataChanged);
     realtimeSocket.on("appointments:changed", handleStaffDataChanged);
+    realtimeSocket.on("reviews:changed", handleStaffDataChanged);
 
     return () => {
       realtimeSocket.off("notifications:changed", handleStaffDataChanged);
       realtimeSocket.off("appointments:changed", handleStaffDataChanged);
+      realtimeSocket.off("reviews:changed", handleStaffDataChanged);
     };
-  }, [loadDashboard, loadNotifications]);
+  }, [loadDashboard, loadNotifications, loadReviews]);
 
   useRealtimeRefresh(() => {
     void loadDashboard();
@@ -392,10 +408,10 @@ function Dashboard() {
                         <circle cx="50" cy="50" r="40" fill="transparent" stroke="#eab308" strokeWidth="20"
                           strokeDasharray={`${pending * 2.51} ${251.2 - pending * 2.51}`}
                           strokeDashoffset={`-${(completed + cancelled) * 2.51}`} />
-                        <text x="50" y="45" textAnchor="middle" fill="#f2f0eb" fontSize="12" fontWeight="bold">
+                        <text x="50" y="45" textAnchor="middle" fill="#111" fontSize="12" fontWeight="bold">
                           {total}
                         </text>
-                        <text x="50" y="58" textAnchor="middle" fill="#8d8a83" fontSize="6">Tổng lịch</text>
+                        <text x="50" y="58" textAnchor="middle" fill="#666" fontSize="6">Tổng lịch</text>
                       </svg>
                     );
                   })()}
@@ -438,6 +454,47 @@ function Dashboard() {
                     <p className="admin-dashboard-empty-chart">Chưa có dữ liệu doanh thu</p>
                   )}
                 </div>
+              </div>
+            </section>
+
+            {/* Service Reviews Section */}
+            <section className="admin-dashboard-reviews-section">
+              <div className="admin-dashboard-reviews-card">
+                <div className="admin-dashboard-reviews-header">
+                  <h3>Đánh giá dịch vụ gần đây</h3>
+                  <Link to="/admin/reviews">Xem tất cả</Link>
+                </div>
+                {reviews.length > 0 ? (
+                  <div className="admin-dashboard-reviews-list">
+                    {reviews.map((review) => (
+                      <div key={review._id} className="admin-dashboard-review-item">
+                        <div className="admin-review-info">
+                          <div className="admin-review-client">{review.client.fullName}</div>
+                          <div className="admin-review-service">
+                            {review.serviceRatings.map((sr, i) => (
+                              <span key={i} className="admin-review-service-tag">
+                                {sr.service.name} ({sr.rating}★)
+                              </span>
+                            ))}
+                          </div>
+                          {review.barberComment && (
+                            <div className="admin-review-comment">"{review.barberComment}"</div>
+                          )}
+                          <div className="admin-review-meta">
+                            <span>Barber: {review.barber.fullName}</span>
+                            <span>{new Date(review.createdAt).toLocaleDateString("vi-VN")}</span>
+                          </div>
+                        </div>
+                        <div className="admin-review-rating">
+                          <strong>{review.overallRating.toFixed(1)}</strong>
+                          <small>★</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="admin-dashboard-empty-reviews">Chưa có đánh giá nào</p>
+                )}
               </div>
             </section>
 

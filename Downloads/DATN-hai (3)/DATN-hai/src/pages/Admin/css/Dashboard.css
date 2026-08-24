@@ -458,6 +458,123 @@
 .admin-dashboard-shortcuts a:hover,
 .admin-dashboard-shortcuts b { color: #111; }
 
+/* Service Reviews Section */
+.admin-dashboard-reviews-section {
+  margin-top: 16px;
+}
+
+.admin-dashboard-reviews-card {
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.admin-dashboard-reviews-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.admin-dashboard-reviews-header h3 {
+  margin: 0;
+  color: #111;
+  font-size: 16px;
+}
+
+.admin-dashboard-reviews-header a {
+  color: #111;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.admin-dashboard-reviews-header a:hover {
+  text-decoration: underline;
+}
+
+.admin-dashboard-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-dashboard-review-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  background: #f8f8f8;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.admin-review-info {
+  flex: 1;
+}
+
+.admin-review-client {
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 4px;
+}
+
+.admin-review-service {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.admin-review-service-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #111;
+  color: #fff;
+  font-size: 11px;
+  border-radius: 12px;
+}
+
+.admin-review-comment {
+  font-style: italic;
+  color: #555;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.admin-review-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: #888;
+}
+
+.admin-review-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 16px;
+  border-left: 1px solid #ddd;
+}
+
+.admin-review-rating strong {
+  font-size: 24px;
+  color: #111;
+}
+
+.admin-review-rating small {
+  font-size: 16px;
+  color: #eab308;
+}
+
+.admin-dashboard-empty-reviews {
+  text-align: center;
+  color: #888;
+  padding: 30px;
+  margin: 0;
+}
+
 @media (max-width: 1050px) {
   .admin-dashboard-overview { grid-template-columns: repeat(2, 1fr); }
   .admin-dashboard-status-grid { grid-template-columns: repeat(3, 1fr); }
