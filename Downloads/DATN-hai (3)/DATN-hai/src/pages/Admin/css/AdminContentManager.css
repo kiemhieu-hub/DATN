@@ -1,0 +1,107 @@
+.admin-content-page {
+  color: #eee;
+}
+
+.admin-content-header p {
+  margin: 0;
+  color: #c6a15b;
+  letter-spacing: 3px;
+}
+
+.admin-content-header h1 {
+  margin: 7px 0;
+  font-size: clamp(30px, 4vw, 42px);
+}
+
+.admin-content-header span,
+.admin-content-row small {
+  color: #aaa;
+}
+
+.admin-content-alert {
+  margin-top: 18px;
+  padding: 13px 16px;
+}
+
+.admin-content-alert.error {
+  color: #ffd3d3;
+  background: #4a2020;
+}
+
+.admin-content-alert.success {
+  color: #c9f5dc;
+  background: #193d2b;
+}
+
+.admin-content-card {
+  margin-top: 24px;
+  border: 1px solid #302f2b;
+  background: #181817;
+}
+
+.admin-content-card-title,
+.admin-content-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+}
+
+.admin-content-card-title {
+  border-bottom: 1px solid #302f2b;
+  background: #20201e;
+}
+
+.admin-content-card-title h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.admin-content-card-title span {
+  color: #c6a15b;
+}
+
+.admin-content-row {
+  border-bottom: 1px solid #302f2b;
+}
+
+.admin-content-row:last-child {
+  border-bottom: 0;
+}
+
+.admin-content-row strong,
+.admin-content-row small {
+  display: block;
+}
+
+.admin-content-row small {
+  margin-top: 6px;
+}
+
+.admin-content-row button {
+  flex: 0 0 auto;
+  border: 1px solid #c75b5b;
+  background: #3f2020;
+  color: #ffd8d8;
+  padding: 9px 15px;
+  cursor: pointer;
+}
+
+.admin-content-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-content-empty {
+  margin: 0;
+  padding: 55px 20px;
+  color: #999;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .admin-content-row {
+    align-items: flex-start;
+  }
+}
