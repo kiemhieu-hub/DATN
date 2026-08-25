@@ -6,6 +6,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { getBarberDashboard } from "../../services/barberDashboard.service";
 import type { BarberDashboardData } from "../../types/BarberDashboard";
 import { queryKeys } from "../../lib/queryKeys";
+import { BarberLeaveRegistrationModal } from "../../components/BarberLeaveRegistrationModal";
 import "./css/Dashboard.css";
 
 const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
@@ -16,6 +17,7 @@ function Dashboard() {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth("BARBER");
   const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -64,6 +66,9 @@ function Dashboard() {
             <Link className="bell" to="/barber/schedule" aria-label="Thông báo">♢{unread > 0 && <b>{unread}</b>}</Link>
             <Link to="/barber/schedule">Lịch hẹn</Link>
             <Link to="/barber/working-schedule">Lịch làm việc</Link>
+            <button type="button" onClick={() => setIsLeaveModalOpen(true)}>
+              Đăng ký nghỉ
+            </button>
             <Link to="/barber/profile">Cá nhân</Link>
             <button onClick={() => { logout(); navigate("/barber/login"); }}>Đăng xuất</button>
           </nav>
@@ -109,6 +114,13 @@ function Dashboard() {
             ))}
           </section>
         </>}
+        <BarberLeaveRegistrationModal
+          isOpen={isLeaveModalOpen}
+          onClose={() => setIsLeaveModalOpen(false)}
+          currentUser={user || undefined}
+          isReceptionist={false}
+          onSuccess={() => void dashboardQuery.refetch()}
+        />
       </main>
     </div>
   );

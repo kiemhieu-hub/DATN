@@ -185,7 +185,7 @@ const STATUS_TRANSITIONS: Record<
 > = {
   PENDING: ["CONFIRMED", "CANCELLED"],
   CONFIRMED: ["CHECKED_IN", "NO_SHOW", "CANCELLED"],
-  CHECKED_IN: ["IN_PROGRESS"],
+  CHECKED_IN: ["IN_PROGRESS", "CANCELLED"],
   IN_PROGRESS: ["COMPLETED"],
   COMPLETED: [],
   NO_SHOW: ["CONFIRMED", "IN_PROGRESS"],
@@ -1489,6 +1489,13 @@ export const updateAppointmentStatus =
         reason: reason?.trim() || undefined,
       },
     });
+    if (status === "CANCELLED") {
+      queueAppointmentLifecycleEmail(
+        appointment as any,
+        "CANCELLED",
+        `Lịch hẹn của bạn đã được hủy bởi ${actorRole === "ADMIN" ? "Admin" : "Lễ tân"}. Lý do: ${reason?.trim() || "Không có lý do cụ thể"}`
+      );
+    }
 
     return populateAppointment(
       String(appointment._id)

@@ -33,7 +33,7 @@ import type {
   Appointment,
   AppointmentStatus,
 } from "../../types/Appointment";
-import type { CatalogBarber, CatalogService } from "../../types/Catalog";
+import type { CatalogBarber, CatalogService, ServiceGroup } from "../../types/Catalog";
 
 import "./css/Appointments.css";
 
@@ -46,6 +46,16 @@ interface ServiceEditorState {
   appointment: Appointment;
   selectedIds: string[];
 }
+
+const groupNames: Record<ServiceGroup, string> = {
+  HAIRCUT: "Cắt tóc",
+  BEARD: "Chăm sóc râu",
+  COLOR: "Nhuộm tóc",
+  CARE: "Chăm sóc thư giãn",
+  OTHER: "Uốn và tạo kiểu",
+};
+
+const serviceGroups = Object.keys(groupNames) as ServiceGroup[];
 
 const statusLabels: Record<AppointmentStatus, string> = {
   PENDING: "Chờ xác nhận",
@@ -95,7 +105,14 @@ const nextActions: Partial<
     },
   ],
   CHECKED_IN: [
-    { status: "IN_PROGRESS", label: "Bắt đầu" },
+    { 
+      status: "IN_PROGRESS", 
+      label: "Bắt đầu" 
+    },
+    {
+      status: "CANCELLED",
+      label: "Hủy",
+    },
   ],
   IN_PROGRESS: [
     {
@@ -219,45 +236,31 @@ function Appointments() {
     isLoading: authLoading,
   } = useAuth(authRole);
 
-  const [appointments, setAppointments] =
-    useState<Appointment[]>([]);
-
-  const [barbers, setBarbers] =
-    useState<CatalogBarber[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [barbers, setBarbers] = useState<CatalogBarber[]>([]);
   const [services, setServices] = useState<CatalogService[]>([]);
 
   const [keyword, setKeyword] = useState("");
-  const [submittedKeyword, setSubmittedKeyword] =
-    useState("");
+  const [submittedKeyword, setSubmittedKeyword] = useState("");
 
-  const [statusFilter, setStatusFilter] =
-    useState<AppointmentStatus | "ALL">("ALL");
-
-  const [barberFilter, setBarberFilter] =
-    useState("");
-
-  const [dateFilter, setDateFilter] =
-    useState("");
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "ALL">("ALL");
+  const [barberFilter, setBarberFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [timeFilter, setTimeFilter] = useState("");
-  const [sortOrder, setSortOrder] = useState<
-    "priority" | "newest" | "oldest"
-  >("priority");
+  const [sortOrder, setSortOrder] = useState<"priority" | "newest" | "oldest">("priority");
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] =
-    useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<Appointment | null>(null);
-
-  const [selectedBarberId, setSelectedBarberId] =
-    useState("");
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedBarberId, setSelectedBarberId] = useState("");
+  
   const [reopenForm, setReopenForm] = useState<{
     appointment: Appointment;
     mode: "CHECK_IN" | "RESCHEDULE";
@@ -265,12 +268,14 @@ function Appointments() {
     startTime: string;
     barberId: string;
   } | null>(null);
+
   const [receipt, setReceipt] = useState<{
     appointment: Appointment;
     method: "CASH" | "BANK_TRANSFER";
   } | null>(null);
-  const [serviceEditor, setServiceEditor] =
-    useState<ServiceEditorState | null>(null);
+
+  const [serviceEditor, setServiceEditor] = useState<ServiceEditorState | null>(null);
+
   const [paymentDialog, setPaymentDialog] = useState<{
     appointment: Appointment;
     method: "CASH" | "BANK_TRANSFER";
@@ -347,21 +352,10 @@ function Appointments() {
   }, []);
 
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
+    if (authLoading) return;
 
-    if (!isAuthenticated || !user) {
-      navigate(isReceptionistPage ? "/receptionist/login" : "/admin/login", {
-        replace: true,
-      });
-      return;
-    }
-
-    if (user.role !== authRole) {
-      navigate(isReceptionistPage ? "/receptionist/login" : "/admin/login", {
-        replace: true,
-      });
+    if (!isAuthenticated || !user || user.role !== authRole) {
+      navigate(isReceptionistPage ? "/receptionist/login" : "/admin/login", { replace: true });
       return;
     }
 
@@ -381,9 +375,7 @@ function Appointments() {
   ]);
 
   useEffect(() => {
-    if (!isAuthenticated || !user || user.role !== authRole) {
-      return;
-    }
+    if (!isAuthenticated || !user || user.role !== authRole) return;
 
     const handleAppointmentsChanged = (): void => {
       void loadAppointments();
@@ -403,17 +395,10 @@ function Appointments() {
   }, Boolean(isAuthenticated && user?.role === authRole));
 
   useEffect(() => {
-    if (!isAuthenticated || !user || user.role !== authRole) {
-      return;
-    }
+    if (!isAuthenticated || !user || user.role !== authRole) return;
 
-    const appointmentId = new URLSearchParams(location.search).get(
-      "appointmentId"
-    );
-
-    if (!appointmentId) {
-      return;
-    }
+    const appointmentId = new URLSearchParams(location.search).get("appointmentId");
+    if (!appointmentId) return;
 
     const openAppointmentFromNotification = async (): Promise<void> => {
       try {
@@ -430,24 +415,14 @@ function Appointments() {
 
         setSelectedBarberId(currentBarberId);
       } catch (requestError) {
-        setError(
-          getErrorMessage(
-            requestError,
-            "Không thể mở lịch hẹn từ thông báo"
-          )
-        );
+        setError(getErrorMessage(requestError, "Không thể mở lịch hẹn từ thông báo"));
       } finally {
         setProcessingId(null);
       }
     };
 
     void openAppointmentFromNotification();
-  }, [
-    authRole,
-    isAuthenticated,
-    location.search,
-    user,
-  ]);
+  }, [authRole, isAuthenticated, location.search, user]);
 
   const handleSearch = (event: FormEvent): void => {
     event.preventDefault();
@@ -476,9 +451,7 @@ function Appointments() {
   };
 
   const closeDetail = (): void => {
-    if (processingId) {
-      return;
-    }
+    if (processingId) return;
 
     setSelectedAppointment(null);
     setSelectedBarberId("");
@@ -495,13 +468,9 @@ function Appointments() {
     let cancellationReason: string | undefined;
 
     if (targetStatus === "CANCELLED") {
-      const inputReason = window.prompt(
-        "Nhập lý do hủy lịch:"
-      );
+      const inputReason = window.prompt("Nhập lý do hủy lịch:");
 
-      if (inputReason === null) {
-        return;
-      }
+      if (inputReason === null) return;
 
       if (!inputReason.trim()) {
         setError("Lý do hủy không được để trống");
@@ -510,13 +479,9 @@ function Appointments() {
 
       cancellationReason = inputReason.trim();
     } else {
-      const confirmed = window.confirm(
-        `Chuyển lịch sang “${statusLabels[targetStatus]}”?`
-      );
+      const confirmed = window.confirm(`Chuyển lịch sang “${statusLabels[targetStatus]}”?`);
 
-      if (!confirmed) {
-        return;
-      }
+      if (!confirmed) return;
     }
 
     try {
@@ -524,12 +489,11 @@ function Appointments() {
       setError("");
       setMessage("");
 
-      const response =
-        await updateAdminAppointmentStatus(
-          appointment._id,
-          targetStatus,
-          cancellationReason
-        );
+      const response = await updateAdminAppointmentStatus(
+        appointment._id,
+        targetStatus,
+        cancellationReason
+      );
 
       setMessage(response.message);
 
@@ -539,21 +503,14 @@ function Appointments() {
 
       await loadAppointments();
     } catch (requestError) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Không thể cập nhật trạng thái lịch hẹn"
-        )
-      );
+      setError(getErrorMessage(requestError, "Không thể cập nhật trạng thái lịch hẹn"));
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleChangeBarber = async (): Promise<void> => {
-    if (!selectedAppointment) {
-      return;
-    }
+    if (!selectedAppointment) return;
 
     if (!selectedBarberId) {
       setError("Vui lòng chọn Barber mới");
@@ -575,28 +532,19 @@ function Appointments() {
 
       await loadAppointments();
     } catch (requestError) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Không thể đổi Barber"
-        )
-      );
+      setError(getErrorMessage(requestError, "Không thể đổi Barber"));
     } finally {
       setProcessingId(null);
     }
   };
 
-  const handleCashPayment = async (
-    appointment: Appointment
-  ): Promise<void> => {
+  const handleCashPayment = async (appointment: Appointment): Promise<void> => {
     try {
       setProcessingId(appointment._id);
       setError("");
       setMessage("");
 
-      const response = await confirmCashPayment(
-        appointment._id
-      );
+      const response = await confirmCashPayment(appointment._id);
 
       setMessage(response.message);
       setPaymentDialog(null);
@@ -608,12 +556,7 @@ function Appointments() {
 
       await loadAppointments();
     } catch (requestError) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Không thể xác nhận thanh toán tiền mặt"
-        )
-      );
+      setError(getErrorMessage(requestError, "Không thể xác nhận thanh toán tiền mặt"));
     } finally {
       setProcessingId(null);
     }
@@ -713,13 +656,34 @@ function Appointments() {
     setServiceEditor({ appointment, selectedIds: currentIds });
   };
 
-  const addEditorService = (serviceId: string): void => {
+  const toggleEditorService = (service: CatalogService): void => {
     setServiceEditor((current) => {
-      if (!current || current.selectedIds.includes(serviceId)) return current;
+      if (!current) return null;
+
+      const isSelected = current.selectedIds.includes(service.id);
+
+      if (isSelected) {
+        return {
+          ...current,
+          selectedIds: current.selectedIds.filter((id) => id !== service.id),
+        };
+      }
+
+      if (!service.isExclusiveInGroup) {
+        return {
+          ...current,
+          selectedIds: [...current.selectedIds, service.id],
+        };
+      }
+
+      const filteredIds = current.selectedIds.filter((id) => {
+        const item = services.find((candidate) => candidate.id === id);
+        return !(item?.group === service.group && item.isExclusiveInGroup);
+      });
 
       return {
         ...current,
-        selectedIds: [...current.selectedIds, serviceId],
+        selectedIds: [...filteredIds, service.id],
       };
     });
   };
@@ -802,20 +766,15 @@ function Appointments() {
     return null;
   }
 
-  const selectedActivities =
-    selectedAppointment?.activities ?? [];
+  const selectedActivities = selectedAppointment?.activities ?? [];
 
   return (
     <div className="admin-appointments-page">
       <main className="admin-appointments-container">
         <header className="admin-appointments-header">
           <div className="admin-appointments-title">
-            <p className="admin-appointments-brand">
-              THADS BARBER
-            </p>
-
+            <p className="admin-appointments-brand">THADS BARBER</p>
             <h1>Quản lý lịch hẹn</h1>
-
             <p className="admin-appointments-description">
               {isReceptionistPage
                 ? "Xác nhận, check-in, điều phối dịch vụ và thanh toán lịch hẹn."
@@ -841,50 +800,33 @@ function Appointments() {
           </div>
         )}
 
-        <form
-          className="appointment-filters"
-          onSubmit={handleSearch}
-        >
+        <form className="appointment-filters" onSubmit={handleSearch}>
           <div className="appointment-filter-field appointment-filter-search">
-            <label htmlFor="appointment-keyword">
-              Tìm khách hàng
-            </label>
+            <label htmlFor="appointment-keyword">Tìm khách hàng</label>
             <input
               id="appointment-keyword"
               value={keyword}
-              onChange={(event) =>
-                setKeyword(event.target.value)
-              }
+              onChange={(event) => setKeyword(event.target.value)}
               placeholder="Tên, email hoặc số điện thoại"
             />
           </div>
 
           <div className="appointment-filter-field">
-            <label htmlFor="appointment-status">
-              Trạng thái
-            </label>
+            <label htmlFor="appointment-status">Trạng thái</label>
             <select
               id="appointment-status"
               value={statusFilter}
               onChange={(event) => {
-                setStatusFilter(
-                  event.target.value as AppointmentStatus | "ALL"
-                );
+                setStatusFilter(event.target.value as AppointmentStatus | "ALL");
                 setPage(1);
               }}
             >
               <option value="ALL">Tất cả trạng thái</option>
-
-              {Object.entries(statusLabels).map(
-                ([statusValue, label]) => (
-                  <option
-                    key={statusValue}
-                    value={statusValue}
-                  >
-                    {label}
-                  </option>
-                )
-              )}
+              {Object.entries(statusLabels).map(([statusValue, label]) => (
+                <option key={statusValue} value={statusValue}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -894,7 +836,10 @@ function Appointments() {
               id="appointment-time"
               type="time"
               value={timeFilter}
-              onChange={(event) => { setTimeFilter(event.target.value); setPage(1); }}
+              onChange={(event) => {
+                setTimeFilter(event.target.value);
+                setPage(1);
+              }}
             />
           </div>
 
@@ -904,9 +849,7 @@ function Appointments() {
               id="appointment-sort"
               value={sortOrder}
               onChange={(event) => {
-                setSortOrder(
-                  event.target.value as "priority" | "newest" | "oldest"
-                );
+                setSortOrder(event.target.value as "priority" | "newest" | "oldest");
                 setPage(1);
               }}
             >
@@ -917,9 +860,7 @@ function Appointments() {
           </div>
 
           <div className="appointment-filter-field">
-            <label htmlFor="appointment-barber">
-              Barber
-            </label>
+            <label htmlFor="appointment-barber">Barber</label>
             <select
               id="appointment-barber"
               value={barberFilter}
@@ -929,12 +870,8 @@ function Appointments() {
               }}
             >
               <option value="">Tất cả Barber</option>
-
               {barbers.map((barber) => (
-                <option
-                  key={barber.id}
-                  value={barber.id}
-                >
+                <option key={barber.id} value={barber.id}>
                   {barber.fullName}
                 </option>
               ))}
@@ -942,9 +879,7 @@ function Appointments() {
           </div>
 
           <div className="appointment-filter-field">
-            <label htmlFor="appointment-date">
-              Ngày hẹn
-            </label>
+            <label htmlFor="appointment-date">Ngày hẹn</label>
             <input
               id="appointment-date"
               type="date"
@@ -956,10 +891,7 @@ function Appointments() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="appointment-search-button"
-          >
+          <button type="submit" className="appointment-search-button">
             Tìm kiếm
           </button>
         </form>
@@ -982,10 +914,7 @@ function Appointments() {
             <tbody>
               {appointments.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="appointment-empty"
-                  >
+                  <td colSpan={8} className="appointment-empty">
                     Không có lịch hẹn phù hợp.
                   </td>
                 </tr>
@@ -996,7 +925,6 @@ function Appointments() {
                       <strong className="appointment-customer-name">
                         {getUserName(appointment.client)}
                       </strong>
-
                       {typeof appointment.client !== "string" && (
                         <div className="appointment-customer-contact">
                           <span>{appointment.client.phone}</span>
@@ -1065,28 +993,19 @@ function Appointments() {
                           </button>
                         )}
 
-                        {(nextActions[appointment.status] ?? []).map(
-                          (action) => (
-                            <button
-                              type="button"
-                              key={action.status}
-                              disabled={
-                                processingId === appointment._id
-                              }
-                              title={action.label}
-                              aria-label={action.label}
-                              className={`appointment-icon-button ${action.status === "CANCELLED" ? "appointment-icon-cancel" : `appointment-icon-${action.status.toLowerCase()}`}`}
-                              onClick={() =>
-                                void handleChangeStatus(
-                                  appointment,
-                                  action.status
-                                )
-                              }
-                            >
-                              {statusActionIcons[action.status]}
-                            </button>
-                          )
-                        )}
+                        {(nextActions[appointment.status] ?? []).map((action) => (
+                          <button
+                            type="button"
+                            key={action.status}
+                            disabled={processingId === appointment._id}
+                            title={action.label}
+                            aria-label={action.label}
+                            className={`appointment-icon-button ${action.status === "CANCELLED" ? "appointment-icon-cancel" : `appointment-icon-${action.status.toLowerCase()}`}`}
+                            onClick={() => void handleChangeStatus(appointment, action.status)}
+                          >
+                            {statusActionIcons[action.status]}
+                          </button>
+                        ))}
 
                         {!(["COMPLETED", "CANCELLED"] as AppointmentStatus[]).includes(appointment.status) && (
                           <button
@@ -1114,23 +1033,18 @@ function Appointments() {
                           </button>
                         )}
 
-                        {appointment.status === "COMPLETED" &&
-                          appointment.paymentStatus !== "PAID" && (
+                        {appointment.status === "COMPLETED" && appointment.paymentStatus !== "PAID" && (
                           <button
                             type="button"
                             className="appointment-icon-button appointment-icon-payment"
                             title="Thanh toán"
                             aria-label="Thanh toán"
                             disabled={processingId === appointment._id}
-                            onClick={() => setPaymentDialog({
-                              appointment,
-                              method: "CASH",
-                            })}
+                            onClick={() => setPaymentDialog({ appointment, method: "CASH" })}
                           >
                             ₫
                           </button>
                         )}
-
                       </div>
                     </td>
                   </tr>
@@ -1164,19 +1078,9 @@ function Appointments() {
       </main>
 
       {selectedAppointment && (
-        <div
-          className="appointment-modal-backdrop"
-          onMouseDown={closeDetail}
-        >
-          <section
-            className="appointment-modal"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="appointment-modal-close"
-              onClick={closeDetail}
-            >
+        <div className="appointment-modal-backdrop" onMouseDown={closeDetail}>
+          <section className="appointment-modal" onMouseDown={(event) => event.stopPropagation()}>
+            <button type="button" className="appointment-modal-close" onClick={closeDetail}>
               ×
             </button>
 
@@ -1196,9 +1100,7 @@ function Appointments() {
 
               <div>
                 <span>Ngày hẹn</span>
-                <strong>
-                  {formatDate(selectedAppointment.appointmentDate)}
-                </strong>
+                <strong>{formatDate(selectedAppointment.appointmentDate)}</strong>
               </div>
 
               <div>
@@ -1215,9 +1117,7 @@ function Appointments() {
 
               <div>
                 <span>Thanh toán</span>
-                <strong>
-                  {paymentStatusLabels[selectedAppointment.paymentStatus]}
-                </strong>
+                <strong>{paymentStatusLabels[selectedAppointment.paymentStatus]}</strong>
               </div>
             </div>
 
@@ -1230,17 +1130,21 @@ function Appointments() {
                     {service.nameSnapshot}
                     <small>{service.durationSnapshot} phút</small>
                   </span>
-
                   <strong>{formatMoney(service.priceSnapshot)}đ</strong>
                 </li>
               ))}
             </ul>
 
             <div className="appointment-detail-total">
-              <span>Tổng dịch vụ: {formatMoney(selectedAppointment.subtotal)}đ{selectedAppointment.voucherCode ? ` · Voucher ${selectedAppointment.voucherCode}: -${formatMoney(selectedAppointment.discountAmount)}đ` : ""}<br />Đặt cọc: {selectedAppointment.depositRequired ? `${formatMoney(selectedAppointment.depositAmount)}đ (${selectedAppointment.depositPaid ? "đã cọc" : "chưa cọc"})` : "không yêu cầu"}<br />Còn phải thu</span>
-              <strong>
-                {formatMoney(selectedAppointment.totalPrice)}đ
-              </strong>
+              <span>
+                Tổng dịch vụ: {formatMoney(selectedAppointment.subtotal)}đ
+                {selectedAppointment.voucherCode ? ` · Voucher ${selectedAppointment.voucherCode}: -${formatMoney(selectedAppointment.discountAmount)}đ` : ""}
+                <br />
+                Đặt cọc: {selectedAppointment.depositRequired ? `${formatMoney(selectedAppointment.depositAmount)}đ (${selectedAppointment.depositPaid ? "đã cọc" : "chưa cọc"})` : "không yêu cầu"}
+                <br />
+                Còn phải thu
+              </span>
+              <strong>{formatMoney(selectedAppointment.totalPrice)}đ</strong>
             </div>
 
             <div className="appointment-detail-note">
@@ -1255,12 +1159,22 @@ function Appointments() {
                   const key = segment === "HAIR" ? "hair" : "care";
                   const value = selectedAppointment.workProgress?.[key];
                   if (value === "NOT_REQUIRED") return null;
-                  return <div key={segment}>
-                    <span>{segment === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc"}</span>
-                    <b>{value === "PENDING" ? "Chưa bắt đầu" : value === "IN_PROGRESS" ? "Đang thực hiện" : "Đã hoàn thành"}</b>
-                    {value === "PENDING" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "START")}>Bắt đầu</button>}
-                    {value === "IN_PROGRESS" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "COMPLETE")}>Hoàn thành phần việc</button>}
-                  </div>;
+                  return (
+                    <div key={segment}>
+                      <span>{segment === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc"}</span>
+                      <b>{value === "PENDING" ? "Chưa bắt đầu" : value === "IN_PROGRESS" ? "Đang thực hiện" : "Đã hoàn thành"}</b>
+                      {value === "PENDING" && (
+                        <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "START")}>
+                          Bắt đầu
+                        </button>
+                      )}
+                      {value === "IN_PROGRESS" && (
+                        <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "COMPLETE")}>
+                          Hoàn thành phần việc
+                        </button>
+                      )}
+                    </div>
+                  );
                 })}
                 <small>Lịch chỉ hoàn thành khi tất cả phần việc bắt buộc đều đã hoàn thành.</small>
               </section>
@@ -1269,7 +1183,11 @@ function Appointments() {
             {selectedAppointment.cancellation && (
               <div className="appointment-cancel-reason">
                 <strong>Lý do hủy:</strong>
-                <span>{selectedAppointment.cancellation.reason}<br />Hoàn cọc: {selectedAppointment.cancellation.depositRefundStatus === "ELIGIBLE" ? `Đủ điều kiện · ${formatMoney(selectedAppointment.cancellation.depositRefundAmount ?? 0)}đ` : selectedAppointment.cancellation.depositRefundStatus === "REFUNDED" ? "Đã hoàn" : selectedAppointment.cancellation.depositRefundStatus === "NOT_ELIGIBLE" ? "Không đủ điều kiện" : "Không áp dụng"}</span>
+                <span>
+                  {selectedAppointment.cancellation.reason}
+                  <br />
+                  Hoàn cọc: {selectedAppointment.cancellation.depositRefundStatus === "ELIGIBLE" ? `Đủ điều kiện · ${formatMoney(selectedAppointment.cancellation.depositRefundAmount ?? 0)}đ` : selectedAppointment.cancellation.depositRefundStatus === "REFUNDED" ? "Đã hoàn" : selectedAppointment.cancellation.depositRefundStatus === "NOT_ELIGIBLE" ? "Không đủ điều kiện" : "Không áp dụng"}
+                </span>
               </div>
             )}
 
@@ -1287,10 +1205,7 @@ function Appointments() {
                           : activity.actorRole;
 
                     return (
-                      <article
-                        className="appointment-activity-item"
-                        key={activity._id}
-                      >
+                      <article className="appointment-activity-item" key={activity._id}>
                         <span className="appointment-activity-dot" />
                         <div>
                           <strong>{activity.description}</strong>
@@ -1313,43 +1228,30 @@ function Appointments() {
               )}
             </section>
 
-            {selectedAppointment.status === "COMPLETED" &&
-              selectedAppointment.paymentStatus !== "PAID" && (
+            {selectedAppointment.status === "COMPLETED" && selectedAppointment.paymentStatus !== "PAID" && (
               <button
                 type="button"
                 className="appointment-modal-payment-button"
                 disabled={processingId === selectedAppointment._id}
-                onClick={() => setPaymentDialog({
-                  appointment: selectedAppointment,
-                  method: "CASH",
-                })}
+                onClick={() => setPaymentDialog({ appointment: selectedAppointment, method: "CASH" })}
               >
                 {processingId === selectedAppointment._id
                   ? "Đang xác nhận..."
-                  : `Thanh toán ${formatMoney(
-                      getRemainingPayment(selectedAppointment)
-                    )}đ`}
+                  : `Thanh toán ${formatMoney(getRemainingPayment(selectedAppointment))}đ`}
               </button>
             )}
 
-            {!["COMPLETED", "CANCELLED"].includes(
-              selectedAppointment.status
-            ) && (
+            {!["COMPLETED", "CANCELLED"].includes(selectedAppointment.status) && (
               <div className="appointment-change-barber">
                 <label htmlFor="new-barber">
                   Đổi Barber
                   <select
                     id="new-barber"
                     value={selectedBarberId}
-                    onChange={(event) =>
-                      setSelectedBarberId(event.target.value)
-                    }
+                    onChange={(event) => setSelectedBarberId(event.target.value)}
                   >
                     {barbers.map((barber) => (
-                      <option
-                        key={barber.id}
-                        value={barber.id}
-                      >
+                      <option key={barber.id} value={barber.id}>
                         {barber.fullName}
                       </option>
                     ))}
@@ -1361,15 +1263,14 @@ function Appointments() {
                   disabled={processingId === selectedAppointment._id}
                   onClick={() => void handleChangeBarber()}
                 >
-                  {processingId === selectedAppointment._id
-                    ? "Đang lưu..."
-                    : "Lưu Barber"}
+                  {processingId === selectedAppointment._id ? "Đang lưu..." : "Lưu Barber"}
                 </button>
               </div>
             )}
           </section>
         </div>
       )}
+
       {paymentDialog && (
         <div
           className="appointment-modal-backdrop"
@@ -1415,10 +1316,7 @@ function Appointments() {
               <button
                 type="button"
                 className={paymentDialog.method === "CASH" ? "active" : ""}
-                onClick={() => setPaymentDialog({
-                  ...paymentDialog,
-                  method: "CASH",
-                })}
+                onClick={() => setPaymentDialog({ ...paymentDialog, method: "CASH" })}
               >
                 <span>₫</span>
                 <div>
@@ -1431,10 +1329,7 @@ function Appointments() {
               <button
                 type="button"
                 className={paymentDialog.method === "BANK_TRANSFER" ? "active" : ""}
-                onClick={() => setPaymentDialog({
-                  ...paymentDialog,
-                  method: "BANK_TRANSFER",
-                })}
+                onClick={() => setPaymentDialog({ ...paymentDialog, method: "BANK_TRANSFER" })}
               >
                 <span>⇄</span>
                 <div>
@@ -1449,12 +1344,8 @@ function Appointments() {
               <div className="appointment-transfer-qr">
                 <div>
                   <span>Quét mã để chuyển khoản</span>
-                  <strong>
-                    {formatMoney(getRemainingPayment(paymentDialog.appointment))}đ
-                  </strong>
-                  <small>
-                    Nội dung: {paymentDialog.appointment.appointmentCode}
-                  </small>
+                  <strong>{formatMoney(getRemainingPayment(paymentDialog.appointment))}đ</strong>
+                  <small>Nội dung: {paymentDialog.appointment.appointmentCode}</small>
                 </div>
 
                 <img
@@ -1477,20 +1368,21 @@ function Appointments() {
                 type="button"
                 className="appointment-payment-confirm"
                 disabled={Boolean(processingId)}
-                onClick={() => paymentDialog.method === "CASH"
-                  ? void handleCashPayment(paymentDialog.appointment)
-                  : void handleBankTransfer(paymentDialog.appointment)}
+                onClick={() =>
+                  paymentDialog.method === "CASH"
+                    ? void handleCashPayment(paymentDialog.appointment)
+                    : void handleBankTransfer(paymentDialog.appointment)
+                }
               >
                 {processingId
                   ? "Đang xác nhận..."
-                  : `Xác nhận đã thu ${formatMoney(
-                      getRemainingPayment(paymentDialog.appointment)
-                    )}đ`}
+                  : `Xác nhận đã thu ${formatMoney(getRemainingPayment(paymentDialog.appointment))}đ`}
               </button>
             </div>
           </section>
         </div>
       )}
+
       {serviceEditor && (
         <div
           className="appointment-modal-backdrop"
@@ -1556,34 +1448,63 @@ function Appointments() {
 
             <div className="appointment-service-editor-heading appointment-available-heading">
               <div>
-                <strong>Thêm dịch vụ</strong>
-                <span>Chọn theo tên dịch vụ, không cần nhập mã ID.</span>
+                <strong>Chọn theo tên dịch vụ</strong>
+                <span>
+                  Các dịch vụ thuộc mục Cắt tóc, Chăm sóc râu, Nhuộm tóc chỉ được chọn tối đa 1 dịch vụ.
+                </span>
               </div>
             </div>
 
-            <div className="appointment-available-services">
-              {services
-                .filter(
-                  (service) =>
-                    service.isActive &&
-                    !serviceEditor.selectedIds.includes(service.id)
-                )
-                .map((service) => (
-                  <button
-                    type="button"
-                    className="appointment-available-service"
-                    key={service.id}
-                    onClick={() => addEditorService(service.id)}
-                  >
-                    <span className="appointment-service-add-icon">+</span>
-                    <span className="appointment-service-editor-info">
-                      <strong>{service.name}</strong>
-                      <small>
-                        {service.durationMinutes} phút · {formatMoney(service.price)}đ
-                      </small>
-                    </span>
-                  </button>
-                ))}
+            <div className="appointment-available-services-grouped">
+              {serviceGroups.map((groupKey) => {
+                const groupServices = services.filter(
+                  (service) => service.isActive && service.group === groupKey
+                );
+
+                if (groupServices.length === 0) return null;
+
+                return (
+                  <div className="appointment-service-group-block" key={groupKey}>
+                    <h3 className="appointment-service-group-title">{groupNames[groupKey]}</h3>
+                    <div className="appointment-available-services-grid">
+                      {groupServices.map((service) => {
+                        const isSelected = serviceEditor.selectedIds.includes(service.id);
+
+                        const isGroupDisabled =
+                          !isSelected &&
+                          service.isExclusiveInGroup &&
+                          serviceEditor.selectedIds.some((selectedId) => {
+                            const selectedService = services.find((s) => s.id === selectedId);
+                            return (
+                              selectedService?.group === service.group &&
+                              selectedService.isExclusiveInGroup
+                            );
+                          });
+
+                        return (
+                          <button
+                            type="button"
+                            key={service.id}
+                            disabled={isGroupDisabled}
+                            className={`appointment-available-service ${isSelected ? "selected" : ""} ${isGroupDisabled ? "disabled" : ""}`}
+                            onClick={() => toggleEditorService(service)}
+                          >
+                            <span className="appointment-service-add-icon">
+                              {isSelected ? "✓" : "+"}
+                            </span>
+                            <span className="appointment-service-editor-info">
+                              <strong>{service.name}</strong>
+                              <small>
+                                {service.durationMinutes} phút · {formatMoney(service.price)}đ
+                              </small>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="appointment-service-editor-total">
@@ -1619,6 +1540,7 @@ function Appointments() {
           </section>
         </div>
       )}
+
       {reopenForm && (
         <div
           className="appointment-modal-backdrop"
@@ -1737,6 +1659,7 @@ function Appointments() {
           </section>
         </div>
       )}
+
       {receipt && (
         <div className="appointment-modal-backdrop">
           <section className="appointment-receipt">
