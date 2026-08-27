@@ -190,20 +190,21 @@
 }
 
 .admin-shell-user > span {
-  color: var(--admin-muted);
+  color: var(--admin-gold) !important;
   font-size: 10px;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
 .admin-shell-user b {
   margin-top: 3px;
-  font-size: 13px;
+  color: #ffffff !important;
+  font-size: 14px;
 }
 
 .admin-shell-user small {
   overflow: hidden;
-  color: var(--admin-muted);
+  color: #a8a49c !important;
   font-size: 11px;
   text-overflow: ellipsis;
 }
