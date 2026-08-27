@@ -346,9 +346,74 @@ function Booking() {
             <label className="booking-note">Ghi chú<textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Yêu cầu kiểu tóc hoặc lưu ý khác..." /></label>
           </section>
           <section className="booking-panel">
-            <div className="booking-panel-title"><b>04</b><div><h2>Thông tin khách sử dụng</h2><p>Có thể sửa để đặt lịch hộ người khác.</p></div></div>
-            <div className="booking-fields"><label>Họ và tên<input value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></label><label>Số điện thoại<input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} /></label><label>Email<input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} /></label></div>
-          </section>
+  <div className="booking-panel-title">
+    <b>04</b>
+    <div>
+      <h2>Thông tin khách sử dụng</h2>
+      <p>Có thể sửa để đặt lịch hộ người khác.</p>
+    </div>
+  </div>
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+      gap: "14px",
+      alignItems: "start",
+    }}
+  >
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <span style={{ color: "#ddd", fontSize: "13px" }}>Họ và tên</span>
+      <input
+        value={customerName}
+        onChange={(e) => setCustomerName(e.target.value)}
+        style={{
+          width: "100%",
+          height: "48px",
+          padding: "13px",
+          color: "#eee",
+          background: "#111",
+          border: "1px solid #49463f",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
+
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <span style={{ color: "#ddd", fontSize: "13px" }}>Số điện thoại</span>
+      <input
+        value={customerPhone}
+        onChange={(e) => setCustomerPhone(e.target.value)}
+        style={{
+          width: "100%",
+          height: "48px",
+          padding: "13px",
+          color: "#eee",
+          background: "#111",
+          border: "1px solid #49463f",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
+
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <span style={{ color: "#ddd", fontSize: "13px" }}>Email</span>
+      <input
+        type="email"
+        value={customerEmail}
+        onChange={(e) => setCustomerEmail(e.target.value)}
+        style={{
+          width: "100%",
+          height: "48px",
+          padding: "13px",
+          color: "#eee",
+          background: "#111",
+          border: "1px solid #49463f",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
+  </div>
+</section>
         </main>
 
         <aside className="booking-summary">
