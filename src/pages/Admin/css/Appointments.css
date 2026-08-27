@@ -1396,6 +1396,164 @@
   }
 }
 
+/* Dàn các nút dịch vụ theo chiều ngang (Responsive Grid) */
+.appointment-available-services-grid {
+  display: grid;
+  /* Hiển thị tự động 2-3 cột tùy kích thước màn hình, mỗi thẻ tối thiểu 220px */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* Đảm bảo từng thẻ dịch vụ chiếm full chiều rộng của ô Grid */
+.appointment-available-service {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  text-align: left;
+}
+.appointment-available-services-grid {
+  display: flex;
+  flex-wrap: wrap; /* Tự động xuống dòng khi hết chiều rộng */
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.appointment-available-service {
+  flex: 1 1 calc(33.333% - 12px); /* Hiển thị 3 cột trên màn hình rộng */
+  min-width: 200px; /* Độ rộng tối thiểu trước khi xuống dòng */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+.appointment-reschedule-modal {
+  width: min(680px, 100%);
+}
+
+.appointment-reschedule-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.appointment-reschedule-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.appointment-reschedule-field label {
+  color: #c8c2b8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.appointment-reschedule-field input[type="date"] {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #45423b;
+  border-radius: 6px;
+  background: #11110f;
+  color: #f2eee7;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.appointment-reschedule-field input[type="date"]:focus {
+  border-color: #c6a15b;
+}
+
+/* Slot Grid tương tự Booking page */
+.appointment-reschedule-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  max-height: 220px;
+  padding-right: 4px;
+  overflow-y: auto;
+}
+
+.appointment-reschedule-slots button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid #3e3a33;
+  border-radius: 6px;
+  background: #121210;
+  color: #f2eee7;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.appointment-reschedule-slots button:hover:not(:disabled) {
+  border-color: #c6a15b;
+  background: #1e1b15;
+}
+
+.appointment-reschedule-slots button.selected {
+  border-color: #c6a15b;
+  background: #c6a15b;
+  color: #11110f;
+}
+
+.appointment-reschedule-slots button:disabled,
+.appointment-reschedule-slots button.occupied {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: #2b2823;
+  background: #171614;
+}
+
+.appointment-reschedule-slots button small {
+  font-size: 10px;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+.appointment-reschedule-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.appointment-reschedule-actions button {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.appointment-reschedule-cancel {
+  border: 1px solid #4a463e;
+  background: #1b1b19;
+  color: #f2eee7;
+}
+
+.appointment-reschedule-submit {
+  border: 1px solid #c6a15b;
+  background: #c6a15b;
+  color: #11110f;
+}
+
+.appointment-reschedule-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .appointment-receipt{width:min(620px,100%);max-height:90vh;padding:30px;overflow:auto;color:#111;background:#fff}.appointment-receipt h2{text-align:center}.appointment-receipt ul{padding:0;list-style:none}.appointment-receipt li{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid #ddd}.appointment-receipt img{display:block;width:220px;height:220px;margin:20px auto}.appointment-receipt>div{display:flex;justify-content:flex-end;gap:10px}.appointment-receipt button{padding:10px 16px;cursor:pointer}
 .appointment-work-progress{margin:18px 0;padding:18px;border:1px solid #d4c1a8;border-radius:14px;background:#f8efe3}.appointment-work-progress>div{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #dfcfbc}.appointment-work-progress button{border:0;border-radius:8px;background:#287653;color:#fff;padding:9px 13px;font-weight:700;cursor:pointer}.appointment-work-progress small{display:block;color:#725f4b;margin-top:9px}
   

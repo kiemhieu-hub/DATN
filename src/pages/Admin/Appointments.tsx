@@ -5,6 +5,7 @@ import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
   type FormEvent,
 } from "react";
@@ -28,6 +29,7 @@ import {
 } from "../../services/adminAppointment.service";
 import { getCatalogBarbers, getCatalogServices } from "../../services/catalog.service";
 import { confirmBankTransfer, confirmCashPayment } from "../../services/payment.service";
+import { getAvailableSlots, type AvailableSlot } from "../../services/appointment.service";
 
 import type {
   Appointment,
@@ -281,6 +283,21 @@ function Appointments() {
     method: "CASH" | "BANK_TRANSFER";
   } | null>(null);
 
+  // --- STATE DÀNH CHO POPUP ĐỔI GIỜ HẸN ---
+  const [rescheduleAppointment, setRescheduleAppointment] = useState<Appointment | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState<string>("");
+  const [rescheduleTime, setRescheduleTime] = useState<string>("");
+  const [rescheduleSlots, setRescheduleSlots] = useState<AvailableSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState<boolean>(false);
+
+  // Giới hạn ngày chọn
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const maxDateStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return d.toISOString().slice(0, 10);
+  }, []);
+
   const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
@@ -423,6 +440,33 @@ function Appointments() {
 
     void openAppointmentFromNotification();
   }, [authRole, isAuthenticated, location.search, user]);
+
+  // Tải danh sách Slot trống khi mở modal Đổi giờ hoặc khi đổi Ngày
+  useEffect(() => {
+    if (!rescheduleAppointment || !rescheduleDate) {
+      setRescheduleSlots([]);
+      return;
+    }
+
+    setSlotsLoading(true);
+    const barberId = typeof rescheduleAppointment.barber === "object"
+      ? rescheduleAppointment.barber._id
+      : rescheduleAppointment.barber;
+
+    const serviceIds = rescheduleAppointment.services
+      .map((s: any) => {
+        if (typeof s === "string") return s;
+        if (typeof s.service === "string") return s.service;
+        if (s.service && typeof s.service === "object") return s.service._id;
+        return s._id;
+      })
+      .filter(Boolean);
+
+    getAvailableSlots(barberId, serviceIds, rescheduleDate)
+      .then((res) => setRescheduleSlots(res.slots))
+      .catch(() => setRescheduleSlots([]))
+      .finally(() => setSlotsLoading(false));
+  }, [rescheduleAppointment, rescheduleDate]);
 
   const handleSearch = (event: FormEvent): void => {
     event.preventDefault();
@@ -629,16 +673,35 @@ function Appointments() {
     }
   };
 
-  const handleReschedule = async (appointment: Appointment): Promise<void> => {
-    const date = window.prompt("Ngày hẹn mới (YYYY-MM-DD):", appointment.appointmentDate);
-    if (!date) return;
-    const time = window.prompt("Giờ bắt đầu mới (HH:mm):", appointment.startTime);
-    if (!time || !window.confirm("Xác nhận khách hàng đã đồng ý đổi lịch?")) return;
+  // Mở Popup đổi lịch
+  const handleOpenRescheduleModal = (appointment: Appointment): void => {
+    setRescheduleAppointment(appointment);
+    setRescheduleDate(appointment.appointmentDate || todayStr);
+    setRescheduleTime(appointment.startTime || "");
+    setError("");
+  };
+
+  // Xác nhận đổi lịch từ Modal Popup
+  const handleConfirmReschedule = async (): Promise<void> => {
+    if (!rescheduleAppointment || !rescheduleDate || !rescheduleTime) return;
+
     try {
-      setProcessingId(appointment._id);
-      const response = await rescheduleAdminAppointment(appointment._id, date, time, true);
+      setProcessingId(rescheduleAppointment._id);
+      setError("");
+      setMessage("");
+
+      const response = await rescheduleAdminAppointment(
+        rescheduleAppointment._id,
+        rescheduleDate,
+        rescheduleTime,
+        true
+      );
+
       setMessage(response.message);
-      if (selectedAppointment?._id === appointment._id) setSelectedAppointment(response.appointment);
+      if (selectedAppointment?._id === rescheduleAppointment._id) {
+        setSelectedAppointment(response.appointment);
+      }
+      setRescheduleAppointment(null);
       await loadAppointments();
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Không thể đổi lịch hẹn"));
@@ -1014,7 +1077,7 @@ function Appointments() {
                             title="Đổi lịch hẹn"
                             aria-label="Đổi lịch hẹn"
                             disabled={processingId === appointment._id}
-                            onClick={() => void handleReschedule(appointment)}
+                            onClick={() => handleOpenRescheduleModal(appointment)}
                           >
                             ◷
                           </button>
@@ -1267,6 +1330,103 @@ function Appointments() {
                 </button>
               </div>
             )}
+          </section>
+        </div>
+      )}
+
+      {/* MODAL POPUP ĐỔI NGÀY / GIỜ HẸN */}
+      {rescheduleAppointment && (
+        <div
+          className="appointment-modal-backdrop"
+          onMouseDown={() => !processingId && setRescheduleAppointment(null)}
+        >
+          <section
+            className="appointment-modal appointment-reschedule-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              aria-label="Đóng"
+              disabled={Boolean(processingId)}
+              onClick={() => setRescheduleAppointment(null)}
+            >
+              ×
+            </button>
+
+            <p className="appointment-modal-brand">THADS BARBER</p>
+            <h2>Đổi ngày & khung giờ hẹn</h2>
+
+            <div className="appointment-reschedule-info">
+              <p>Khách hàng: <strong>{getUserName(rescheduleAppointment.client)}</strong></p>
+              <p>Barber phụ trách: <strong>{getUserName(rescheduleAppointment.barber)}</strong></p>
+            </div>
+
+            <div className="appointment-reschedule-field">
+              <label htmlFor="reschedule-date-input">Chọn ngày hẹn mới:</label>
+              <input
+                id="reschedule-date-input"
+                type="date"
+                min={todayStr}
+                max={maxDateStr}
+                value={rescheduleDate}
+                onChange={(e) => {
+                  setRescheduleDate(e.target.value);
+                  setRescheduleTime("");
+                }}
+              />
+            </div>
+
+            <div className="appointment-reschedule-field">
+              <label>Chọn khung giờ khả dụng:</label>
+              {slotsLoading ? (
+                <p className="appointment-slots-loading">Đang tải danh sách khung giờ...</p>
+              ) : (
+                <div className="appointment-reschedule-slots">
+                  {rescheduleSlots.length === 0 ? (
+                    <p className="appointment-slots-loading">Không có khung giờ khả dụng trong ngày này.</p>
+                  ) : (
+                    rescheduleSlots.map((slot) => {
+                      const isSelected = rescheduleTime === slot.startTime;
+                      const isOccupied = !slot.available;
+
+                      return (
+                        <button
+                          key={slot.startTime}
+                          type="button"
+                          disabled={isOccupied}
+                          title={isOccupied ? slot.reason || "Khung giờ đã có lịch" : "Khung giờ còn trống"}
+                          className={`appointment-slot-btn ${isSelected ? "selected" : ""} ${isOccupied ? "occupied" : ""}`}
+                          onClick={() => setRescheduleTime(slot.startTime)}
+                        >
+                          <strong>{slot.startTime}</strong>
+                          <small>{slot.endTime}</small>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="appointment-reopen-actions">
+              <button
+                type="button"
+                className="appointment-reopen-cancel"
+                disabled={Boolean(processingId)}
+                onClick={() => setRescheduleAppointment(null)}
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                className="appointment-reopen-submit"
+                disabled={Boolean(processingId) || !rescheduleDate || !rescheduleTime}
+                onClick={() => void handleConfirmReschedule()}
+              >
+                {processingId ? "Đang xử lý..." : "Xác nhận đổi lịch"}
+              </button>
+            </div>
           </section>
         </div>
       )}
