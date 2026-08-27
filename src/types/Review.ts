@@ -18,3 +18,12 @@ export interface CreateReviewPayload {
     comment: string;
   }>;
 }
+
+export interface PublicBarberReview {
+  _id: string;
+  client?: { _id: string; fullName: string; avatar?: string };
+  barberRating: number;
+  barberComment: string;
+  overallRating: number;
+  createdAt: string;
+}

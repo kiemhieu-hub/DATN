@@ -22,7 +22,7 @@ const validRating = (value: number) =>
 
 export const createClientReview = async (
   clientId: string,
-  input: CreateReviewInput
+  input: CreateReviewInput,
 ) => {
   if (!mongoose.Types.ObjectId.isValid(input.appointmentId)) {
     throw new AppError("Mã lịch hẹn không hợp lệ", 400);
@@ -51,17 +51,20 @@ export const createClientReview = async (
   }
 
   const appointmentServiceIds = appointment.services.map((item) =>
-    String(item.service)
+    String(item.service),
   );
   const ratingMap = new Map(
-    input.serviceRatings.map((item) => [item.serviceId, item])
+    input.serviceRatings.map((item) => [item.serviceId, item]),
   );
 
   if (
     ratingMap.size !== appointmentServiceIds.length ||
     appointmentServiceIds.some((serviceId) => !ratingMap.has(serviceId))
   ) {
-    throw new AppError("Phải đánh giá đầy đủ và đúng các dịch vụ trong lịch hẹn", 400);
+    throw new AppError(
+      "Phải đánh giá đầy đủ và đúng các dịch vụ trong lịch hẹn",
+      400,
+    );
   }
 
   const serviceRatings = appointmentServiceIds.map((serviceId) => {
@@ -76,9 +79,14 @@ export const createClientReview = async (
     };
   });
 
-  const allRatings = [input.barberRating, ...serviceRatings.map((item) => item.rating)];
+  const allRatings = [
+    input.barberRating,
+    ...serviceRatings.map((item) => item.rating),
+  ];
   const overallRating = Number(
-    (allRatings.reduce((total, item) => total + item, 0) / allRatings.length).toFixed(1)
+    (
+      allRatings.reduce((total, item) => total + item, 0) / allRatings.length
+    ).toFixed(1),
   );
 
   return Review.create({
@@ -98,3 +106,15 @@ export const getMyReviews = async (clientId: string) =>
     .select("appointment overallRating status createdAt")
     .sort({ createdAt: -1 })
     .lean();
+
+export const getApprovedBarberReviews = async (barberId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(barberId)) {
+    throw new AppError("Mã Barber không hợp lệ", 400);
+  }
+  return Review.find({ barber: barberId, status: "APPROVED" })
+    .select("client barberRating barberComment overallRating createdAt")
+    .populate("client", "fullName avatar")
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .lean();
+};

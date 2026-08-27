@@ -7,7 +7,7 @@ import AppError from "../utils/AppError";
 export const createReview = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
@@ -30,11 +30,27 @@ export const createReview = async (
 export const getMine = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
     const reviews = await reviewService.getMyReviews(req.user.userId);
+    res.json({ success: true, reviews });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getApprovedByBarber = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const barberId = Array.isArray(req.params.barberId)
+      ? (req.params.barberId[0] ?? "")
+      : (req.params.barberId ?? "");
+    const reviews = await reviewService.getApprovedBarberReviews(barberId);
     res.json({ success: true, reviews });
   } catch (error) {
     next(error);

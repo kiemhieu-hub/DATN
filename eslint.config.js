@@ -5,7 +5,9 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // public/js chứa thư viện giao diện bên thứ ba đã minify; server/dist và
+  // dist là sản phẩm build, không phải mã nguồn cần lint.
+  globalIgnores(['dist/**', 'server/dist/**', 'public/js/**', '**/node_modules/**']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

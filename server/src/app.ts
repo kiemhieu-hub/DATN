@@ -33,6 +33,7 @@ import staffNotificationRoutes from "./routes/staffNotification.routes";
 import vnpayRoutes from "./routes/vnpay.routes";
 import favoriteHairstyleRoutes from "./routes/favoriteHairstyle.routes";
 import refundRoutes from "./routes/refund.routes";
+import bankAccountRoutes from "./routes/bankAccount.routes";
 
 import {
   emitBusinessChanged,
@@ -111,6 +112,7 @@ app.use("/api/staff/notifications", staffNotificationRoutes);
 app.use("/api/payments/vnpay", vnpayRoutes);
 app.use("/api/favorites", favoriteHairstyleRoutes);
 app.use("/api/admin/refunds", refundRoutes);
+app.use("/api/banks", bankAccountRoutes);
 
 
 

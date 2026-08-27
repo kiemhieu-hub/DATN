@@ -272,6 +272,22 @@ export const getAdminDashboard =
       ...dateMatch,
     };
     if (filters.barberId) revenueFilter.barber = filters.barberId;
+    const outcomeFilter: Record<string, unknown> = {
+      status: { $in: ["COMPLETED", "CANCELLED"] },
+      ...dateMatch,
+    };
+    if (filters.barberId) outcomeFilter.barber = filters.barberId;
+    const [completedInPeriod, cancelledInPeriod] = await Promise.all([
+      Appointment.countDocuments({ ...outcomeFilter, status: "COMPLETED" }),
+      Appointment.countDocuments({ ...outcomeFilter, status: "CANCELLED" }),
+    ]);
+    const outcomeTotal = completedInPeriod + cancelledInPeriod;
+    const outcomeSummary = {
+      completed: completedInPeriod,
+      cancelled: cancelledInPeriod,
+      completionRate: outcomeTotal ? Math.round(completedInPeriod * 100 / outcomeTotal) : 0,
+      cancellationRate: outcomeTotal ? Math.round(cancelledInPeriod * 100 / outcomeTotal) : 0,
+    };
     const revenueRows = await Appointment.aggregate([
       { $match: revenueFilter },
       { $group: { _id: "$barber", revenue: { $sum: "$totalPrice" }, appointments: { $sum: 1 } } },
@@ -293,5 +309,6 @@ export const getAdminDashboard =
       recentAppointments,
       revenueByBarber,
       revenueFilter: { period, date: selectedDate, barberId: filters.barberId || "" },
+      outcomeSummary,
     };
   };

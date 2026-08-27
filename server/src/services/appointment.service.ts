@@ -923,11 +923,11 @@ export const createAppointment =
 
     const discountPercent = voucherCalculation?.discountPercent ?? 0;
     const discountAmount = voucherCalculation?.discountAmount ?? 0;
-    // Voucher chỉ được ghi nhận khi đặt lịch. Số tiền giảm thực tế được áp
-    // dụng sau khi chốt dịch vụ ở bước thanh toán cuối cùng.
-    const totalPrice = subtotal;
-    const depositRequired = subtotal > 200000;
-    const depositAmount = depositRequired ? Math.round(subtotal * 0.3) : 0;
+    // Lưu mức giảm tạm tính ngay khi đặt lịch. Khi chốt dịch vụ, hệ thống vẫn
+    // tính lại trên hóa đơn thực tế để không làm sai số tiền thanh toán.
+    const totalPrice = Math.max(0, subtotal - discountAmount);
+    const depositRequired = totalPrice > 200000;
+    const depositAmount = depositRequired ? Math.round(totalPrice * 0.3) : 0;
 
     const appointment =
       await Appointment.create({

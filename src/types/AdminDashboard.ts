@@ -95,6 +95,12 @@ export interface AdminDashboardData {
     date: string;
     barberId: string;
   };
+  outcomeSummary: {
+    completed: number;
+    cancelled: number;
+    completionRate: number;
+    cancellationRate: number;
+  };
 }
 
 export interface GetAdminDashboardResponse {

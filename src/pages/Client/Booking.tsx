@@ -172,9 +172,10 @@ function Booking() {
     .filter((service) => service.staffType === "CARE")
     .reduce((sum, service) => sum + service.durationMinutes, 0);
   const totalDuration = hairDuration + careDuration;
-  const total = subtotal;
-  const depositRequired = subtotal > 200000;
-  const depositAmount = depositRequired ? Math.round(subtotal * 0.3) : 0;
+  const previewDiscount = voucherCalculation?.discountAmount ?? 0;
+  const total = Math.max(0, subtotal - previewDiscount);
+  const depositRequired = total > 200000;
+  const depositAmount = depositRequired ? Math.round(total * 0.3) : 0;
 
   const formatDuration = (minutes: number): string => {
     if (minutes < 60) return `${minutes}p`;
@@ -227,7 +228,7 @@ function Booking() {
   const chooseVoucher = (voucher: AvailableVoucher): void => {
     setVoucherCode(voucher.code);
     setVoucherCalculation(voucher);
-    setVoucherMessage(`Đã chọn ${voucher.code}. Voucher sẽ được tính trên hóa đơn thực tế khi hoàn thành.`);
+    setVoucherMessage(`Đã áp dụng tạm tính ${voucher.code}: giảm ${money(voucher.discountAmount)}đ.`);
     setVoucherOpen(false);
   };
 
@@ -386,9 +387,11 @@ function Booking() {
 
           {voucherMessage && <small className="booking-voucher-message">{voucherMessage}</small>}
           <div className="booking-totals">
-            <p className="grand-total"><span>Tổng tiền tạm tính</span><b>{money(total)}đ</b></p>
-            {voucherCode && <small>Voucher <b>{voucherCode}</b> sẽ áp dụng khi chốt hóa đơn cuối cùng.</small>}
-            {depositRequired && <small>Đặt cọc 30% tổng đơn ban đầu: <b>{money(depositAmount)}đ</b></small>}
+            <p><span>Tạm tính dịch vụ</span><b>{money(subtotal)}đ</b></p>
+            {voucherCode && <p><span>Voucher {voucherCode}</span><b>-{money(previewDiscount)}đ</b></p>}
+            <p className="grand-total"><span>Tổng tiền sau voucher</span><b>{money(total)}đ</b></p>
+            {voucherCode && <small>Mức giảm được kiểm tra lại theo dịch vụ thực tế khi chốt hóa đơn.</small>}
+            {depositRequired && <small>Đặt cọc 30% tổng sau voucher: <b>{money(depositAmount)}đ</b></small>}
           </div>
           <div className="booking-summary-footer">
             <button className="booking-submit" disabled={submitting}>{submitting ? "Đang đặt lịch..." : "Xác nhận đặt lịch"}</button>

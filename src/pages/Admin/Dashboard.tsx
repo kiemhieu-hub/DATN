@@ -10,9 +10,12 @@ import {
   useState,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { getAdminDashboard } from "../../services/adminDashboard.service";
+import { getCatalogBarbers } from "../../services/catalog.service";
+import { getAdminReviews } from "../../services/adminReview.service";
 import {
   getStaffNotifications,
   markAllStaffNotificationsRead,
@@ -24,6 +27,8 @@ import type {
   AdminDashboardData,
 } from "../../types/AdminDashboard";
 import type { StaffNotification } from "../../types/StaffNotification";
+import type { CatalogBarber } from "../../types/Catalog";
+import type { AdminReview } from "../../types/AdminReview";
 
 import "./css/Dashboard.css";
 
@@ -60,19 +65,38 @@ function Dashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
+
+  // Filters for dashboard
+  const [period, setPeriod] = useState<"DAY" | "MONTH" | "YEAR">("MONTH");
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [barberId, setBarberId] = useState("");
+
+  const filters = useMemo(() => ({
+    period,
+    date,
+    barberId: barberId || undefined,
+  }), [period, date, barberId]);
+
+  // Fetch barbers for filter dropdown
+  const barbersQuery = useQuery({
+    queryKey: [...["catalog", "barbers"], filters],
+    queryFn: async () => (await getCatalogBarbers()).barbers,
+  });
+  const barbers: CatalogBarber[] = barbersQuery.data ?? [];
 
   const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-      const response = await fetchBusinessQuery("admin-dashboard", () => getAdminDashboard());
+      const response = await fetchBusinessQuery("admin-dashboard", () => getAdminDashboard(filters));
       setData(response.data);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     void loadDashboard();
@@ -88,22 +112,35 @@ function Dashboard() {
     }
   }, []);
 
+  const loadReviews = useCallback(async () => {
+    try {
+      const response = await getAdminReviews({ limit: 5, status: "APPROVED" });
+      setReviews(response.items);
+    } catch {
+      // Không làm gián đoạn Dashboard khi đánh giá lỗi.
+    }
+  }, []);
+
   useEffect(() => {
     void loadNotifications();
+    void loadReviews();
 
     const handleStaffDataChanged = (): void => {
       void loadDashboard();
       void loadNotifications();
+      void loadReviews();
     };
 
     realtimeSocket.on("notifications:changed", handleStaffDataChanged);
     realtimeSocket.on("appointments:changed", handleStaffDataChanged);
+    realtimeSocket.on("reviews:changed", handleStaffDataChanged);
 
     return () => {
       realtimeSocket.off("notifications:changed", handleStaffDataChanged);
       realtimeSocket.off("appointments:changed", handleStaffDataChanged);
+      realtimeSocket.off("reviews:changed", handleStaffDataChanged);
     };
-  }, [loadDashboard, loadNotifications]);
+  }, [loadDashboard, loadNotifications, loadReviews]);
 
   useRealtimeRefresh(() => {
     void loadDashboard();
@@ -288,6 +325,34 @@ function Dashboard() {
 
         {data && (
           <>
+            {/* Filter Section */}
+            <section className="admin-dashboard-filters">
+              <label>
+                Chu kỳ
+                <select value={period} onChange={(e) => setPeriod(e.target.value as typeof period)}>
+                  <option value="DAY">Theo ngày</option>
+                  <option value="MONTH">Theo tháng</option>
+                  <option value="YEAR">Theo năm</option>
+                </select>
+              </label>
+
+              <label>
+                Ngày đối chiếu
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              </label>
+
+              <label>
+                Barber
+                <select value={barberId} onChange={(e) => setBarberId(e.target.value)}>
+                  <option value="">Tất cả Barber</option>
+                  {barbers.map((barber) => (
+                    <option key={barber.id} value={barber.id}>{barber.fullName}</option>
+                  ))}
+                </select>
+              </label>
+            </section>
+
+            {/* Stats Overview */}
             <section className="admin-dashboard-overview">
               <article>
                 <span>Tổng người dùng</span>
@@ -314,12 +379,123 @@ function Dashboard() {
               </article>
             </section>
 
-            <section className="admin-dashboard-status-grid">
-              <article><span>Chờ xác nhận</span><b>{data.statistics.pendingAppointments}</b></article>
-              <article><span>Đã xác nhận</span><b>{data.statistics.confirmedAppointments}</b></article>
-              <article><span>Đang thực hiện</span><b>{data.statistics.inProgressAppointments}</b></article>
-              <article><span>Hoàn thành</span><b>{data.statistics.completedAppointments}</b></article>
-              <article><span>Đã hủy</span><b>{data.statistics.cancelledAppointments}</b></article>
+            {/* Status Grid + Pie Chart */}
+            <section className="admin-dashboard-status-section">
+              <div className="admin-dashboard-status-grid">
+                <article><span>Chờ xác nhận</span><b>{data.statistics.pendingAppointments}</b></article>
+                <article><span>Đã xác nhận</span><b>{data.statistics.confirmedAppointments}</b></article>
+                <article><span>Đang thực hiện</span><b>{data.statistics.inProgressAppointments}</b></article>
+                <article><span>Hoàn thành</span><b className="text-success">{data.statistics.completedAppointments}</b></article>
+                <article><span>Đã hủy</span><b className="text-danger">{data.statistics.cancelledAppointments}</b></article>
+              </div>
+
+              {/* Pie Chart - Appointment Status */}
+              <div className="admin-dashboard-pie-chart">
+                <h3>Tỉ lệ lịch hẹn</h3>
+                <div className="admin-pie-chart-container">
+                  {(() => {
+                    const total = data.statistics.totalAppointments || 1;
+                    const completed = Math.round((data.statistics.completedAppointments / total) * 100);
+                    const cancelled = Math.round((data.statistics.cancelledAppointments / total) * 100);
+                    const pending = 100 - completed - cancelled;
+                    return (
+                      <svg viewBox="0 0 100 100" className="admin-pie-svg">
+                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#22c55e" strokeWidth="20"
+                          strokeDasharray={`${completed * 2.51} ${251.2 - completed * 2.51}`} />
+                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#ef4444" strokeWidth="20"
+                          strokeDasharray={`${cancelled * 2.51} ${251.2 - cancelled * 2.51}`}
+                          strokeDashoffset={`-${completed * 2.51}`} />
+                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#eab308" strokeWidth="20"
+                          strokeDasharray={`${pending * 2.51} ${251.2 - pending * 2.51}`}
+                          strokeDashoffset={`-${(completed + cancelled) * 2.51}`} />
+                        <text x="50" y="45" textAnchor="middle" fill="#111" fontSize="12" fontWeight="bold">
+                          {total}
+                        </text>
+                        <text x="50" y="58" textAnchor="middle" fill="#666" fontSize="6">Tổng lịch</text>
+                      </svg>
+                    );
+                  })()}
+                </div>
+                <div className="admin-pie-legend">
+                  <span className="legend-item"><i className="dot dot-success"></i> Hoàn thành: {Math.round((data.statistics.completedAppointments / (data.statistics.totalAppointments || 1)) * 100)}%</span>
+                  <span className="legend-item"><i className="dot dot-danger"></i> Hủy: {Math.round((data.statistics.cancelledAppointments / (data.statistics.totalAppointments || 1)) * 100)}%</span>
+                  <span className="legend-item"><i className="dot dot-warning"></i> Khác: {Math.round(((data.statistics.totalAppointments - data.statistics.completedAppointments - data.statistics.cancelledAppointments) / (data.statistics.totalAppointments || 1)) * 100)}%</span>
+                </div>
+              </div>
+            </section>
+
+            {/* Bar Chart - Revenue Last 7 Days */}
+            <section className="admin-dashboard-chart-section">
+              <div className="admin-dashboard-bar-chart-card">
+                <h3>Doanh thu 7 ngày gần nhất</h3>
+                <div className="admin-bar-chart">
+                  {data.revenueLastSevenDays.length > 0 ? (
+                    (() => {
+                      const maxRevenue = Math.max(...data.revenueLastSevenDays.map(p => p.revenue), 1);
+                      const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+                      return data.revenueLastSevenDays.map((point, idx) => {
+                        const dayIndex = new Date(point.date).getDay();
+                        const height = Math.round((point.revenue / maxRevenue) * 100);
+                        return (
+                          <div key={point.date} className="admin-bar-item">
+                            <div className="admin-bar-tooltip">
+                              <strong>{new Intl.NumberFormat("vi-VN").format(point.revenue)}đ</strong>
+                              <small>{point.completedAppointments} lịch</small>
+                            </div>
+                            <div className="admin-bar" style={{ height: `${height}%` }}>
+                              <div className="admin-bar-fill"></div>
+                            </div>
+                            <span className="admin-bar-label">{days[dayIndex]}</span>
+                          </div>
+                        );
+                      });
+                    })()
+                  ) : (
+                    <p className="admin-dashboard-empty-chart">Chưa có dữ liệu doanh thu</p>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* Service Reviews Section */}
+            <section className="admin-dashboard-reviews-section">
+              <div className="admin-dashboard-reviews-card">
+                <div className="admin-dashboard-reviews-header">
+                  <h3>Đánh giá dịch vụ gần đây</h3>
+                  <Link to="/admin/reviews">Xem tất cả</Link>
+                </div>
+                {reviews.length > 0 ? (
+                  <div className="admin-dashboard-reviews-list">
+                    {reviews.map((review) => (
+                      <div key={review._id} className="admin-dashboard-review-item">
+                        <div className="admin-review-info">
+                          <div className="admin-review-client">{review.client.fullName}</div>
+                          <div className="admin-review-service">
+                            {review.serviceRatings.map((sr, i) => (
+                              <span key={i} className="admin-review-service-tag">
+                                {sr.service.name} ({sr.rating}★)
+                              </span>
+                            ))}
+                          </div>
+                          {review.barberComment && (
+                            <div className="admin-review-comment">"{review.barberComment}"</div>
+                          )}
+                          <div className="admin-review-meta">
+                            <span>Barber: {review.barber.fullName}</span>
+                            <span>{new Date(review.createdAt).toLocaleDateString("vi-VN")}</span>
+                          </div>
+                        </div>
+                        <div className="admin-review-rating">
+                          <strong>{review.overallRating.toFixed(1)}</strong>
+                          <small>★</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="admin-dashboard-empty-reviews">Chưa có đánh giá nào</p>
+                )}
+              </div>
             </section>
 
             <section className="admin-dashboard-content-grid">

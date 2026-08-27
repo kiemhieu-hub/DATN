@@ -7,7 +7,7 @@ export const getRefunds = async () =>
 export const processRefund = async (
   id: string,
   payload: {
-    status: Extract<RefundStatus, "REFUNDED_MANUAL" | "REJECTED" | "FAILED">;
+    status: Extract<RefundStatus, "REFUNDED_MANUAL" | "FAILED">;
     bankReference?: string;
     proofImage?: string;
     failureReason?: string;

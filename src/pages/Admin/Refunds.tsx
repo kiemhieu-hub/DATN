@@ -36,7 +36,7 @@ export default function Refunds() {
         <div><small>MÃ LỊCH</small><b>{item.appointment?.appointmentCode}</b><span>{item.appointment?.customer?.fullName}</span></div>
         <div><small>SỐ TIỀN</small><strong>{money(item.amount)}đ</strong><span>{item.reason}</span></div>
         <div><small>TRẠNG THÁI</small><b className={`refund-status ${item.status.toLowerCase()}`}>{labels[item.status]}</b><span>{item.bankReference && `Mã GD: ${item.bankReference}`}</span></div>
-        <div>{item.status === "PENDING" && <><button onClick={() => void manualRefund(item)}>Xác nhận hoàn thủ công</button><button className="reject" onClick={() => void processMutation.mutateAsync({ id: item._id, payload: { status: "REJECTED", failureReason: "Admin từ chối yêu cầu" } })}>Từ chối</button></>}</div>
+        <div>{["PENDING", "FAILED"].includes(item.status) && <button onClick={() => void manualRefund(item)}>Xác nhận đã hoàn cọc</button>}</div>
       </article>)}
     </section>
   </main>;

@@ -64,7 +64,7 @@ interface ProcessRefundInput {
   refundId: string;
   actorId: string;
   actorRole: "ADMIN" | "RECEPTIONIST";
-  status: Extract<RefundStatus, "REFUNDED_MANUAL" | "REJECTED" | "FAILED">;
+  status: Extract<RefundStatus, "REFUNDED_MANUAL" | "FAILED">;
   bankReference?: string;
   proofImage?: string;
   failureReason?: string;
@@ -77,6 +77,9 @@ export const processRefund = async (input: ProcessRefundInput) => {
 
   const refund = await Refund.findById(input.refundId);
   if (!refund) throw new AppError("Không tìm thấy yêu cầu hoàn tiền", 404);
+  if (!['REFUNDED_MANUAL', 'FAILED'].includes(input.status)) {
+    throw new AppError("Chỉ có thể xác nhận đã hoàn hoặc ghi nhận giao dịch thất bại", 400);
+  }
   if (!["PENDING", "PROCESSING", "FAILED"].includes(refund.status)) {
     throw new AppError("Yêu cầu hoàn tiền đã được xử lý", 409);
   }
@@ -137,4 +140,3 @@ export const listRefunds = async () =>
     .populate("requestedBy processedBy", "fullName email role")
     .sort({ createdAt: -1 })
     .lean();
-

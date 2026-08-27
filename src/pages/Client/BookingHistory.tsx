@@ -10,6 +10,11 @@ import { getMyReviews } from "../../services/review.service";
 import { createVnpayPayment, type VnpayPurpose } from "../../services/vnpay.service";
 import type {Appointment,AppointmentStatus,PaymentStatus,} from "../../types/Appointment";
 import ClientHeader from "../../components/ClientHeader";
+import {
+  getBanks,
+  verifyBankAccount,
+  type BankOption,
+} from "../../services/bankAccount.service";
 import "./css/BookingHistory.css";
 
 interface LocationState {
@@ -126,6 +131,9 @@ function BookingHistory() {
   const [refundBankName, setRefundBankName] = useState("");
   const [refundAccountNumber, setRefundAccountNumber] = useState("");
   const [refundAccountName, setRefundAccountName] = useState("");
+  const [banks, setBanks] = useState<BankOption[]>([]);
+  const [bankChecking, setBankChecking] = useState(false);
+  const [bankLookupMessage, setBankLookupMessage] = useState("");
   const [payingId, setPayingId] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
   const [dateFilter, setDateFilter] = useState("");
@@ -194,6 +202,33 @@ function BookingHistory() {
     navigate,
     loadAppointments,
   ]);
+
+  useEffect(() => {
+    if (!cancelTarget?.depositPaid) return;
+    void getBanks()
+      .then((response: { success: boolean; banks: BankOption[] }) => setBanks(response.banks))
+      .catch(() => setBanks([]));
+  }, [cancelTarget]);
+
+  useEffect(() => {
+    setRefundAccountName("");
+    setBankLookupMessage("");
+    if (!refundBankName || !/^\d{6,20}$/.test(refundAccountNumber)) return;
+    const timer = window.setTimeout(async () => {
+      try {
+        setBankChecking(true);
+        const response: { success: boolean; accountName: string } = await verifyBankAccount(
+          refundBankName,
+          refundAccountNumber
+        );
+        setRefundAccountName(response.accountName);
+        setBankLookupMessage("✓ Tài khoản hợp lệ");
+      } catch (lookupError) {
+        setBankLookupMessage(getErrorMessage(lookupError, "Không tìm thấy tài khoản"));
+      } finally { setBankChecking(false); }
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [refundBankName, refundAccountNumber]);
 
   const canCancel = (
     appointment: Appointment
@@ -677,7 +712,7 @@ function BookingHistory() {
           </div>
         )}
       </main>
-      {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label>{cancelTarget.depositPaid && <fieldset><legend>Tài khoản nhận hoàn cọc</legend><label>Ngân hàng<input value={refundBankName} onChange={(event) => setRefundBankName(event.target.value)} /></label><label>Số tài khoản<input value={refundAccountNumber} onChange={(event) => setRefundAccountNumber(event.target.value)} /></label><label>Chủ tài khoản<input value={refundAccountName} onChange={(event) => setRefundAccountName(event.target.value)} /></label></fieldset>}<small>Lịch chưa xác nhận được hủy trước giờ hẹn. Lịch đã xác nhận phải hủy trước 24 giờ; hoàn cọc nếu hủy trước ít nhất 3 ngày.</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id}>Xác nhận hủy</button></div></form></div>}
+      {cancelTarget && <div className="history-cancel-modal-bg" onMouseDown={() => setCancelTarget(null)}><form className="history-cancel-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); void handleCancel(cancelTarget); }}><h2>Yêu cầu hủy lịch</h2><p>Mã lịch: <b>{cancelTarget.appointmentCode}</b></p><p>{formatDate(cancelTarget.appointmentDate)} · {cancelTarget.startTime}–{cancelTarget.endTime}</p><label>Lý do hủy<textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} required placeholder="Mô tả lý do bạn cần hủy lịch..." /></label>{cancelTarget.depositPaid && <fieldset><legend>Tài khoản nhận hoàn cọc</legend><label>Ngân hàng<select value={refundBankName} onChange={(event) => setRefundBankName(event.target.value)} required><option value="">-- Chọn ngân hàng --</option>{banks.map((bank) => <option key={bank.code} value={bank.code}>{bank.shortName} - {bank.name}</option>)}</select></label><label>Số tài khoản<input inputMode="numeric" value={refundAccountNumber} onChange={(event) => setRefundAccountNumber(event.target.value.replace(/\D/g, "").slice(0, 20))} required /></label><label>Chủ tài khoản<input value={refundAccountName} readOnly placeholder={bankChecking ? "Đang kiểm tra..." : "Tự động hiển thị sau khi xác thực"} /></label>{bankLookupMessage && <small>{bankLookupMessage}</small>}</fieldset>}<small>Lịch chưa xác nhận được hủy trước giờ hẹn. Lịch đã xác nhận phải hủy trước 24 giờ; hoàn cọc chỉ khi đáp ứng thời hạn chính sách.</small><div><button type="button" onClick={() => setCancelTarget(null)}>Đóng</button><button type="submit" disabled={cancellingId === cancelTarget._id || bankChecking || (cancelTarget.depositPaid && !refundAccountName)}>Xác nhận hủy</button></div></form></div>}
       {reviewTarget && (
         <ReviewModal
           appointment={reviewTarget}

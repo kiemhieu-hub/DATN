@@ -1,2 +1,162 @@
-.client-site-header{position:sticky;top:0;z-index:900;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;min-height:72px;padding:12px clamp(18px,4vw,64px);background:#11110ff2;border-bottom:1px solid #39352d;backdrop-filter:blur(14px);font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif}.client-site-brand{display:grid;color:#d2aa5c;text-decoration:none;line-height:1}.client-site-brand span{font-size:22px;font-weight:800;letter-spacing:2px}.client-site-brand small{margin-top:5px;color:#aaa69d;font-size:9px;letter-spacing:3px}.client-site-header nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.client-site-header nav a,.client-site-account a,.client-site-account button{padding:9px 11px;color:#c8c4bb;background:transparent;border:0;text-decoration:none;font:inherit;font-size:13px;cursor:pointer}.client-site-header nav a:hover,.client-site-header nav a.active{color:#d2aa5c}.client-site-account{display:flex;align-items:center}.client-account-menu{position:relative}.client-site-account .client-account-trigger{display:flex;align-items:center;gap:8px;border:1px solid #665638;border-radius:10px;color:#d2aa5c}.client-account-trigger img{width:26px;height:26px;border-radius:50%;object-fit:cover}.client-account-trigger span{max-width:140px;overflow:hidden;color:#eee;font-size:12px;text-overflow:ellipsis;white-space:nowrap}.client-account-dropdown{position:absolute;top:calc(100% + 8px);right:0;display:none;width:210px;padding:8px;border:1px solid #4d4435;border-radius:12px;background:#181714;box-shadow:0 18px 40px #0008}.client-account-menu:hover .client-account-dropdown,.client-account-menu:focus-within .client-account-dropdown{display:grid}.client-account-dropdown a,.client-account-dropdown button{width:100%;border:0;border-radius:7px;text-align:left}.client-account-dropdown a:hover,.client-account-dropdown button:hover{background:#2a261f;color:#e5b963}.client-site-account>a{border:1px solid #665638;border-radius:9px;color:#d2aa5c}@media(max-width:900px){.client-site-header{grid-template-columns:auto auto;justify-content:space-between}.client-site-header nav{grid-column:1/-1;grid-row:2;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap}.client-site-header nav a{white-space:nowrap}.client-account-trigger span{display:none}}
-.client-notification-bell{position:relative;width:42px;height:42px;border:1px solid #c79a53;border-radius:50%;display:grid!important;place-items:center;font-size:22px;text-decoration:none}.client-notification-bell b{position:absolute;right:-6px;top:-7px;background:#d33f3f;color:#fff;border-radius:20px;padding:3px 6px;font-size:10px}.client-site-account{display:flex;align-items:center;gap:10px}
+.client-site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: 190px 1fr auto;
+  align-items: center;
+  min-height: 88px;
+  padding: 10px clamp(22px, 5vw, 78px);
+  color: #fff;
+  background: #817e79f5;
+  border-bottom: 1px solid #ffffff2b;
+  backdrop-filter: blur(12px);
+  font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+}
+
+.client-site-brand img {
+  display: block;
+  width: 118px;
+  max-height: 68px;
+  object-fit: contain;
+}
+
+.client-site-header nav {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+}
+
+.client-site-header nav > a,
+.client-nav-discovery > button,
+.client-site-account a,
+.client-site-account button {
+  padding: 10px 12px;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  text-decoration: none;
+  text-transform: uppercase;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+}
+
+.client-site-header nav > a:hover,
+.client-site-header nav > a.active,
+.client-nav-discovery:hover > button {
+  color: #d4a767;
+}
+
+.client-nav-discovery,
+.client-account-menu {
+  position: relative;
+}
+
+.client-nav-discovery > div,
+.client-account-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  display: none;
+  min-width: 220px;
+  padding: 8px;
+  background: #171411;
+  border: 1px solid #4d4438;
+  box-shadow: 0 18px 35px #0006;
+}
+
+.client-nav-discovery:hover > div,
+.client-nav-discovery:focus-within > div,
+.client-account-menu:hover .client-account-dropdown,
+.client-account-menu:focus-within .client-account-dropdown {
+  display: grid;
+}
+
+.client-nav-discovery > div a,
+.client-account-dropdown a,
+.client-account-dropdown button {
+  padding: 11px 12px;
+  color: #f5f0e9;
+  text-align: left;
+  text-decoration: none;
+  text-transform: none;
+  font-size: 13px;
+}
+
+.client-nav-discovery > div a:hover,
+.client-account-dropdown a:hover,
+.client-account-dropdown button:hover {
+  color: #e7bd79;
+  background: #29231d;
+}
+
+.client-site-account,
+.client-auth-links {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.client-account-trigger {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.client-account-trigger img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.client-notification-bell {
+  position: relative;
+  display: grid !important;
+  width: 42px;
+  height: 42px;
+  padding: 0 !important;
+  place-items: center;
+  border: 1px solid #d4a767 !important;
+  border-radius: 50%;
+}
+
+.client-notification-bell b {
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  padding: 3px 6px;
+  color: #fff;
+  background: #c53d3d;
+  border-radius: 20px;
+  font-size: 10px;
+}
+
+@media (max-width: 1050px) {
+  .client-site-header {
+    grid-template-columns: auto auto;
+  }
+  .client-site-header nav {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+  .client-site-header nav > * {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .client-site-header {
+    padding: 9px 16px;
+  }
+  .client-account-trigger span,
+  .client-auth-links a:last-child {
+    display: none;
+  }
+}

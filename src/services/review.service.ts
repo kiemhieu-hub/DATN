@@ -1,5 +1,9 @@
 import api from "./api";
-import type { CreateReviewPayload, MyReview } from "../types/Review";
+import type {
+  CreateReviewPayload,
+  MyReview,
+  PublicBarberReview,
+} from "../types/Review";
 
 export const getMyReviews = async () => {
   const response = await api.get<{
@@ -17,3 +21,10 @@ export const createReview = async (payload: CreateReviewPayload) => {
   }>("/reviews", payload);
   return response.data;
 };
+
+export const getApprovedBarberReviews = async (barberId: string) =>
+  (
+    await api.get<{ success: boolean; reviews: PublicBarberReview[] }>(
+      `/reviews/barber/${barberId}`,
+    )
+  ).data;

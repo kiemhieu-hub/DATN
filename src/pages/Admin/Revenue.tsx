@@ -61,6 +61,9 @@ function Revenue() {
     : period === "MONTH"
       ? "tháng đã chọn"
       : "năm đã chọn";
+  const completionRate = data?.outcomeSummary.completionRate ?? 0;
+  const cancellationRate = data?.outcomeSummary.cancellationRate ?? 0;
+  const outcomeChart = `conic-gradient(#42b883 0 ${completionRate}%, #e05b5b ${completionRate}% ${completionRate + cancellationRate}%, #35322d ${completionRate + cancellationRate}% 100%)`;
 
   return (
     <div className="admin-revenue-page">
@@ -109,6 +112,17 @@ function Revenue() {
           <article><span>Số Barber có doanh thu</span><strong>{data?.revenueByBarber.length ?? 0}</strong></article>
         </section>
 
+        <section className="admin-revenue-visual-grid">
+        <article className="admin-revenue-outcome-card">
+          <div><span>CHẤT LƯỢNG LỊCH HẸN</span><h2>Tỷ lệ kết quả</h2></div>
+          <div className="admin-revenue-donut" style={{ background: outcomeChart }}>
+            <span><b>{completionRate}%</b> hoàn thành</span>
+          </div>
+          <ul>
+            <li><i className="completed" /> Hoàn thành: <b>{data?.outcomeSummary.completed ?? 0} ({completionRate}%)</b></li>
+            <li><i className="cancelled" /> Đã hủy: <b>{data?.outcomeSummary.cancelled ?? 0} ({cancellationRate}%)</b></li>
+          </ul>
+        </article>
         <section className="admin-revenue-chart-card">
           <div className="admin-revenue-chart-heading">
             <div><span>SO SÁNH BARBER</span><h2>Biểu đồ cột doanh thu</h2></div>
@@ -138,7 +152,7 @@ function Revenue() {
               </div>
             </div>
           )}
-        </section>
+        </section></section>
 
         {!!data?.revenueByBarber.length && (
           <section className="admin-revenue-ranking">
