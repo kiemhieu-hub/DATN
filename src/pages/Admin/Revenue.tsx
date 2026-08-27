@@ -142,13 +142,23 @@ function Revenue() {
 
         {!!data?.revenueByBarber.length && (
           <section className="admin-revenue-ranking">
-            <h2>Chi tiết doanh thu từng Barber</h2>
+            <h2 style={{ marginTop: 0, marginBottom: "16px", fontSize: "22px" }}>
+              <span style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}>
+                Chi tiết doanh thu từng Barber
+              </span>
+            </h2>
             {data.revenueByBarber.map((item, index) => (
               <article key={item.barberId}>
-                <b>#{index + 1}</b>
-                <span>{item.barberName}</span>
-                <small>{item.appointments} lịch hoàn thành</small>
-                <strong>{money(item.revenue)}đ</strong>
+                <b style={{ color: "#c6a15b", WebkitTextFillColor: "#c6a15b" }}>#{index + 1}</b>
+                <span style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", fontWeight: 600 }}>
+                  {item.barberName}
+                </span>
+                <small style={{ color: "#aaa", WebkitTextFillColor: "#aaa" }}>
+                  {item.appointments} lịch hoàn thành
+                </small>
+                <strong style={{ color: "#c6a15b", WebkitTextFillColor: "#c6a15b" }}>
+                  {money(item.revenue)}đ
+                </strong>
               </article>
             ))}
           </section>
