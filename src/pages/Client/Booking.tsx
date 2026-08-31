@@ -172,10 +172,9 @@ function Booking() {
     .filter((service) => service.staffType === "CARE")
     .reduce((sum, service) => sum + service.durationMinutes, 0);
   const totalDuration = hairDuration + careDuration;
-  const previewDiscount = voucherCalculation?.discountAmount ?? 0;
-  const total = Math.max(0, subtotal - previewDiscount);
-  const depositRequired = total > 200000;
-  const depositAmount = depositRequired ? Math.round(total * 0.3) : 0;
+  const total = subtotal;
+  const depositRequired = subtotal > 200000;
+  const depositAmount = depositRequired ? Math.round(subtotal * 0.3) : 0;
 
   const formatDuration = (minutes: number): string => {
     if (minutes < 60) return `${minutes}p`;
@@ -228,7 +227,7 @@ function Booking() {
   const chooseVoucher = (voucher: AvailableVoucher): void => {
     setVoucherCode(voucher.code);
     setVoucherCalculation(voucher);
-    setVoucherMessage(`Đã áp dụng tạm tính ${voucher.code}: giảm ${money(voucher.discountAmount)}đ.`);
+    setVoucherMessage(`Đã chọn ${voucher.code}. Voucher sẽ được tính trên hóa đơn thực tế khi hoàn thành.`);
     setVoucherOpen(false);
   };
 
@@ -347,9 +346,74 @@ function Booking() {
             <label className="booking-note">Ghi chú<textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Yêu cầu kiểu tóc hoặc lưu ý khác..." /></label>
           </section>
           <section className="booking-panel">
-            <div className="booking-panel-title"><b>04</b><div><h2>Thông tin khách sử dụng</h2><p>Có thể sửa để đặt lịch hộ người khác.</p></div></div>
-            <div className="booking-fields"><label>Họ và tên<input value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></label><label>Số điện thoại<input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} /></label><label>Email<input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} /></label></div>
-          </section>
+  <div className="booking-panel-title">
+    <b>04</b>
+    <div>
+      <h2>Thông tin khách sử dụng</h2>
+      <p>Có thể sửa để đặt lịch hộ người khác.</p>
+    </div>
+  </div>
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+      gap: "14px",
+      alignItems: "start",
+    }}
+  >
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <span style={{ color: "#ddd", fontSize: "13px" }}>Họ và tên</span>
+      <input
+        value={customerName}
+        onChange={(e) => setCustomerName(e.target.value)}
+        style={{
+          width: "100%",
+          height: "48px",
+          padding: "13px",
+          color: "#eee",
+          background: "#111",
+          border: "1px solid #49463f",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
+
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <span style={{ color: "#ddd", fontSize: "13px" }}>Số điện thoại</span>
+      <input
+        value={customerPhone}
+        onChange={(e) => setCustomerPhone(e.target.value)}
+        style={{
+          width: "100%",
+          height: "48px",
+          padding: "13px",
+          color: "#eee",
+          background: "#111",
+          border: "1px solid #49463f",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
+
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <span style={{ color: "#ddd", fontSize: "13px" }}>Email</span>
+      <input
+        type="email"
+        value={customerEmail}
+        onChange={(e) => setCustomerEmail(e.target.value)}
+        style={{
+          width: "100%",
+          height: "48px",
+          padding: "13px",
+          color: "#eee",
+          background: "#111",
+          border: "1px solid #49463f",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
+  </div>
+</section>
         </main>
 
         <aside className="booking-summary">
@@ -387,11 +451,9 @@ function Booking() {
 
           {voucherMessage && <small className="booking-voucher-message">{voucherMessage}</small>}
           <div className="booking-totals">
-            <p><span>Tạm tính dịch vụ</span><b>{money(subtotal)}đ</b></p>
-            {voucherCode && <p><span>Voucher {voucherCode}</span><b>-{money(previewDiscount)}đ</b></p>}
-            <p className="grand-total"><span>Tổng tiền sau voucher</span><b>{money(total)}đ</b></p>
-            {voucherCode && <small>Mức giảm được kiểm tra lại theo dịch vụ thực tế khi chốt hóa đơn.</small>}
-            {depositRequired && <small>Đặt cọc 30% tổng sau voucher: <b>{money(depositAmount)}đ</b></small>}
+            <p className="grand-total"><span>Tổng tiền tạm tính</span><b>{money(total)}đ</b></p>
+            {voucherCode && <small>Voucher <b>{voucherCode}</b> sẽ áp dụng khi chốt hóa đơn cuối cùng.</small>}
+            {depositRequired && <small>Đặt cọc 30% tổng đơn ban đầu: <b>{money(depositAmount)}đ</b></small>}
           </div>
           <div className="booking-summary-footer">
             <button className="booking-submit" disabled={submitting}>{submitting ? "Đang đặt lịch..." : "Xác nhận đặt lịch"}</button>

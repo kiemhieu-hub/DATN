@@ -70,7 +70,7 @@ body {
 }
 
 body {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     font-weight: 300;
     line-height: 1.75em;
@@ -80,7 +80,7 @@ body {
 }
 
 p {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     font-weight: 300;
     line-height: 1.75em;
@@ -94,7 +94,7 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-weight: 800;
     line-height: 1.25em;
     margin: 0 0 20px 0;
@@ -187,7 +187,7 @@ textarea {
     display: block;
     width: 100%;
     line-height: 1.5em;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     font-weight: 300;
     color: #14100c;
@@ -242,7 +242,7 @@ input[type="checkbox"] {
 
 input[type="submit"] {
     font-weight: 300;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     text-transform: uppercase;
     background: #14100c;
     color: #fff;
@@ -299,7 +299,7 @@ blockquote {
 }
 
 blockquote p {
-    font-family: inherit;
+    font-family: 'Be Vietnam Pro';
     margin-bottom: 0 !important;
     color: inherit;
     max-width: 650px;
@@ -310,7 +310,7 @@ blockquote p {
 
 blockquote:before {
     content: '\e645';
-    font-family: 'Themify';
+    font-family: 'Be Vietnam Pro';
     position: absolute;
     right: 40px;
     bottom: 40px;
@@ -330,7 +330,7 @@ blockquote p a {
 
 blockquote cite {
     display: inline-block;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     position: relative;
     padding-left: 60px;
@@ -463,7 +463,7 @@ blockquote cite:before {
 }
 
 .count {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
 }
 
 .valign {
@@ -857,7 +857,7 @@ blockquote cite:before {
 }
 
 .section-head .section-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 48px;
     line-height: 1.2em;
     font-weight: 800;
@@ -876,7 +876,7 @@ blockquote cite:before {
     text-align: center;
     font-size: 130px;
     line-height: 150px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -1005,7 +1005,7 @@ blockquote cite:before {
     margin-bottom: 0px;
 }
 .nav-scroll .logo-wrapper .logo h2 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 27px;
     font-weight: 800;
     display: block;
@@ -1017,7 +1017,7 @@ blockquote cite:before {
 }
 .nav-scroll .logo-wrapper .logo span {
     display: block;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 12px;
     color: #91765a;
     font-weight: 400;
@@ -1032,7 +1032,7 @@ blockquote cite:before {
     float: left;
 }
 .logo-wrapper .logo h2 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 27px;
     font-weight: 800;
     display: block;
@@ -1049,7 +1049,7 @@ blockquote cite:before {
 }
 .logo-wrapper .logo span {
     display: block;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 12px;
     color: #91765a;
     font-weight: 400;
@@ -1073,7 +1073,7 @@ blockquote cite:before {
 }
 .navbar .dropdown-menu .dropdown-item {
     padding: 7px 0;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     font-weight: 400;
     color: #fff;
@@ -1338,7 +1338,7 @@ blockquote cite:before {
 
 .header .caption h1 i {
     display: block;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -1351,7 +1351,7 @@ blockquote cite:before {
 }
 
 .header .caption h4 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 12px;
     font-weight: 800;
     text-transform: uppercase;
@@ -1662,7 +1662,7 @@ blockquote cite:before {
 
 .kenburns-inner .caption h3 {
     position: relative;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 60px;
     line-height: 1em;
     color: #fff;
@@ -1832,7 +1832,7 @@ blockquote cite:before {
     font-size: 12px;
     letter-spacing: 2px;
     line-height: 1.5em;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     text-transform: uppercase;
 }
 
@@ -2003,7 +2003,7 @@ blockquote cite:before {
 
 .video-fullscreen-wrap h3 {
     position: relative;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 60px;
     line-height: 1em;
     color: #fff;
@@ -2105,7 +2105,7 @@ blockquote cite:before {
 .about-name {
     font-size: 15px;
     color: #91765a;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
 }
 
 .about-rol {
@@ -2201,14 +2201,14 @@ blockquote cite:before {
 
 .team-card .title-box h3,
 .team-page-card .title-box h3 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 18px;
     color: #14100c;
 }
 
 .team-card .title-box h3 span,
 .team-page-card .title-box h3 span {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     font-weight: 300;
     color: #625c56;
@@ -2250,14 +2250,14 @@ blockquote cite:before {
 
 .team-card .team-title,
 .team-page-card .team-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 24px;
     color: #fff;
 }
 
 .team-card .team-title span,
 .team-page-card .team-title span {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     color: #91765a;
     font-weight: 400;
@@ -2359,7 +2359,7 @@ blockquote cite:before {
 }
 
 .team-box .wrap .desc .section-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 27px;
     line-height: 1.2em;
     font-weight: 800;
@@ -2639,7 +2639,7 @@ blockquote cite:before {
 /* permalink */
 
 .barber-services .item .con .permalink {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     color: #fff;
     height: 0;
@@ -2745,7 +2745,7 @@ blockquote cite:before {
     font-size: 12px;
     color: #14100c;
     margin-bottom: 5px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
@@ -2753,7 +2753,7 @@ blockquote cite:before {
 .barber-services-2 .caption h6 {
     display: inline-block;
     color: #14100c;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-weight: 400;
     font-size: 10px;
     margin-bottom: 10px;
@@ -2785,20 +2785,20 @@ blockquote cite:before {
 .barber-services-2 .caption .info-wrapper .icon {
     color: #625c56;
     font-size: 12px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     letter-spacing: 0px;
     font-weight: 300;
 }
 
 .barber-services-2 .caption .info-wrapper .icon.ti-calendar:before {
     content: "\e6b6";
-    font-family: 'Themify';
+    font-family: 'Be Vietnam Pro';
     margin-right: 5px;
-    color: #14100c;
+    color: #fff;
 }
 
 .barber-services-2 .caption .info-wrapper .more {
-    color: #14100c;
+    color: #fff;
     text-decoration: none;
     font-size: 12px;
 }
@@ -2810,7 +2810,7 @@ blockquote cite:before {
 
 .barber-services-2 .caption .info-wrapper .date {
     color: #14100c;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     background: transparent;
     border: 1px solid #14100c;
@@ -2949,7 +2949,7 @@ hr.border-2 {
     color: #fff;
     font-size: 15px;
     font-weight: 400;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     letter-spacing: 1px;
     background: #91765a;
     border: 1px solid #91765a;
@@ -2983,7 +2983,7 @@ hr.border-2 {
 .first-class-services .square h6 a {
     position: relative;
     color: #91765a;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-weight: 400;
     font-size: 12px;
     margin-bottom: 10px;
@@ -3041,7 +3041,7 @@ hr.border-2 {
 .first-class-services .square2 h6 {
     position: relative;
     color: #FFF;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     text-transform: uppercase;
     font-weight: 400;
     font-size: 12px;
@@ -3519,7 +3519,7 @@ button.mfp-arrow {
 
 .testimonials-box .head-box .subtitle {
     color: #91765a;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-weight: 400;
     font-size: 12px;
     text-transform: uppercase;
@@ -3528,7 +3528,7 @@ button.mfp-arrow {
 }
 
 .testimonials-box .head-box .title {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 36px;
     font-weight: 400;
     color: #fff;
@@ -3647,7 +3647,7 @@ button.mfp-arrow {
 }
 
 .opening-hours-box .head-box h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     color: #91765a;
     font-size: 12px;
     font-weight: 400;
@@ -3716,7 +3716,7 @@ button.mfp-arrow {
 .opening-hours-box .item ul li span {
     white-space: nowrap;
     padding-left: 10px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     color: #aba59f;
 }
 
@@ -4039,7 +4039,7 @@ button.mfp-arrow {
     position: relative;
     cursor: pointer;
     transition: all 0.3s ease-out;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
 }
 
 .btn-form1-submit:hover {
@@ -4078,7 +4078,7 @@ button.mfp-arrow {
     position: relative;
     cursor: pointer;
     transition: all 0.3s ease-out;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
 }
 
 .btn-form2-submit:hover {
@@ -4348,7 +4348,7 @@ button.mfp-arrow {
 
 .booking-box .head-box h6 {
     font-size: 12px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-weight: 400;
     color: #91765a;
     text-transform: uppercase;
@@ -4402,13 +4402,13 @@ button.mfp-arrow {
     font-weight: 800;
     margin-bottom: 5px;
     color: #91765a;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
 
 .reservations .text a {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 27px;
     color: #14100c;
     font-weight: 800;
@@ -4484,13 +4484,13 @@ button.mfp-arrow {
     -ms-flex-negative: 0;
     flex-shrink: 0;
     color: #14100c;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 17px;
     font-weight: 800;
 }
 
 .barber-pricing .menu-list .flex .title span {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     color: #625c56;
 }
 
@@ -4645,7 +4645,7 @@ button.mfp-arrow {
 
 .accordion-box .block .acc-btn {
     position: relative;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 18px;
     line-height: 30px;
     font-weight: 800;
@@ -4788,7 +4788,7 @@ button.mfp-arrow {
 
 .news .item .date span,
 .blog .item .date span {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     display: block;
     font-size: 12px;
     text-transform: uppercase;
@@ -4800,7 +4800,7 @@ button.mfp-arrow {
 
 .news .item .date i,
 .blog .item .date i {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     display: block;
     font-size: 24px;
     font-style: normal;
@@ -4860,7 +4860,7 @@ button.mfp-arrow {
     color: #14100c;
     font-size: 24px;
     margin-bottom: 0px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     line-height: 1.25em;
 }
 
@@ -4929,7 +4929,7 @@ button.mfp-arrow {
 }
 
 .news2 .post-img .date span {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     display: block;
     font-size: 12px;
     text-transform: uppercase;
@@ -4940,7 +4940,7 @@ button.mfp-arrow {
 }
 
 .news2 .post-img .date i {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     display: block;
     font-size: 24px;
     font-style: normal;
@@ -4978,7 +4978,7 @@ button.mfp-arrow {
 }
 
 .news2 .post-cont .date {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     margin-top: 0px;
     font-size: 12px;
     text-align: right;
@@ -5136,7 +5136,7 @@ button.mfp-arrow {
     color: #14100c;
     font-weight: 400;
     border: 1px solid rgba(145, 118, 90, 0.1);
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     border-radius: 100%;
 }
@@ -5399,7 +5399,7 @@ a:hover.post-repay {
     top: 4px;
     right: 4px;
     cursor: pointer;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 12px;
     font-weight: 800;
     outline: none;
@@ -5423,7 +5423,7 @@ a:hover.post-repay {
 .go-back a {
     color: #FFF;
     display: inline-block;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -5473,7 +5473,7 @@ a:hover.post-repay {
     padding: 20px 60px 20px 30px;
     height: 70px;
     display: block;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 15px;
     background: #f4f4f4;
     color: #14100c;
@@ -5509,7 +5509,7 @@ a:hover.post-repay {
     transition: border-color 400ms ease, color 400ms ease, background-color 400ms ease;
     color: #14100c;
     line-height: 20px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-weight: 800;
     text-align: center;
     font-size: 12px;
@@ -5664,7 +5664,7 @@ a:hover.post-repay {
 .link-btn {
     display: inline-block;
     position: relative;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 12px;
     text-transform: uppercase;
     font-weight: 800;
@@ -5836,7 +5836,7 @@ a.link-btn span {
 }
 
 p.footer-contact-phone {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 24px;
     color: #91765a;
     font-weight: 800;
@@ -5986,7 +5986,7 @@ select {
     top: 4px;
     right: 4px;
     cursor: pointer;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 2px;
@@ -6028,7 +6028,7 @@ select {
 .footer .item ul li span {
     white-space: nowrap;
     padding-left: 10px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', Arial;
     color: #aba59f;
 }
 
