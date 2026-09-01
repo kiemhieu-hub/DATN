@@ -16,7 +16,9 @@
   box-sizing: border-box;
   font-family: "Be Vietnam Pro", sans-serif;
 }
-
+.admin-shell-user .admin-user-name {
+    color: #ffffff !important;
+}
 .admin-shell {
   min-height: 100vh;
   color: var(--admin-text);

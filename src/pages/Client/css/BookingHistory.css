@@ -7,7 +7,29 @@
     #10100f;
 }
 .history-filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;background:#fffaf4;border:1px solid #d9c4aa;border-radius:16px;padding:16px;margin:16px 0}.history-filters input,.history-filters select{padding:12px;border:1px solid #cdb89e;border-radius:9px;background:#fff;color:#211b16}.history-card,.history-time-banner,.history-services,.history-details>div{border-radius:14px!important}.history-services strong{color:#211b16!important}.history-cancel-button{background:#a93232!important;color:#fff!important;border-color:#a93232!important;border-radius:9px!important}@media(max-width:800px){.history-filters{grid-template-columns:1fr}}
+.client-review-backdrop .client-review-modal h2,
+.client-review-backdrop .client-review-modal h3,
+.client-review-backdrop .client-review-modal p,
+.client-review-backdrop .client-review-modal label,
+.client-review-backdrop .client-review-modal small {
+    color: #ffffff !important;
+}
 
+/* Đổi màu tiêu đề nhỏ CHIA SẺ TRẢI NGHIỆM thành màu vàng kim */
+.client-review-backdrop .client-review-modal .client-review-eyebrow {
+    color: #d2aa5c !important;
+}
+
+/* Đổi màu placeholder và chữ trong các ô textarea nhập đánh giá */
+.client-review-backdrop .client-review-modal textarea {
+    color: #ffffff !important;
+    background-color: #121110 !important;
+    border: 1px solid #514a43 !important;
+}
+
+.client-review-backdrop .client-review-modal textarea::placeholder {
+    color: #8f8881 !important;
+}
 .history-container {
   width: 100%;
   max-width: 1120px;
@@ -182,8 +204,9 @@
 }
 
 .status-completed {
-  color: #afe8ba;
-  background: rgba(52, 144, 77, 0.24);
+  color: #0d5327 !important;            
+    background: #d1e7dd !important;     
+    border: 1px solid #a3cfbb !important;
 }
 
 .status-cancelled {
@@ -281,7 +304,11 @@
   padding: 0;
   list-style: none;
 }
-
+.history-services li div div {
+    display: flex;
+    flex-direction: column; /* Đưa số phút xuống dòng dưới */
+    gap: 4px;                /* Khoảng cách giữa tên và số phút */
+}
 .history-services li {
   display: flex;
   justify-content: space-between;

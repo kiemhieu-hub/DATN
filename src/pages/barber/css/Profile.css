@@ -149,10 +149,15 @@
 
 .barber-profile-preview h2 {
   margin: 0;
-  color: #fff;
+  
   font-size: 22px;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
 }
-
+.barber-profile-page .barber-profile-preview h2 {
+    color: #ffffff !important;
+}
 .barber-profile-preview > p {
   margin: 8px 0 0;
   color: #aaa39c;

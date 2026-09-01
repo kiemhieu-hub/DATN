@@ -196,7 +196,7 @@
 }
 
 .booking-barber-picker h3 {
-  color: #f2eee5;
+  color: #14100c;
 }
 
 .booking-barber-picker > div {
@@ -264,7 +264,7 @@
 .booking-note {
   display: grid;
   gap: 8px;
-  color: #ddd;
+  color: #14100c;
   font-size: 13px;
 }
 

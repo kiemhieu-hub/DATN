@@ -1769,7 +1769,9 @@ blockquote cite:before {
     transition: all .5s;
 }
 
-
+.public-hero h1 {
+    color: #fff
+}
 
 /* ======= Page Banner Header style ======= */
 
@@ -5790,7 +5792,7 @@ a.link-btn span {
 
 .footer-explore-list li a:hover {
     padding-left: 15px;
-    color: #14100c);
+    color: #14100c;
 }
 
 .footer-explore-list li a:before {

@@ -362,7 +362,7 @@ function Booking() {
     }}
   >
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <span style={{ color: "#ddd", fontSize: "13px" }}>Họ và tên</span>
+      <span style={{ color: "#14100c", fontSize: "13px" }}>Họ và tên</span>
       <input
         value={customerName}
         onChange={(e) => setCustomerName(e.target.value)}
@@ -379,7 +379,7 @@ function Booking() {
     </div>
 
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <span style={{ color: "#ddd", fontSize: "13px" }}>Số điện thoại</span>
+      <span style={{ color: "#14100c", fontSize: "13px" }}>Số điện thoại</span>
       <input
         value={customerPhone}
         onChange={(e) => setCustomerPhone(e.target.value)}
@@ -396,7 +396,7 @@ function Booking() {
     </div>
 
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <span style={{ color: "#ddd", fontSize: "13px" }}>Email</span>
+      <span style={{ color: "#14100c", fontSize: "13px" }}>Email</span>
       <input
         type="email"
         value={customerEmail}
