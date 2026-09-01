@@ -1,0 +1,237 @@
+/* ==========================================
+   THADS BARBER - WORKING SCHEDULE THEME
+   ========================================== */
+
+.barber-view-page {
+  min-height: 100vh;
+  padding: 40px 20px 60px;
+  background: linear-gradient(rgba(18, 16, 14, 0.95), rgba(18, 16, 14, 0.98)),
+              url('/img/slider/18.jpg') center / cover fixed #12100e;
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+.barber-schedule-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Header Card */
+.barber-header-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 28px 32px;
+  background: rgba(31, 28, 25, 0.95);
+  border: 1px solid #403a34;
+  border-left: 4px solid #c89b63;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+}
+
+.barber-brand-tag {
+  display: inline-block;
+  color: #c89b63;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  margin-bottom: 6px;
+}
+
+.barber-page-title {
+  margin: 0;
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.barber-page-desc {
+  margin: 8px 0 0;
+  color: #a0988e;
+  font-size: 13.5px;
+}
+
+/* Nav Actions Header */
+.barber-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.barber-nav-btn {
+  min-height: 40px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #e5ded6;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #4a423a;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  transition: all 0.2s ease;
+}
+
+.barber-nav-btn:hover {
+  color: #ffffff;
+  border-color: #c89b63;
+  background: rgba(200, 155, 99, 0.15);
+}
+
+.barber-nav-btn.active {
+  color: #fff;
+  background: #c89b63;
+  border-color: #c89b63;
+}
+
+/* Grid Lịch Làm Việc */
+.barber-week-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+/* Card Ngày */
+.barber-day-card {
+  background: rgba(31, 28, 25, 0.85);
+  border: 1px solid #3d3630;
+  border-radius: 10px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.barber-day-card:hover {
+  transform: translateY(-2px);
+  border-color: #5c5044;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+/* Card trạng thái Đi làm vs Nghỉ */
+.barber-day-card.is-working {
+  border-left: 3px solid #c89b63;
+}
+
+.barber-day-card.is-off {
+  border-left: 3px solid #5a524a;
+  opacity: 0.65;
+  background: rgba(24, 22, 20, 0.6);
+}
+
+/* Badge Header trong Card */
+.day-badge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.day-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #070707;
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-pill.working {
+  background: rgba(200, 155, 99, 0.2);
+  color: #e5b880;
+  border: 1px solid rgba(200, 155, 99, 0.4);
+}
+
+.status-pill.off {
+  background: rgba(255, 255, 255, 0.06);
+  color: #8c837a;
+  border: 1px solid #403a34;
+}
+
+/* Body trong Card */
+.day-time-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.working-hours {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b0b0b;
+  letter-spacing: 0.5px;
+}
+
+.break-note {
+  font-size: 12px;
+  color: #c89b63;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.break-note::before {
+  content: '•';
+  font-size: 16px;
+}
+
+.day-off-text {
+  font-size: 14px;
+  color: #7a7269;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* Loading state */
+.barber-loading-box {
+  max-width: 400px;
+  margin: 100px auto;
+  padding: 40px;
+  text-align: center;
+  background: rgba(31, 28, 25, 0.95);
+  border: 1px solid #403a34;
+  border-radius: 8px;
+  color: #c89b63;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .barber-header-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .barber-nav-actions {
+    width: 100%;
+  }
+
+  .barber-nav-btn {
+    flex: 1;
+  }
+
+  .barber-week-grid-modern {
+    grid-template-columns: 1fr;
+  }
+}

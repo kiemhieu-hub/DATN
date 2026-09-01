@@ -1,0 +1,65 @@
+.booking-deposit-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #000c;
+}
+
+.booking-deposit-modal section {
+  width: min(460px, 100%);
+  padding: 30px;
+  text-align: center;
+  background: #1c1c1a;
+  border: 1px solid #c6a15b;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6);
+}
+
+.booking-deposit-modal h2 {
+  margin-top: 0;
+  margin-bottom: 14px;
+  color: #fff;
+  font-size: 24px;
+}
+
+.booking-deposit-modal p {
+  margin: 10px 0;
+  color: #ccc;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.booking-deposit-modal p b {
+  color: #c6a15b;
+}
+
+.booking-deposit-modal section > strong {
+  display: block;
+  margin: 16px 0;
+  color: #c6a15b;
+  font-size: 32px;
+}
+
+.booking-deposit-modal button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px 20px;
+  color: #111;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  background: #c6a15b;
+  border: 0;
+  transition: opacity 0.2s;
+}
+
+.booking-deposit-modal button:hover {
+  opacity: 0.9;
+}
+
+.booking-deposit-modal button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

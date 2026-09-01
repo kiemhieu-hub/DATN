@@ -1,0 +1,711 @@
+/* THADS unified theme — imported last from App.tsx */
+:root{
+  --thads-bg:#f3ede5;
+  --thads-surface:#fffaf3;
+  --thads-surface-2:#e9dfd3;
+  --thads-ink:#18130f;
+  --thads-muted:#756b61;
+  --thads-accent:#aa804d;
+  --thads-accent-strong:#8c6538;
+  --thads-dark:#1d1a17;
+  --thads-dark-2:#28231f;
+  --thads-border:#d7c9b9;
+  --thads-danger:#a94343;
+  --thads-success:#2f7652;
+  --thads-info:#39758d;
+  --thads-shadow:0 16px 42px rgb(57 39 24 / 10%);
+  --admin-gold:var(--thads-accent);
+  --admin-background:var(--thads-bg);
+  --admin-panel:var(--thads-dark);
+  --admin-border:#3c352e;
+  --admin-text:#f8f1e8;
+  --admin-muted:#aaa096;
+}
+
+html,body,#root{min-height:100%;background:var(--thads-bg);color:var(--thads-ink)}
+body,button,input,select,textarea{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important}
+body{margin:0;letter-spacing:0;color:var(--thads-ink)}
+::selection{color:#fff;background:var(--thads-accent)}
+
+/* Booking and customer history follow the cream client pages */
+.booking-page,.history-page{color:var(--thads-ink)!important;background:var(--thads-bg)!important}
+.booking-header h1,.booking-panel h2,.booking-service-group h3,.history-page h1,
+.history-page h2,.history-page h3{color:var(--thads-ink)!important}
+.booking-header p,.booking-panel-title p,.history-page p{color:var(--thads-muted)!important}
+.booking-panel,.history-card,.history-empty{
+  color:var(--thads-ink)!important;background:var(--thads-surface)!important;
+  border-color:var(--thads-border)!important;box-shadow:var(--thads-shadow)!important
+}
+.booking-service-card,.booking-barber-picker button,.booking-auto-care{
+  color:var(--thads-ink)!important;background:#fffdf9!important;border-color:var(--thads-border)!important
+}
+.booking-service-card.selected,.booking-barber-picker button.selected{
+  background:#efe1ce!important;border-color:var(--thads-accent)!important
+}
+.booking-service-card strong,.booking-barber-picker b{color:var(--thads-ink)!important}
+.booking-service-card p,.booking-service-card small,.booking-barber-picker small{color:var(--thads-muted)!important}
+.booking-fields input,.booking-date input,.booking-note textarea{
+  color:var(--thads-ink)!important;background:#fff!important;border-color:#cdbba8!important
+}
+.booking-slots button{color:#443a31!important;background:#fffdf9!important;border-color:var(--thads-border)!important}
+.booking-slots button.selected{color:#17120d!important;background:var(--thads-accent)!important;border-color:var(--thads-accent)!important}
+.booking-summary{color:#f7efe5!important;background:var(--thads-dark)!important;border-color:#4b4238!important}
+.booking-summary-header h2,.booking-summary li b,.booking-times b{color:#fffaf3!important}
+.booking-summary li,.booking-times>div,.booking-voucher-trigger{background:#29251f!important;border-color:#494139!important}
+.booking-totals .grand-total{background:#cda25f!important}
+.history-card>header,.history-detail-grid>div,.history-services,.history-cancel-reason{background:#fffdf9!important;border-color:var(--thads-border)!important;color:var(--thads-ink)!important}
+
+/* Shell: sidebar dark like client navigation, working area light like client content */
+.admin-shell{color:var(--thads-ink)!important;background:var(--thads-bg)!important}
+.admin-shell-sidebar{background:linear-gradient(180deg,#211e1a,#171512)!important;border-right-color:#40382f!important}
+.admin-shell-content{background:var(--thads-bg)!important}
+.admin-nav-link{color:#c9c0b6!important;border-radius:10px!important}
+.admin-nav-link:hover{color:#fff!important;background:#2b2722!important}
+.admin-nav-link.active{color:#fff!important;background:linear-gradient(90deg,rgb(170 128 77 / 25%),#2a251f)!important;border-color:rgb(170 128 77 / 60%)!important}
+.admin-shell-brand h2,.admin-nav-icon{color:#d4aa72!important}
+.admin-shell-logo,.admin-sidebar-toggle{background:#cda25f!important}
+
+/* All operational pages */
+.admin-dashboard-page,.admin-revenue-page,.admin-payments-page,.admin-vouchers-page,
+.admin-reviews-page,.admin-users-page,.admin-barbers-page,.service-categories-page,
+.admin-services-page,.admin-appointments-page,.admin-gallery-page,.admin-content-page,
+.admin-module-page,.staff-notifications-page,.reception-page-embedded,
+.barber-dashboard-page,.barber-profile-page,.barber-view-page{
+  min-height:100vh!important;
+  color:var(--thads-ink)!important;
+  background:var(--thads-bg)!important;
+}
+
+.admin-dashboard-container,.admin-revenue-container,.admin-payments-container,
+.admin-users-container,.admin-barbers-container,.admin-services-container,
+.admin-appointments-container,.admin-module-container,.reception-main{
+  color:var(--thads-ink)!important;
+}
+
+/* Typography */
+.admin-dashboard-page h1,.admin-revenue-page h1,.admin-payments-page h1,
+.admin-vouchers-page h1,.admin-reviews-page h1,.admin-users-page h1,
+.admin-barbers-page h1,.service-categories-page h1,.admin-services-page h1,
+.admin-appointments-page h1,.admin-gallery-page h1,.admin-content-page h1,
+.barber-dashboard-page h1,.barber-profile-page h1,.barber-view-page h1,
+.reception-page h1{color:var(--thads-ink)!important;font-weight:800!important;letter-spacing:-1.2px!important;text-transform:none!important}
+
+.admin-dashboard-page h2,.admin-revenue-page h2,.admin-payments-page h2,
+.admin-vouchers-page h2,.admin-reviews-page h2,.admin-users-page h2,
+.admin-barbers-page h2,.service-categories-page h2,.admin-services-page h2,
+.admin-appointments-page h2,.admin-gallery-page h2,.barber-dashboard-page h2,
+.barber-profile-page h2,.reception-page h2{color:var(--thads-ink)!important}
+
+.admin-dashboard-header>div>p:first-child,.admin-revenue-header p,.admin-payments-header p,
+.voucher-header p,.admin-reviews-header p,.admin-users-header p,.admin-barbers-header p,
+.category-header p,.admin-services-header p,.admin-appointments-header p,
+.admin-gallery-header p,.barber-dashboard-brand,.barber-profile-brand{
+  color:var(--thads-accent-strong)!important;font-weight:700!important;letter-spacing:3px!important
+}
+
+.admin-dashboard-header p,.admin-revenue-header span,.admin-payments-header span,
+.voucher-header span,.admin-reviews-header span,.admin-users-header span,
+.admin-barbers-header span,.category-header span,.admin-services-header span,
+.admin-appointments-header span,.admin-gallery-header span,
+.barber-dashboard-header p,.barber-profile-header p,.reception-main header p{
+  color:var(--thads-muted)!important
+}
+
+/* Cards and sections */
+.admin-dashboard-card,.admin-revenue-chart-card,.admin-revenue-summary article,
+.payments-summary article,.review-summary button,.admin-users-summary article,
+.admin-barbers-summary article,.admin-barber-card,.admin-content-card,
+.reception-stats article,.reception-schedule-list>section,
+.barber-dashboard-header,.barber-dashboard-date-banner,.barber-dashboard-statistics article,
+.barber-dashboard-next-card,.barber-dashboard-revenue-card,.barber-dashboard-appointment-card,
+.barber-profile-header,.barber-profile-section,.barber-week-grid article{
+  color:var(--thads-ink)!important;
+  background:var(--thads-surface)!important;
+  border:1px solid var(--thads-border)!important;
+  border-radius:0!important;
+  box-shadow:var(--thads-shadow)!important;
+}
+
+.admin-dashboard-card span,.admin-revenue-summary span,.payments-summary span,
+.review-summary span,.admin-users-summary span,.admin-barbers-summary span,
+.reception-stats span,.barber-dashboard-statistics span,.barber-profile-section label{
+  color:var(--thads-muted)!important
+}
+.admin-dashboard-card strong,.admin-revenue-summary strong,.payments-summary strong,
+.review-summary strong,.admin-users-summary strong,.admin-barbers-summary strong,
+.reception-stats b,.barber-dashboard-statistics strong{color:var(--thads-accent-strong)!important}
+
+/* Filters and forms */
+.appointment-filters,.service-filters,.review-filters,.admin-users-filters,
+.payments-filters,.admin-revenue-filters,.category-filters,.gallery-filters,
+.voucher-filters,.barber-view-filter{
+  padding:18px!important;background:var(--thads-surface)!important;
+  border:1px solid var(--thads-border)!important;box-shadow:0 8px 28px rgb(57 39 24 / 6%)!important
+}
+
+.admin-shell-content input,.admin-shell-content select,.admin-shell-content textarea,
+.reception-page input,.reception-page select,.reception-page textarea,
+.barber-dashboard-page input,.barber-profile-page input,.barber-profile-page select,
+.barber-profile-page textarea,.barber-view-page input{
+  color:var(--thads-ink)!important;background:#fffdf9!important;
+  border:1px solid #cdbba8!important;border-radius:0!important;outline:none!important
+}
+.admin-shell-content input:focus,.admin-shell-content select:focus,.admin-shell-content textarea:focus,
+.reception-page input:focus,.barber-profile-page input:focus{
+  border-color:var(--thads-accent)!important;box-shadow:0 0 0 3px rgb(170 128 77 / 14%)!important
+}
+.admin-shell-content input::placeholder,.admin-shell-content textarea::placeholder{color:#9a8f84!important}
+.admin-shell-content label,.reception-page label,.barber-profile-page label{color:#4c433b!important}
+
+/* Tables */
+.appointment-table-wrapper,.service-table-wrap,.review-table-wrap,.voucher-table-wrap,
+.payments-table-wrapper,.admin-users-table-wrapper,.category-table-wrap,
+.admin-dashboard-table-wrap,.reception-table,.barber-view-table{
+  overflow:auto!important;background:var(--thads-surface)!important;
+  border:1px solid var(--thads-border)!important;box-shadow:var(--thads-shadow)!important
+}
+.appointment-table,.service-table-wrap table,.review-table-wrap table,.voucher-table-wrap table,
+.payments-table,.admin-users-table,.category-table-wrap table,.admin-dashboard-table-wrap table,
+.reception-table table,.barber-view-table table{
+  color:var(--thads-ink)!important;background:var(--thads-surface)!important
+}
+.appointment-table th,.service-table-wrap th,.review-table-wrap th,.voucher-table-wrap th,
+.payments-table th,.admin-users-table th,.category-table-wrap th,.admin-dashboard-table-wrap th,
+.reception-table th,.barber-view-table th{
+  color:#f8eee2!important;background:var(--thads-dark-2)!important;
+  border-color:#463e35!important;font-size:12px!important;letter-spacing:.35px!important
+}
+.appointment-table td,.service-table-wrap td,.review-table-wrap td,.voucher-table-wrap td,
+.payments-table td,.admin-users-table td,.category-table-wrap td,.admin-dashboard-table-wrap td,
+.reception-table td,.barber-view-table td{
+  color:#302820!important;background:var(--thads-surface)!important;border-color:#e2d7cb!important
+}
+.appointment-table tbody tr:hover td,.service-table-wrap tbody tr:hover td,
+.review-table-wrap tbody tr:hover td,.voucher-table-wrap tbody tr:hover td,
+.payments-table tbody tr:hover td,.admin-users-table tbody tr:hover td{
+  background:#f3e9dc!important
+}
+.appointment-customer-name,.appointment-price,.appointment-time,
+.appointment-service-list span,.appointment-customer-contact{color:inherit!important}
+.appointment-price{color:var(--thads-accent-strong)!important}
+
+/* Buttons and links */
+.admin-shell-content button,.reception-page button,.barber-dashboard-page button,
+.barber-profile-page button,.barber-view-page button{
+  border-radius:8px!important;font-family:inherit!important;transition:.18s ease!important
+}
+.appointment-search-button,.service-filters button,.review-filters button,
+.admin-users-filters button,.payments-filters button,.admin-revenue-filters button,
+.voucher-header button,.admin-services-header button,.category-header button,
+.admin-barbers-header-actions .primary,.modal-actions .primary,
+.voucher-modal-actions .primary,.category-modal-actions .primary{
+  color:#17120d!important;background:var(--thads-accent)!important;
+  border-color:var(--thads-accent)!important;font-weight:700!important
+}
+.appointment-search-button:hover,.service-filters button:hover,.review-filters button:hover,
+.admin-users-filters button:hover,.payments-filters button:hover{
+  color:#fff!important;background:var(--thads-accent-strong)!important
+}
+.admin-shell-content a{color:var(--thads-accent-strong)}
+
+/* Modals */
+.appointment-modal-backdrop,.service-modal-backdrop,.voucher-modal-bg,.review-modal-bg,
+.admin-user-modal-backdrop,.admin-barbers-modal-backdrop,.category-modal-bg,.gallery-modal-bg,
+.reception-modal-bg{background:rgb(24 19 15 / 72%)!important;backdrop-filter:blur(5px)}
+.appointment-modal,.service-modal,.voucher-modal,.review-modal,.admin-user-modal,
+.admin-barbers-modal,.category-modal,.gallery-modal,.reception-modal{
+  color:var(--thads-ink)!important;background:var(--thads-surface)!important;
+  border:1px solid var(--thads-border)!important;box-shadow:0 30px 80px rgb(32 23 15 / 28%)!important
+}
+.appointment-modal h2,.appointment-modal h3,.service-modal h2,.voucher-modal h2,
+.review-modal h2,.admin-user-modal h2,.admin-barbers-modal h2,.category-modal h2,.gallery-modal h2{
+  color:var(--thads-ink)!important
+}
+.appointment-detail-grid>div,.review-detail-grid>div,.review-comment,
+.review-service-list>div,.appointment-detail-note,.appointment-activity-item{
+  color:var(--thads-ink)!important;background:#fffdf9!important;border-color:#dfd2c4!important
+}
+
+/* Auth uses the same charcoal/gold identity */
+.login-page,.register-page{background:linear-gradient(rgb(29 26 23 / 76%),rgb(29 26 23 / 86%)),url('/img/slider/18.jpg') center/cover fixed!important}
+.login-card,.register-card{background:rgb(29 26 23 / 96%)!important;border:1px solid #5a4b3b!important;box-shadow:0 30px 90px #0007!important}
+.login-title,.register-title{color:#fffaf3!important}.login-subtitle,.register-subtitle{color:#c7bbb0!important}
+.login-input,.register-card input{color:#fff!important;background:#2a2521!important;border-color:#574b40!important}
+.login-button,.register-button{color:#17120d!important;background:#cda25f!important}
+
+/* Notifications and semantic messages */
+.appointment-alert-success,.service-alert.success,.review-alert.success,.admin-users-alert.success,
+.category-alert.success,.gallery-alert.success,.reception-alert.success{color:#215b3d!important;background:#ddf0e5!important;border-color:#83b99a!important}
+.appointment-alert-error,.service-alert.error,.review-alert.error,.admin-users-alert.error,
+.category-alert.error,.gallery-alert.error,.reception-alert.error{color:#812e2e!important;background:#f6dddd!important;border-color:#d59696!important}
+
+/* Preserve readable semantic badges on the light background */
+.appointment-status,.appointment-payment-status,.status,.voucher-status,.review-status,
+.payment-badge,.reception-status{box-shadow:none!important;font-weight:700!important}
+
+@media(max-width:760px){
+  .admin-dashboard-page,.admin-revenue-page,.admin-payments-page,.admin-vouchers-page,
+  .admin-reviews-page,.admin-users-page,.admin-barbers-page,.service-categories-page,
+  .admin-services-page,.admin-appointments-page,.admin-gallery-page{padding-right:14px!important;padding-left:14px!important}
+}
+
+/* =========================================================
+   ADMIN UI POLISH — màu chức năng rõ ràng và bo góc đồng bộ
+========================================================= */
+:root{
+  --ui-primary:#2563eb;
+  --ui-primary-hover:#1d4ed8;
+  --ui-success:#16845b;
+  --ui-success-hover:#106b49;
+  --ui-warning:#d97706;
+  --ui-warning-soft:#fff4dc;
+  --ui-danger:#dc4c4c;
+  --ui-danger-hover:#b93636;
+  --ui-info:#087ea4;
+  --ui-card-radius:16px;
+  --ui-control-radius:10px;
+}
+
+/* Khung nội dung, card và bộ lọc */
+.admin-dashboard-card,.admin-revenue-chart-card,.admin-revenue-summary article,
+.payments-summary article,.review-summary button,.admin-users-summary article,
+.admin-barbers-summary article,.admin-barber-card,.admin-content-card,
+.reception-stats article,.reception-schedule-list>section,
+.barber-dashboard-header,.barber-dashboard-date-banner,.barber-dashboard-statistics article,
+.barber-dashboard-next-card,.barber-dashboard-revenue-card,.barber-dashboard-appointment-card,
+.barber-profile-header,.barber-profile-section,.barber-week-grid article,
+.admin-user-group,.gallery-toolbar,.admin-gallery-grid article{
+  border-radius:var(--ui-card-radius)!important;
+}
+
+.appointment-filters,.service-filters,.review-filters,.admin-users-filters,
+.payments-filters,.admin-revenue-filters,.category-filters,.gallery-filters,
+.voucher-filters,.barber-view-filter,.admin-barbers-toolbar{
+  border-radius:14px!important;
+}
+
+.admin-shell-content input,.admin-shell-content select,.admin-shell-content textarea,
+.reception-page input,.reception-page select,.reception-page textarea,
+.barber-dashboard-page input,.barber-profile-page input,.barber-profile-page select,
+.barber-profile-page textarea,.barber-view-page input{
+  border-radius:var(--ui-control-radius)!important;
+}
+
+/* Bảng: giữ header rõ, bo khung và tăng khoảng thở */
+.appointment-table-wrapper,.service-table-wrap,.review-table-wrap,.voucher-table-wrap,
+.payments-table-wrapper,.admin-users-table-wrapper,.category-table-wrap,
+.admin-dashboard-table-wrap,.reception-table,.barber-view-table{
+  border-radius:14px!important;
+}
+
+.service-table-wrap td strong,.admin-users-table td strong,
+.review-table-wrap td strong,.voucher-table-wrap td strong,
+.payments-table td strong,.category-table-wrap td strong{
+  color:var(--thads-ink)!important;
+}
+
+.service-table-wrap td small,.admin-users-table td small,
+.review-table-wrap td small,.voucher-table-wrap td small,
+.payments-table td small,.category-table-wrap td small{
+  color:var(--thads-muted)!important;
+}
+
+/* Nút mặc định: chữ luôn đủ tương phản */
+.admin-shell-content button,.reception-page button,.barber-dashboard-page button,
+.barber-profile-page button,.barber-view-page button{
+  min-height:38px;
+  border-radius:var(--ui-control-radius)!important;
+}
+
+.admin-shell-content button:not(:disabled):hover,
+.reception-page button:not(:disabled):hover,
+.barber-dashboard-page button:not(:disabled):hover,
+.barber-profile-page button:not(:disabled):hover{
+  transform:translateY(-1px);
+  box-shadow:0 7px 18px rgb(38 30 22 / 14%);
+}
+
+.admin-shell-content button:disabled,.reception-page button:disabled,
+.barber-dashboard-page button:disabled,.barber-profile-page button:disabled{
+  opacity:.48!important;
+  cursor:not-allowed!important;
+}
+
+/* Nút chính */
+.appointment-search-button,.service-filters button,.review-filters button,
+.admin-users-filters button,.payments-filters button,.admin-revenue-filters button,
+.voucher-header button,.admin-services-header button,.category-header button,
+.admin-barbers-header-actions .primary,.admin-barbers-search button,
+.modal-actions .primary,.voucher-modal-actions .primary,.category-modal-actions .primary,
+.gallery-modal-actions .primary,.admin-gallery-header>button,
+.reception-schedule-list>section>button{
+  color:#fff!important;
+  background:var(--ui-primary)!important;
+  border-color:var(--ui-primary)!important;
+  box-shadow:0 7px 16px rgb(37 99 235 / 18%)!important;
+}
+
+.appointment-search-button:hover,.service-filters button:hover,.review-filters button:hover,
+.admin-users-filters button:hover,.payments-filters button:hover,.admin-revenue-filters button:hover,
+.admin-barbers-search button:hover,.admin-gallery-header>button:hover{
+  color:#fff!important;
+  background:var(--ui-primary-hover)!important;
+  border-color:var(--ui-primary-hover)!important;
+}
+
+/* Nút theo nghiệp vụ */
+.admin-user-actions button,.admin-barber-actions button,.row-actions button,
+.admin-gallery-grid footer button,.gallery-modal-actions button,
+.service-pagination button,.admin-users-pagination button,.admin-barbers-pagination button{
+  color:#1f2937!important;
+  background:#fff!important;
+  border:1px solid #b8c0ca!important;
+  border-radius:9px!important;
+  font-weight:700!important;
+}
+
+.admin-user-actions button:first-child,.admin-barber-actions button:first-child,
+.row-actions button:first-child,.admin-gallery-grid footer button:first-child{
+  color:#fff!important;
+  background:var(--ui-info)!important;
+  border-color:var(--ui-info)!important;
+}
+
+.admin-user-actions .success,.admin-barber-actions .success{
+  color:#fff!important;
+  background:var(--ui-success)!important;
+  border-color:var(--ui-success)!important;
+}
+
+.admin-user-actions .danger,.admin-barber-actions .danger,
+.admin-gallery-grid footer .danger{
+  color:#fff!important;
+  background:var(--ui-danger)!important;
+  border-color:var(--ui-danger)!important;
+}
+
+.admin-user-actions .danger:hover,.admin-barber-actions .danger:hover,
+.admin-gallery-grid footer .danger:hover{
+  background:var(--ui-danger-hover)!important;
+  border-color:var(--ui-danger-hover)!important;
+}
+
+.row-actions .toggle,.admin-gallery-grid footer button:nth-child(2){
+  color:#9a5600!important;
+  background:var(--ui-warning-soft)!important;
+  border-color:#e5a33e!important;
+}
+
+/* Trang người dùng */
+.admin-user-group{
+  color:var(--thads-ink)!important;
+  background:var(--thads-surface)!important;
+  box-shadow:var(--thads-shadow)!important;
+}
+
+.admin-user-group-header h2{color:var(--thads-ink)!important}
+.admin-user-group-header p{color:var(--thads-muted)!important}
+.admin-user-group-header>span{
+  color:var(--thads-accent-strong)!important;
+  background:#fff!important;
+  border-color:var(--thads-border)!important;
+}
+
+/* Card Barber: bỏ các ô đen nặng và sửa chữ bị chìm */
+.admin-barber-card{padding:26px!important}
+.admin-barber-card-header,.admin-barber-meta{border-color:var(--thads-border)!important}
+.admin-barber-title h2{color:var(--thads-ink)!important}
+.admin-barber-contact div,.admin-barber-metrics div{
+  color:var(--thads-ink)!important;
+  background:#f8f2ea!important;
+  border-color:#e3d5c5!important;
+  border-radius:12px!important;
+}
+.admin-barber-contact span,.admin-barber-metrics span,
+.admin-barber-bio>span,.admin-barber-specialties>span,
+.admin-barber-meta small{color:var(--thads-muted)!important}
+.admin-barber-contact strong,.admin-barber-metrics strong,
+.admin-barber-bio p{color:var(--thads-ink)!important}
+.admin-barber-specialties small{
+  color:#43382f!important;
+  background:#f1e5d7!important;
+  border-color:#d8c3aa!important;
+  border-radius:8px!important;
+}
+
+/* Lịch làm việc Barber */
+.reception-schedule-list>section{padding:26px!important}
+.reception-schedule-list article{
+  color:#f8f4ec!important;
+  background:#28241f!important;
+  border:1px solid #453e35!important;
+  border-radius:12px!important;
+}
+.reception-schedule-list article strong,
+.reception-schedule-list article label{color:#f4eee6!important}
+.reception-schedule-list article input[type=time]{
+  color:#211a15!important;
+  background:#fff!important;
+  border-color:#d6c8b8!important;
+  border-radius:8px!important;
+}
+
+/* Gallery */
+.gallery-toolbar{
+  color:var(--thads-ink)!important;
+  background:var(--thads-surface)!important;
+  border-color:var(--thads-border)!important;
+  box-shadow:var(--thads-shadow)!important;
+}
+.admin-gallery-grid article{
+  color:var(--thads-ink)!important;
+  background:var(--thads-surface)!important;
+  border-color:var(--thads-border)!important;
+  box-shadow:var(--thads-shadow)!important;
+}
+.admin-gallery-image{background:#e8ded2!important}
+.admin-gallery-info h2{color:var(--thads-ink)!important}
+.admin-gallery-info p{color:#554b43!important}
+.admin-gallery-info small{color:var(--thads-muted)!important}
+.admin-gallery-grid footer{padding:0 16px 18px!important}
+
+/* Popup */
+.appointment-modal,.service-modal,.voucher-modal,.review-modal,.admin-user-modal,
+.admin-barbers-modal,.category-modal,.gallery-modal,.reception-modal{
+  border-radius:18px!important;
+}
+.admin-user-detail-grid p,.admin-user-barber-profile,
+.admin-user-recent-list article,.appointment-detail-grid>div,
+.review-detail-grid>div,.review-comment,.review-service-list>div,
+.appointment-detail-note{
+  border-radius:11px!important;
+}
+
+/* =========================================================
+   LỊCH HẸN ADMIN + LỄ TÂN
+   Nút vuông màu trầm như mẫu, bo góc nhẹ để không bị thô.
+========================================================= */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions{
+  min-width:148px!important;
+  gap:7px!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-button{
+  display:inline-grid!important;
+  width:42px!important;
+  min-width:42px!important;
+  height:42px!important;
+  min-height:42px!important;
+  padding:0!important;
+  color:#fff!important;
+  border-width:1px!important;
+  border-style:solid!important;
+  border-radius:8px!important;
+  box-shadow:0 3px 8px rgb(31 25 20 / 12%)!important;
+  place-items:center!important;
+  font-size:18px!important;
+}
+
+/* Xem chi tiết */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-detail{
+  color:#f4f1eb!important;
+  background:#24221f!important;
+  border-color:#3c3934!important;
+}
+
+/* Xác nhận, check-in, bắt đầu và hoàn thành */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-confirmed{
+  color:#dff4e7!important;
+  background:#526f5e!important;
+  border-color:#668772!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-checked_in,
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-in_progress,
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-completed,
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-payment{
+  color:#c7f0d7!important;
+  background:#103b29!important;
+  border-color:#225d43!important;
+}
+
+/* Vắng mặt */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-no_show{
+  color:#ffd479!important;
+  background:#2b251b!important;
+  border-color:#9e7023!important;
+}
+
+/* Hủy */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-cancel{
+  color:#ffc4c4!important;
+  background:#5a1d21!important;
+  border-color:#84343a!important;
+  font-size:21px!important;
+}
+
+/* Bật lại */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-reopen{
+  color:#c5ecf3!important;
+  background:#123842!important;
+  border-color:#28606c!important;
+}
+
+/* Đổi thời gian */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-reschedule{
+  color:#bfe8f1!important;
+  background:#102f38!important;
+  border-color:#285763!important;
+}
+
+/* Thêm/bớt dịch vụ */
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-services{
+  color:#ead7f5!important;
+  background:#34243f!important;
+  border-color:#604475!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-button:hover:not(:disabled){
+  filter:brightness(1.15)!important;
+  transform:translateY(-2px)!important;
+  box-shadow:0 7px 14px rgb(31 25 20 / 20%)!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-actions .appointment-icon-button:disabled{
+  opacity:.5!important;
+  filter:saturate(.65)!important;
+}
+
+/* Modal chi tiết: tăng tương phản trên nền sáng. */
+.admin-shell .admin-shell-content .admin-appointments-page .appointment-modal{
+  width:min(850px,100%)!important;
+  padding:32px!important;
+  color:#2b231c!important;
+  background:#fffaf4!important;
+  border:1px solid #d8c5b1!important;
+  border-radius:20px!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page .appointment-modal h2,
+.admin-shell .admin-shell-content .admin-appointments-page .appointment-modal h3{
+  color:#1f1812!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-grid>div{
+  min-height:92px!important;
+  padding:16px!important;
+  color:#2b231c!important;
+  background:#f8f0e7!important;
+  border:1px solid #ddcbb8!important;
+  border-radius:12px!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-grid span{
+  color:#75685c!important;
+  font-weight:600!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-grid strong{
+  color:#211a14!important;
+  font-size:15px!important;
+  font-weight:800!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-services{
+  overflow:hidden!important;
+  background:#fff!important;
+  border:1px solid #e0d0bf!important;
+  border-radius:12px!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-services li{
+  padding:13px 16px!important;
+  border-color:#e8ddd2!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-services span{
+  color:#2e261f!important;
+  font-weight:700!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-services small{
+  color:#817367!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-total{
+  color:#3c3128!important;
+  background:#f2e4d3!important;
+  border:1px solid #d8b98f!important;
+  border-radius:12px!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-detail-note{
+  color:#332a22!important;
+  background:#fff!important;
+  border-color:#dfd0c0!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-section{
+  padding:21px!important;
+  background:#f7eee4!important;
+  border:1px solid #dfcfbf!important;
+  border-radius:14px!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-section h3,
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-item strong{
+  color:#2b221b!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-item{
+  margin-bottom:7px!important;
+  padding:13px 14px 13px 4px!important;
+  color:#30271f!important;
+  background:#fffaf5!important;
+  border:1px solid #e2d3c3!important;
+  border-radius:10px!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-item p{
+  color:#796b5f!important;
+}
+
+.admin-shell .admin-shell-content .admin-appointments-page
+.appointment-activity-timeline::before{
+  background:#cda66b!important;
+}
+
+@media(max-width:760px){
+  .admin-shell .admin-shell-content .admin-appointments-page .appointment-modal{
+    padding:25px 17px!important;
+  }
+}
