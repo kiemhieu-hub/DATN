@@ -86,6 +86,32 @@ export function AuthProvider({
         "ADMIN",
       ];
 
+      const cachedSessions = roles.reduce<AuthSessions>((result, role) => {
+        const cachedUser = localStorage.getItem(userKey(role));
+        if (!cachedUser) return result;
+        try {
+          const parsed = JSON.parse(cachedUser) as AuthUser;
+          if (parsed.role === role) result[role] = parsed;
+        } catch {
+          localStorage.removeItem(userKey(role));
+        }
+        return result;
+      }, { ...emptySessions });
+
+      // Hiển thị ngay dữ liệu phiên đã lưu, không bắt mọi trang phải chờ tối đa
+      // bốn request /auth/me (client, barber, lễ tân và admin).
+      setSessions(cachedSessions);
+      setIsLoading(false);
+
+      const path = window.location.pathname;
+      const activeRole: UserRole = path.startsWith("/admin")
+        ? "ADMIN"
+        : path.startsWith("/receptionist")
+          ? "RECEPTIONIST"
+          : path.startsWith("/barber")
+            ? "BARBER"
+            : "CLIENT";
+
       const restored = await Promise.all(
         roles.map(async (role) => {
           const accessToken = localStorage.getItem(
@@ -94,6 +120,12 @@ export function AuthProvider({
 
           if (!accessToken) {
             return [role, null] as const;
+          }
+
+          // Các vai trò không dùng ở tab hiện tại lấy từ cache. API vẫn kiểm
+          // tra token khi người dùng chuyển sang đúng khu vực của vai trò đó.
+          if (role !== activeRole) {
+            return [role, cachedSessions[role]] as const;
           }
 
           try {
@@ -128,7 +160,6 @@ export function AuthProvider({
         RECEPTIONIST: restored.find(([role]) => role === "RECEPTIONIST")?.[1] ?? null,
         ADMIN: restored.find(([role]) => role === "ADMIN")?.[1] ?? null,
       });
-      setIsLoading(false);
     };
 
     void restoreSessions();

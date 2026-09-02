@@ -277,12 +277,12 @@ export const getAdminDashboard =
     const selectedBarberId = filters.barberId && mongoose.Types.ObjectId.isValid(filters.barberId)
       ? new mongoose.Types.ObjectId(filters.barberId)
       : undefined;
-    if (selectedBarberId) revenueFilter.barber = selectedBarberId;
+    if (selectedBarberId) revenueFilter.$or = [{ barber: selectedBarberId }, { "staffAssignments.barber": selectedBarberId }];
     const outcomeFilter: Record<string, unknown> = {
       status: { $in: ["COMPLETED", "CANCELLED"] },
       ...dateMatch,
     };
-    if (selectedBarberId) outcomeFilter.barber = selectedBarberId;
+    if (selectedBarberId) outcomeFilter.$or = [{ barber: selectedBarberId }, { "staffAssignments.barber": selectedBarberId }];
     const [completedInPeriod, cancelledInPeriod] = await Promise.all([
       Appointment.countDocuments({ ...outcomeFilter, status: "COMPLETED" }),
       Appointment.countDocuments({ ...outcomeFilter, status: "CANCELLED" }),
@@ -294,22 +294,25 @@ export const getAdminDashboard =
       completionRate: outcomeTotal ? Math.round(completedInPeriod * 100 / outcomeTotal) : 0,
       cancellationRate: outcomeTotal ? Math.round(cancelledInPeriod * 100 / outcomeTotal) : 0,
     };
-    const revenueRows = await Appointment.aggregate([
-      { $match: revenueFilter },
-      { $group: { _id: "$barber", revenue: { $sum: "$totalPrice" }, appointments: { $sum: 1 } } },
-      { $sort: { revenue: -1 } },
-    ]);
-    const serviceRows = await Appointment.aggregate([
-      { $match: revenueFilter },
-      { $unwind: "$services" },
-      { $group: {
-        _id: "$services.service",
-        serviceName: { $first: "$services.nameSnapshot" },
-        uses: { $sum: 1 },
-        revenue: { $sum: { $cond: [{ $gt: ["$subtotal", 0] }, { $multiply: ["$totalPrice", { $divide: ["$services.priceSnapshot", "$subtotal"] }] }, 0] } },
-      } },
-      { $sort: { uses: -1, revenue: -1 } },
-    ]);
+    const rows = await Appointment.find(revenueFilter).select("barber staffAssignments services subtotal totalPrice").lean();
+    const byBarber = new Map<string, { revenue: number; appointments: Set<string> }>();
+    const byService = new Map<string, { serviceName: string; uses: number; revenue: number }>();
+    for (const appointment of rows) {
+      const subtotal = appointment.subtotal > 0 ? appointment.subtotal : appointment.totalPrice;
+      for (const service of appointment.services) {
+        const serviceId = String(service.service);
+        const assignment = appointment.staffAssignments?.find((item) => item.serviceIds.some((id) => String(id) === serviceId));
+        const barberId = String(assignment?.barber || appointment.barber);
+        if (selectedBarberId && barberId !== String(selectedBarberId)) continue;
+        const amount = subtotal > 0 ? appointment.totalPrice * service.priceSnapshot / subtotal : 0;
+        const barberRow = byBarber.get(barberId) || { revenue: 0, appointments: new Set<string>() };
+        barberRow.revenue += amount; barberRow.appointments.add(String(appointment._id)); byBarber.set(barberId, barberRow);
+        const serviceRow = byService.get(serviceId) || { serviceName: service.nameSnapshot || "Dịch vụ", uses: 0, revenue: 0 };
+        serviceRow.uses += 1; serviceRow.revenue += amount; byService.set(serviceId, serviceRow);
+      }
+    }
+    const revenueRows = [...byBarber.entries()].map(([barberId, value]) => ({ _id: barberId, revenue: Math.round(value.revenue), appointments: value.appointments.size })).sort((a, b) => b.revenue - a.revenue);
+    const serviceRows = [...byService.entries()].map(([serviceId, value]) => ({ _id: serviceId, ...value, revenue: Math.round(value.revenue) })).sort((a, b) => b.uses - a.uses || b.revenue - a.revenue);
     const barberUsers = await User.find({ _id: { $in: revenueRows.map((row) => row._id) } }).select("fullName").lean();
     const barberMap = new Map(barberUsers.map((barber) => [String(barber._id), barber.fullName]));
     const revenueByBarber = revenueRows.map((row) => ({

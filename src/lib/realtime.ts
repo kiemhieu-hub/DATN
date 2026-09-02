@@ -25,9 +25,12 @@ export const startRealtimeSync = (): (() => void) => {
   realtimeStarted = true;
 
   const refreshBusinessData = (): void => {
+    // Chỉ đánh dấu cache đã cũ. Các màn hình đang mở sẽ tự tải đúng dữ liệu
+    // của mình qua BUSINESS_REFRESH_EVENT bên dưới. Nếu vừa invalidate với
+    // refetchType "active" vừa phát event, mỗi thay đổi sẽ tạo hai lượt API.
     void queryClient.invalidateQueries({
       queryKey: queryKeys.all,
-      refetchType: "active",
+      refetchType: "none",
     });
 
     window.dispatchEvent(new Event(BUSINESS_REFRESH_EVENT));

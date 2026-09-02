@@ -9,3 +9,12 @@ select,
 textarea {
   font-family: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif !important;
 }
+/* Fallback rất nhẹ trong lúc trình duyệt chỉ tải bundle của trang đang mở. */
+.route-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #f4eee6;
+  color: #211b16;
+  font: 700 16px/1.5 Arial, sans-serif;
+}

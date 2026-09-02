@@ -85,6 +85,10 @@ function Schedule() {
     if (targetStatus === "COMPLETED" && !window.confirm("Xác nhận đã hoàn thành toàn bộ dịch vụ của lịch hẹn này?")) return;
     statusMutation.mutate({ appointmentId, status: targetStatus });
   };
+  const myProgress = (item: Appointment) => {
+    const assignment = item.staffAssignments?.find((entry) => (typeof entry.barber === "string" ? entry.barber : entry.barber._id) === user?.id);
+    return item.workProgress?.[assignment?.staffType === "CARE" ? "care" : "hair"] ?? "PENDING";
+  };
 
   return (
     <div className="barber-schedule-page">
@@ -105,7 +109,7 @@ function Schedule() {
         {appointmentsQuery.isPending ? <p className="schedule-empty">Đang tải...</p> : (
           <section className="schedule-list">
             {items.length === 0 && <p className="schedule-empty">Không có lịch hẹn phù hợp.</p>}
-            {items.map((item) => (
+            {items.map((item) => { const progress = myProgress(item); const canStart = ["CHECKED_IN", "IN_PROGRESS"].includes(item.status) && progress === "PENDING"; const canComplete = item.status === "IN_PROGRESS" && progress === "IN_PROGRESS"; return (
               <article key={item._id} className={!item.barberViewedAt ? "new" : ""} onClick={() => void view(item)}>
                 <div className="schedule-code">
                   {!item.barberViewedAt && <i />}
@@ -144,7 +148,7 @@ function Schedule() {
                       <button
                         className="btn-start"
                         title={item.status === "CHECKED_IN" ? "Bắt đầu thực hiện dịch vụ" : "Chỉ bật sau khi khách đã check-in"}
-                        disabled={item.status !== "CHECKED_IN" || statusMutation.isPending}
+                        disabled={!canStart || statusMutation.isPending}
                         onClick={(e) => handleStatusChange(e, item._id, "IN_PROGRESS")}
                       >
                         {statusMutation.isPending && statusMutation.variables?.appointmentId === item._id ? "Đang xử lý..." : "Bắt đầu làm"}
@@ -152,16 +156,16 @@ function Schedule() {
                       <button
                         className="btn-complete"
                         title={item.status === "IN_PROGRESS" ? "Xác nhận hoàn thành lịch hẹn" : "Chỉ bật sau khi đã bắt đầu làm"}
-                        disabled={item.status !== "IN_PROGRESS" || statusMutation.isPending}
+                        disabled={!canComplete || statusMutation.isPending}
                         onClick={(e) => handleStatusChange(e, item._id, "COMPLETED")}
                       >
-                        {statusMutation.isPending && statusMutation.variables?.appointmentId === item._id ? "Đang xử lý..." : "Hoàn thành đơn"}
+                        {statusMutation.isPending && statusMutation.variables?.appointmentId === item._id ? "Đang xử lý..." : "Hoàn thành việc"}
                       </button>
                     </div>
                   </div>
                 </div>
               </article>
-            ))}
+            );})}
           </section>
         )}
       </main>

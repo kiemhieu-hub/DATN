@@ -3,6 +3,8 @@ import { invalidateBusinessData } from "../lib/queryKeys";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  // Không để một kết nối MongoDB/mạng lỗi giữ giao diện loading vô hạn.
+  timeout: 15_000,
   headers: {
     "Content-Type": "application/json",
   },

@@ -35,6 +35,7 @@ export const getMe = async (
     success: boolean;
     user: AuthUser;
   }>(`${API_URL}/auth/me`, {
+    timeout: 10_000,
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

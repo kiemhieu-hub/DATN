@@ -143,22 +143,25 @@ function BookingHistory() {
   ] = useState<string | null>(null);
 
   const loadAppointments =
-    useCallback(async (): Promise<void> => {
+    useCallback(async (showPageLoading = false): Promise<void> => {
       try {
-        setLoading(true);
+        if (showPageLoading) setLoading(true);
         setError("");
 
-        const [response, reviewResponse] = await Promise.all([
+        const [response, reviewResponse] = await Promise.allSettled([
           fetchBusinessQuery("my-appointments", () => getMyAppointments()),
           fetchBusinessQuery("my-reviews", () => getMyReviews()),
         ]);
 
-        setAppointments(
-          response.appointments
-        );
-        setReviewedAppointmentIds(
-          new Set(reviewResponse.reviews.map((review) => String(review.appointment)))
-        );
+        if (response.status === "rejected") throw response.reason;
+        setAppointments(response.value.appointments);
+
+        // Lỗi tải đánh giá không được phép làm mất toàn bộ lịch hẹn.
+        if (reviewResponse.status === "fulfilled") {
+          setReviewedAppointmentIds(
+            new Set(reviewResponse.value.reviews.map((review) => String(review.appointment)))
+          );
+        }
       } catch (requestError) {
         setError(
           getErrorMessage(
@@ -172,7 +175,7 @@ function BookingHistory() {
     }, []);
 
   useRealtimeRefresh(() => {
-    void loadAppointments();
+    void loadAppointments(true);
   }, isAuthenticated);
 
   useEffect(() => {

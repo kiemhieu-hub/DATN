@@ -5,6 +5,7 @@ import StaffNotification, {
   type StaffNotificationKind,
 } from "../models/StaffNotification";
 import AppError from "../utils/AppError";
+import { getVietnamDateString, parseVietnamDateTime } from "../utils/vietnamTime";
 
 type StaffRole = "ADMIN" | "RECEPTIONIST";
 
@@ -158,17 +159,7 @@ export const createUpcomingNotifications =
     const upcomingLimit = new Date(
       now.getTime() + 30 * 60 * 1000
     );
-    const today = [
-      now.getFullYear(),
-      String(now.getMonth() + 1).padStart(
-        2,
-        "0"
-      ),
-      String(now.getDate()).padStart(
-        2,
-        "0"
-      ),
-    ].join("-");
+    const today = getVietnamDateString(now);
 
     const appointments =
       await Appointment.find({
@@ -182,9 +173,7 @@ export const createUpcomingNotifications =
 
     const upcoming = appointments.filter(
       (appointment) => {
-        const startsAt = new Date(
-          `${appointment.appointmentDate}T${appointment.startTime}:00`
-        );
+        const startsAt = parseVietnamDateTime(appointment.appointmentDate, appointment.startTime);
         return (
           startsAt > now &&
           startsAt <= upcomingLimit

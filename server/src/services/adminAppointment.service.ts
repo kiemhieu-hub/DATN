@@ -16,6 +16,7 @@ import {
   type AppointmentEmailEvent,
 } from "./email.service";
 import { createStaffNotification } from "./staffNotification.service";
+import { getDateDayOfWeek, parseVietnamDateTime } from "../utils/vietnamTime";
 
 type StaffRole = "ADMIN" | "RECEPTIONIST";
 
@@ -102,7 +103,7 @@ type SortableAppointment = {
 };
 
 const appointmentTimestamp = (item: SortableAppointment) =>
-  new Date(`${item.appointmentDate}T${item.startTime}:00`).getTime();
+  parseVietnamDateTime(item.appointmentDate, item.startTime).getTime();
 
 const priorityRank = (item: SortableAppointment) => {
   if (item.status === "COMPLETED" && ["UNPAID", "PENDING"].includes(item.paymentStatus)) return 0;
@@ -141,7 +142,7 @@ const assertBarberAvailability = async (
   const barber = await User.findOne({ _id: barberId, role: "BARBER", status: "ACTIVE" }).select("_id");
   if (!barber) throw new AppError("Barber không tồn tại hoặc đã ngừng hoạt động", 404);
 
-  const dayOfWeek = new Date(`${appointmentDate}T00:00:00`).getDay();
+  const dayOfWeek = getDateDayOfWeek(appointmentDate);
   const schedule = await BarberSchedule.findOne({ barber: barberId, dayOfWeek, isWorking: true }).lean();
   if (!schedule) throw new AppError("Barber không làm việc trong ngày đã chọn", 409);
 
@@ -404,7 +405,7 @@ export const rescheduleAppointment = async (
   if (!datePattern.test(appointmentDate) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) {
     throw new AppError("Ngày hoặc giờ hẹn không hợp lệ", 400);
   }
-  const nextStart = new Date(`${appointmentDate}T${startTime}:00`);
+  const nextStart = parseVietnamDateTime(appointmentDate, startTime);
   if (Number.isNaN(nextStart.getTime()) || nextStart.getTime() <= Date.now()) {
     throw new AppError("Không thể đổi lịch sang thời gian trong quá khứ", 400);
   }
@@ -509,7 +510,7 @@ export const reopenNoShowAppointment = async (
     const now = new Date();
     const currentDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const endsAt = new Date(`${appointment.appointmentDate}T${appointment.endTime}:00`);
+    const endsAt = parseVietnamDateTime(appointment.appointmentDate, appointment.endTime);
     if (appointment.appointmentDate !== currentDate || now >= endsAt) {
       throw new AppError("Khung giờ cũ đã kết thúc, vui lòng đặt lại lịch", 409);
     }

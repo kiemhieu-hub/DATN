@@ -4,71 +4,65 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
-import Index from "./pages/Client/Index";
-import About from "./pages/Client/About";
-import Services from "./pages/Client/Services";
-import Pricing from "./pages/Client/Pricing";
-import Contact from "./pages/Client/Contact";
-import ServicesPage from "./pages/Client/ServicesPage";
-import Team from "./pages/Client/Team";
-import TeamDetails from "./pages/Client/TeamDetail";
-import Portfolio from "./pages/Client/Portfolio";
-import Faq from "./pages/Client/Faq";
-import NotFound from "./pages/Client/NotFound";
-import Post from "./pages/Client/Post";
-import Blog from "./pages/Client/Blog";
-import Blog2 from "./pages/Client/Blog2";
-import Blog3 from "./pages/Client/Blog3";
-import Booking from "./pages/Client/Booking";
-import BookingHistory from "./pages/Client/BookingHistory";
-import Favorites from "./pages/Client/Favorites";
-import ClientProfile from "./pages/Client/Profile";
-import Schedule from "./pages/barber/Schedule";
-import WorkingSchedule from "./pages/barber/WorkingSchedule";
-import Dashboard from "./pages/barber/Dashboard";
-import Profile from "./pages/barber/Profile";
-
-// Auth
-import Login from "./pages/Auth/Login";
-import Register from "./pages/Auth/Register";
-import ForgotPassword from "./pages/Auth/ForgotPassword";
-import ResetPassword from "./pages/Auth/ResetPassword";
-
-import AdminLogin from "./pages/Auth/AdminLogin";
-import BarberLogin from "./pages/Auth/BarberLogin";
-import ReceptionistLogin from "./pages/Auth/ReceptionistLogin";
-import ReceptionistDashboard from "./pages/Receptionist/Dashboard";
-import ReceptionistBarberSchedules from "./pages/Receptionist/BarberSchedules";
-import BarberDaySchedule from "./pages/Receptionist/BarberDaySchedule";
-import AdminLayout from "./layouts/AdminLayout";
-import ReceptionistLayout from "./layouts/ReceptionistLayout";
-
-//Admin
-import AdminDashboard from "./pages/Admin/Dashboard";
-import AdminRevenue from "./pages/Admin/Revenue";
-import Barbers from "./pages/Admin/Barbers";
-import AdminServices from "./pages/Admin/Services";
-import AdminAppointments from "./pages/Admin/Appointments";
-import AdminPayments from "./pages/Admin/Payments";
-import AdminUsers from "./pages/Admin/Users";
-import AdminVouchers from "./pages/Admin/Vouchers";
-import AdminServiceCategories from "./pages/Admin/ServiceCategories";
-import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
-import AdminReviews from "./pages/Admin/Reviews";
-import AdminRefunds from "./pages/Admin/Refunds";
-import StaffNotifications from "./pages/Admin/StaffNotifications";
-
-//VNpay
-import VnpayReturn from "./pages/Client/VnpayReturn";
+const Index = lazy(() => import("./pages/Client/Index"));
+const About = lazy(() => import("./pages/Client/About"));
+const Services = lazy(() => import("./pages/Client/Services"));
+const Pricing = lazy(() => import("./pages/Client/Pricing"));
+const Contact = lazy(() => import("./pages/Client/Contact"));
+const ServicesPage = lazy(() => import("./pages/Client/ServicesPage"));
+const Team = lazy(() => import("./pages/Client/Team"));
+const TeamDetails = lazy(() => import("./pages/Client/TeamDetail"));
+const Portfolio = lazy(() => import("./pages/Client/Portfolio"));
+const Faq = lazy(() => import("./pages/Client/Faq"));
+const NotFound = lazy(() => import("./pages/Client/NotFound"));
+const Post = lazy(() => import("./pages/Client/Post"));
+const Blog = lazy(() => import("./pages/Client/Blog"));
+const Blog2 = lazy(() => import("./pages/Client/Blog2"));
+const Blog3 = lazy(() => import("./pages/Client/Blog3"));
+const Booking = lazy(() => import("./pages/Client/Booking"));
+const BookingHistory = lazy(() => import("./pages/Client/BookingHistory"));
+const Favorites = lazy(() => import("./pages/Client/Favorites"));
+const ClientProfile = lazy(() => import("./pages/Client/Profile"));
+const Schedule = lazy(() => import("./pages/barber/Schedule"));
+const WorkingSchedule = lazy(() => import("./pages/barber/WorkingSchedule"));
+const Dashboard = lazy(() => import("./pages/barber/Dashboard"));
+const Profile = lazy(() => import("./pages/barber/Profile"));
+const Login = lazy(() => import("./pages/Auth/Login"));
+const Register = lazy(() => import("./pages/Auth/Register"));
+const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/Auth/ResetPassword"));
+const AdminLogin = lazy(() => import("./pages/Auth/AdminLogin"));
+const BarberLogin = lazy(() => import("./pages/Auth/BarberLogin"));
+const ReceptionistLogin = lazy(() => import("./pages/Auth/ReceptionistLogin"));
+const ReceptionistDashboard = lazy(() => import("./pages/Receptionist/Dashboard"));
+const ReceptionistBarberSchedules = lazy(() => import("./pages/Receptionist/BarberSchedules"));
+const BarberDaySchedule = lazy(() => import("./pages/Receptionist/BarberDaySchedule"));
+const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
+const ReceptionistLayout = lazy(() => import("./layouts/ReceptionistLayout"));
+const AdminDashboard = lazy(() => import("./pages/Admin/Dashboard"));
+const AdminRevenue = lazy(() => import("./pages/Admin/Revenue"));
+const Barbers = lazy(() => import("./pages/Admin/Barbers"));
+const AdminServices = lazy(() => import("./pages/Admin/Services"));
+const AdminAppointments = lazy(() => import("./pages/Admin/Appointments"));
+const AdminPayments = lazy(() => import("./pages/Admin/Payments"));
+const AdminUsers = lazy(() => import("./pages/Admin/Users"));
+const AdminVouchers = lazy(() => import("./pages/Admin/Vouchers"));
+const AdminServiceCategories = lazy(() => import("./pages/Admin/ServiceCategories"));
+const AdminHairstyleGallery = lazy(() => import("./pages/Admin/HairstyleGallery"));
+const AdminReviews = lazy(() => import("./pages/Admin/Reviews"));
+const AdminRefunds = lazy(() => import("./pages/Admin/Refunds"));
+const StaffNotifications = lazy(() => import("./pages/Admin/StaffNotifications"));
+const VnpayReturn = lazy(() => import("./pages/Client/VnpayReturn"));
+const ChatWidget = lazy(() => import("./components/ChatWidget"));
 
 // Theme dùng chung, luôn import sau CSS riêng của từng module.
 import "./styles/ThadsTheme.css";
-import ChatWidget from "./components/ChatWidget";
-
 function App() {
   return (
     <Router>
+      <Suspense fallback={<div className="route-loading">Đang tải trang...</div>}>
       <Routes>
         {/* ================= ADMIN ================= */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -187,6 +181,7 @@ function App() {
         />
       </Routes>
       <ChatWidget />
+      </Suspense>
     </Router>
   );
 }

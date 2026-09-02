@@ -33,6 +33,7 @@ import {
 import { createStaffNotification } from "./staffNotification.service";
 import { createRefundRequestForAppointment } from "./refund.service";
 import { buildAppointmentSlotKeys } from "../utils/appointmentSlot";
+import { getDateDayOfWeek, getVietnamDateString, parseVietnamDateTime } from "../utils/vietnamTime";
 
 interface LifecycleEmailAppointment {
   appointmentCode: string;
@@ -259,9 +260,7 @@ const isDateFormatValid = (
     return false;
   }
 
-  const parsedDate = new Date(
-    `${date}T00:00:00`
-  );
+  const parsedDate = new Date(`${date}T00:00:00Z`);
 
   if (
     Number.isNaN(
@@ -279,30 +278,21 @@ const isDateFormatValid = (
   const day = Number(dayText);
 
   return (
-    parsedDate.getFullYear() === year &&
-    parsedDate.getMonth() + 1 === month &&
-    parsedDate.getDate() === day
+    parsedDate.getUTCFullYear() === year && parsedDate.getUTCMonth() + 1 === month && parsedDate.getUTCDate() === day
   );
 };
 
 const getDayOfWeek = (
   appointmentDate: string
 ): number => {
-  const date = new Date(
-    `${appointmentDate}T00:00:00`
-  );
-
-  return date.getDay();
+  return getDateDayOfWeek(appointmentDate);
 };
 
 const isPastAppointment = (
   appointmentDate: string,
   startTime: string
 ): boolean => {
-  const appointmentDateTime =
-    new Date(
-      `${appointmentDate}T${startTime}:00`
-    );
+  const appointmentDateTime = parseVietnamDateTime(appointmentDate, startTime);
 
   return (
     Number.isNaN(
@@ -830,7 +820,7 @@ export const createAppointment =
     const latestDate = new Date();
     latestDate.setHours(23, 59, 59, 999);
     latestDate.setDate(latestDate.getDate() + 14);
-    if (new Date(`${appointmentDate}T${startTime}:00`) > latestDate) {
+    if (parseVietnamDateTime(appointmentDate, startTime) > latestDate) {
       throw new AppError("Chỉ được đặt lịch trong vòng 14 ngày tới", 400);
     }
 
@@ -1156,7 +1146,7 @@ export const cancelMyAppointment =
       );
     }
 
-    const appointmentStart = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+    const appointmentStart = parseVietnamDateTime(appointment.appointmentDate, appointment.startTime);
     const leadTime = appointmentStart.getTime() - Date.now();
     const policyHours = appointment.cancellationPolicySnapshot?.fullRefundHours ?? 24;
     const fullRefundWindow = policyHours * 60 * 60 * 1000;
@@ -1323,8 +1313,8 @@ export const getBarberAppointments =
       const secondUnread = !second.barberViewedAt;
       if (firstUnread !== secondUnread) return firstUnread ? -1 : 1;
 
-      const firstTime = new Date(`${first.appointmentDate}T${first.startTime}:00`).getTime();
-      const secondTime = new Date(`${second.appointmentDate}T${second.startTime}:00`).getTime();
+      const firstTime = parseVietnamDateTime(first.appointmentDate, first.startTime).getTime();
+      const secondTime = parseVietnamDateTime(second.appointmentDate, second.startTime).getTime();
       const firstFuture = firstTime >= now;
       const secondFuture = secondTime >= now;
       if (firstFuture !== secondFuture) return firstFuture ? -1 : 1;
@@ -1417,7 +1407,7 @@ export const updateAppointmentStatus =
     }
 
     if (status === "CHECKED_IN") {
-      const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+      const startsAt = parseVietnamDateTime(appointment.appointmentDate, appointment.startTime);
       // Cho phép check-in sớm tối đa 24 giờ để thuận tiện kiểm thử/demo.
       const earliest = startsAt.getTime() - 24 * 60 * 60 * 1000;
       if (Date.now() < earliest) {
@@ -1427,7 +1417,7 @@ export const updateAppointmentStatus =
     }
 
     if (status === "NO_SHOW") {
-      const startsAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}:00`);
+      const startsAt = parseVietnamDateTime(appointment.appointmentDate, appointment.startTime);
       if (Date.now() < startsAt.getTime() + 15 * 60 * 1000) {
         throw new AppError("Chỉ chuyển vắng mặt sau giờ hẹn 15 phút", 400);
       }
@@ -1798,14 +1788,10 @@ export const getAvailableSlots =
     return slots;
   };
 
-/** Tự động cập nhật vắng mặt sau 15 phút và hoàn thành khi hết giờ. */
+/** Tự động cập nhật vắng mặt sau 15 phút. Hoàn thành phải do nhân viên xác nhận. */
 export const processAutomaticAppointmentStatuses = async () => {
   const now = new Date();
-  const today = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, "0"),
-    String(now.getDate()).padStart(2, "0"),
-  ].join("-");
+  const today = getVietnamDateString(now);
   const candidates = await Appointment.find({
     status: { $in: ["PENDING", "CONFIRMED"] },
     appointmentDate: { $lte: today },
@@ -1813,9 +1799,7 @@ export const processAutomaticAppointmentStatuses = async () => {
 
   const overdueIds = candidates
     .filter((appointment) => {
-      const startsAt = new Date(
-        `${appointment.appointmentDate}T${appointment.startTime}:00`
-      );
+      const startsAt = parseVietnamDateTime(appointment.appointmentDate, appointment.startTime);
       return now.getTime() >= startsAt.getTime() + 15 * 60 * 1000;
     })
     .map((appointment) => appointment._id);
@@ -1826,27 +1810,8 @@ export const processAutomaticAppointmentStatuses = async () => {
         { $set: { status: "NO_SHOW", noShowAt: now } }
       )
     : { modifiedCount: 0 };
-  const running = await Appointment.find({
-    status: "IN_PROGRESS",
-    appointmentDate: { $lte: today },
-  }).select("appointmentDate endTime");
-  const completedIds = running.filter((appointment) => {
-    const endsAt = new Date(`${appointment.appointmentDate}T${appointment.endTime}:00`);
-    return now.getTime() >= endsAt.getTime();
-  }).map((appointment) => appointment._id);
-  const completedResult = completedIds.length
-    ? await Appointment.updateMany(
-        { _id: { $in: completedIds }, status: "IN_PROGRESS" },
-        {
-          $set: {
-            status: "COMPLETED",
-            completedAt: now,
-            "workProgress.hair": "COMPLETED",
-            "workProgress.care": "COMPLETED",
-          },
-        }
-      )
-    : { modifiedCount: 0 };
+  const completedIds: mongoose.Types.ObjectId[] = [];
+  const completedResult = { modifiedCount: 0 };
 
   await Promise.all([
     recordSystemActivities(

@@ -130,7 +130,7 @@ export const evaluateVoucher = async (
   discountAmount = Math.min(discountAmount, subtotal);
 
   const total = Math.max(0, subtotal - discountAmount);
-  const depositRequired = subtotal > 200000;
+  const depositRequired = total > 200000;
 
   return {
     voucherId: String(voucher._id),
@@ -142,7 +142,7 @@ export const evaluateVoucher = async (
     subtotal,
     total,
     depositRequired,
-    depositAmount: depositRequired ? Math.round(subtotal * 0.3) : 0,
+    depositAmount: depositRequired ? Math.round(total * 0.3) : 0,
   };
 };
 
