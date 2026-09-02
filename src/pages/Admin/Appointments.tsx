@@ -2,7 +2,7 @@ import axios from "axios";
 import { fetchBusinessQuery } from "../../lib/queryApi";
 import { realtimeSocket } from "../../lib/realtime";
 import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
-import { BarberLeaveRegistrationModal } from "../../components/BarberLeaveRegistrationModal"; // Thay đường dẫn tương ứng
+import { BarberLeaveRegistrationModal } from "../../components/BarberLeaveRegistrationModal";
 import {
   useCallback,
   useEffect,
@@ -221,45 +221,29 @@ function Appointments() {
     isLoading: authLoading,
   } = useAuth(authRole);
 
-  const [appointments, setAppointments] =
-    useState<Appointment[]>([]);
-
-  const [barbers, setBarbers] =
-    useState<CatalogBarber[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [barbers, setBarbers] = useState<CatalogBarber[]>([]);
   const [services, setServices] = useState<CatalogService[]>([]);
 
   const [keyword, setKeyword] = useState("");
-  const [submittedKeyword, setSubmittedKeyword] =
-    useState("");
-
-  const [statusFilter, setStatusFilter] =
-    useState<AppointmentStatus | "ALL">("ALL");
-
-  const [barberFilter, setBarberFilter] =
-    useState("");
-
-  const [dateFilter, setDateFilter] =
-    useState("");
+  const [submittedKeyword, setSubmittedKeyword] = useState("");
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "ALL">("ALL");
+  const [barberFilter, setBarberFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [timeFilter, setTimeFilter] = useState("");
-  const [sortOrder, setSortOrder] = useState<
-    "priority" | "newest" | "oldest"
-  >("priority");
+  const [sortOrder, setSortOrder] = useState<"priority" | "newest" | "oldest">("priority");
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] =
-    useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<Appointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedBarberId, setSelectedBarberId] = useState("");
 
-  const [selectedBarberId, setSelectedBarberId] =
-    useState("");
   const [reopenForm, setReopenForm] = useState<{
     appointment: Appointment;
     mode: "CHECK_IN" | "RESCHEDULE";
@@ -267,20 +251,30 @@ function Appointments() {
     startTime: string;
     barberId: string;
   } | null>(null);
+
   const [receipt, setReceipt] = useState<{
     appointment: Appointment;
     method: "CASH" | "BANK_TRANSFER";
   } | null>(null);
-  const [serviceEditor, setServiceEditor] =
-    useState<ServiceEditorState | null>(null);
+
+  const [serviceEditor, setServiceEditor] = useState<ServiceEditorState | null>(null);
+
   const [paymentDialog, setPaymentDialog] = useState<{
     appointment: Appointment;
     method: "CASH" | "BANK_TRANSFER";
   } | null>(null);
+
   const [cancelDialog, setCancelDialog] = useState<{
     appointment: Appointment;
     reason: string;
     presetReason: string;
+  } | null>(null);
+
+  // Modal Popup đổi lịch hẹn
+  const [rescheduleDialog, setRescheduleDialog] = useState<{
+    appointment: Appointment;
+    appointmentDate: string;
+    startTime: string;
   } | null>(null);
 
   const loadAppointments = useCallback(async () => {
@@ -311,12 +305,7 @@ function Appointments() {
       setAppointments(response.items);
       setTotalPages(response.pagination.totalPages);
     } catch (requestError) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Không thể tải danh sách lịch hẹn"
-        )
-      );
+      setError(getErrorMessage(requestError, "Không thể tải danh sách lịch hẹn"));
     } finally {
       setLoading(false);
     }
@@ -335,12 +324,7 @@ function Appointments() {
       const response = await fetchBusinessQuery("catalog-barbers", () => getCatalogBarbers());
       setBarbers(response.barbers);
     } catch (requestError) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Không thể tải danh sách Barber"
-        )
-      );
+      setError(getErrorMessage(requestError, "Không thể tải danh sách Barber"));
     }
   }, []);
 
@@ -354,18 +338,9 @@ function Appointments() {
   }, []);
 
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
+    if (authLoading) return;
 
-    if (!isAuthenticated || !user) {
-      navigate(isReceptionistPage ? "/receptionist/login" : "/admin/login", {
-        replace: true,
-      });
-      return;
-    }
-
-    if (user.role !== authRole) {
+    if (!isAuthenticated || !user || user.role !== authRole) {
       navigate(isReceptionistPage ? "/receptionist/login" : "/admin/login", {
         replace: true,
       });
@@ -388,9 +363,7 @@ function Appointments() {
   ]);
 
   useEffect(() => {
-    if (!isAuthenticated || !user || user.role !== authRole) {
-      return;
-    }
+    if (!isAuthenticated || !user || user.role !== authRole) return;
 
     const handleAppointmentsChanged = (): void => {
       void loadAppointments();
@@ -410,17 +383,10 @@ function Appointments() {
   }, Boolean(isAuthenticated && user?.role === authRole));
 
   useEffect(() => {
-    if (!isAuthenticated || !user || user.role !== authRole) {
-      return;
-    }
+    if (!isAuthenticated || !user || user.role !== authRole) return;
 
-    const appointmentId = new URLSearchParams(location.search).get(
-      "appointmentId"
-    );
-
-    if (!appointmentId) {
-      return;
-    }
+    const appointmentId = new URLSearchParams(location.search).get("appointmentId");
+    if (!appointmentId) return;
 
     const openAppointmentFromNotification = async (): Promise<void> => {
       try {
@@ -437,24 +403,14 @@ function Appointments() {
 
         setSelectedBarberId(currentBarberId);
       } catch (requestError) {
-        setError(
-          getErrorMessage(
-            requestError,
-            "Không thể mở lịch hẹn từ thông báo"
-          )
-        );
+        setError(getErrorMessage(requestError, "Không thể mở lịch hẹn từ thông báo"));
       } finally {
         setProcessingId(null);
       }
     };
 
     void openAppointmentFromNotification();
-  }, [
-    authRole,
-    isAuthenticated,
-    location.search,
-    user,
-  ]);
+  }, [authRole, isAuthenticated, location.search, user]);
 
   const handleSearch = (event: FormEvent): void => {
     event.preventDefault();
@@ -483,9 +439,7 @@ function Appointments() {
   };
 
   const closeDetail = (): void => {
-    if (processingId) {
-      return;
-    }
+    if (processingId) return;
 
     setSelectedAppointment(null);
     setSelectedBarberId("");
@@ -499,7 +453,6 @@ function Appointments() {
     appointment: Appointment,
     targetStatus: AppointmentStatus
   ): Promise<void> => {
-    // Nếu là thao tác HỦY -> Mở Modal Popup, không dùng prompt
     if (targetStatus === "CANCELLED") {
       setCancelDialog({
         appointment,
@@ -509,25 +462,15 @@ function Appointments() {
       return;
     }
 
-    // Các trạng thái khác vẫn xác nhận bình thường
-    const confirmed = window.confirm(
-      `Chuyển lịch sang “${statusLabels[targetStatus]}”?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
+    const confirmed = window.confirm(`Chuyển lịch sang “${statusLabels[targetStatus]}”?`);
+    if (!confirmed) return;
 
     try {
       setProcessingId(appointment._id);
       setError("");
       setMessage("");
 
-      const response = await updateAdminAppointmentStatus(
-        appointment._id,
-        targetStatus
-      );
-
+      const response = await updateAdminAppointmentStatus(appointment._id, targetStatus);
       setMessage(response.message);
 
       if (selectedAppointment?._id === appointment._id) {
@@ -536,16 +479,12 @@ function Appointments() {
 
       await loadAppointments();
     } catch (requestError) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Không thể cập nhật trạng thái lịch hẹn"
-        )
-      );
+      setError(getErrorMessage(requestError, "Không thể cập nhật trạng thái lịch hẹn"));
     } finally {
       setProcessingId(null);
     }
   };
+
   const handleConfirmCancel = async (): Promise<void> => {
     if (!cancelDialog) return;
 
@@ -575,7 +514,6 @@ function Appointments() {
     } catch (requestError) {
       const errorMsg = getErrorMessage(requestError, "Không thể hủy lịch hẹn");
       setError(errorMsg);
-      // 👉 Thêm alert để biết chính xác backend đang từ chối vì lý do gì
       alert(`Lỗi khi hủy: ${errorMsg}`);
     } finally {
       setProcessingId(null);
@@ -583,9 +521,7 @@ function Appointments() {
   };
 
   const handleChangeBarber = async (): Promise<void> => {
-    if (!selectedAppointment) {
-      return;
-    }
+    if (!selectedAppointment) return;
 
     if (!selectedBarberId) {
       setError("Vui lòng chọn Barber mới");
@@ -604,32 +540,21 @@ function Appointments() {
 
       setMessage(response.message);
       setSelectedAppointment(response.appointment);
-
       await loadAppointments();
     } catch (requestError) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Không thể đổi Barber"
-        )
-      );
+      setError(getErrorMessage(requestError, "Không thể đổi Barber"));
     } finally {
       setProcessingId(null);
     }
   };
 
-  const handleCashPayment = async (
-    appointment: Appointment
-  ): Promise<void> => {
+  const handleCashPayment = async (appointment: Appointment): Promise<void> => {
     try {
       setProcessingId(appointment._id);
       setError("");
       setMessage("");
 
-      const response = await confirmCashPayment(
-        appointment._id
-      );
-
+      const response = await confirmCashPayment(appointment._id);
       setMessage(response.message);
       setPaymentDialog(null);
       setReceipt({ appointment: response.appointment, method: "CASH" });
@@ -640,12 +565,7 @@ function Appointments() {
 
       await loadAppointments();
     } catch (requestError) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Không thể xác nhận thanh toán tiền mặt"
-        )
-      );
+      setError(getErrorMessage(requestError, "Không thể xác nhận thanh toán tiền mặt"));
     } finally {
       setProcessingId(null);
     }
@@ -718,16 +638,45 @@ function Appointments() {
     }
   };
 
-  const handleReschedule = async (appointment: Appointment): Promise<void> => {
-    const date = window.prompt("Ngày hẹn mới (YYYY-MM-DD):", appointment.appointmentDate);
-    if (!date) return;
-    const time = window.prompt("Giờ bắt đầu mới (HH:mm):", appointment.startTime);
-    if (!time || !window.confirm("Xác nhận khách hàng đã đồng ý đổi lịch?")) return;
+  // Mở Popup Đổi lịch
+  const openRescheduleModal = (appointment: Appointment): void => {
+    setRescheduleDialog({
+      appointment,
+      appointmentDate: appointment.appointmentDate,
+      startTime: appointment.startTime,
+    });
+    setError("");
+  };
+
+  // Xác nhận đổi lịch trong Popup
+  const handleConfirmReschedule = async (): Promise<void> => {
+    if (!rescheduleDialog) return;
+    const { appointment, appointmentDate, startTime } = rescheduleDialog;
+
+    if (!appointmentDate || !startTime) {
+      setError("Vui lòng chọn đầy đủ ngày và giờ hẹn mới.");
+      return;
+    }
+
     try {
       setProcessingId(appointment._id);
-      const response = await rescheduleAdminAppointment(appointment._id, date, time, true);
-      setMessage(response.message);
-      if (selectedAppointment?._id === appointment._id) setSelectedAppointment(response.appointment);
+      setError("");
+      setMessage("");
+
+      const response = await rescheduleAdminAppointment(
+        appointment._id,
+        appointmentDate,
+        startTime,
+        true
+      );
+
+      setMessage(response.message || "Đổi lịch hẹn thành công.");
+      setRescheduleDialog(null);
+
+      if (selectedAppointment?._id === appointment._id) {
+        setSelectedAppointment(response.appointment);
+      }
+
       await loadAppointments();
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Không thể đổi lịch hẹn"));
@@ -834,20 +783,15 @@ function Appointments() {
     return null;
   }
 
-  const selectedActivities =
-    selectedAppointment?.activities ?? [];
+  const selectedActivities = selectedAppointment?.activities ?? [];
 
   return (
     <div className="admin-appointments-page">
       <main className="admin-appointments-container">
         <header className="admin-appointments-header">
           <div className="admin-appointments-title">
-            <p className="admin-appointments-brand">
-              THADS BARBER
-            </p>
-
+            <p className="admin-appointments-brand">THADS BARBER</p>
             <h1>Quản lý lịch hẹn</h1>
-
             <p className="admin-appointments-description">
               {isReceptionistPage
                 ? "Xác nhận, check-in, điều phối dịch vụ và thanh toán lịch hẹn."
@@ -861,62 +805,36 @@ function Appointments() {
           </nav>
         </header>
 
-        {error && (
-          <div className="appointment-alert appointment-alert-error">
-            {error}
-          </div>
-        )}
+        {error && <div className="appointment-alert appointment-alert-error">{error}</div>}
+        {message && <div className="appointment-alert appointment-alert-success">{message}</div>}
 
-        {message && (
-          <div className="appointment-alert appointment-alert-success">
-            {message}
-          </div>
-        )}
-
-        <form
-          className="appointment-filters"
-          onSubmit={handleSearch}
-        >
+        <form className="appointment-filters" onSubmit={handleSearch}>
           <div className="appointment-filter-field appointment-filter-search">
-            <label htmlFor="appointment-keyword">
-              Tìm khách hàng
-            </label>
+            <label htmlFor="appointment-keyword">Tìm khách hàng</label>
             <input
               id="appointment-keyword"
               value={keyword}
-              onChange={(event) =>
-                setKeyword(event.target.value)
-              }
+              onChange={(event) => setKeyword(event.target.value)}
               placeholder="Tên, email hoặc số điện thoại"
             />
           </div>
 
           <div className="appointment-filter-field">
-            <label htmlFor="appointment-status">
-              Trạng thái
-            </label>
+            <label htmlFor="appointment-status">Trạng thái</label>
             <select
               id="appointment-status"
               value={statusFilter}
               onChange={(event) => {
-                setStatusFilter(
-                  event.target.value as AppointmentStatus | "ALL"
-                );
+                setStatusFilter(event.target.value as AppointmentStatus | "ALL");
                 setPage(1);
               }}
             >
               <option value="ALL">Tất cả trạng thái</option>
-
-              {Object.entries(statusLabels).map(
-                ([statusValue, label]) => (
-                  <option
-                    key={statusValue}
-                    value={statusValue}
-                  >
-                    {label}
-                  </option>
-                )
-              )}
+              {Object.entries(statusLabels).map(([statusValue, label]) => (
+                <option key={statusValue} value={statusValue}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -936,9 +854,7 @@ function Appointments() {
               id="appointment-sort"
               value={sortOrder}
               onChange={(event) => {
-                setSortOrder(
-                  event.target.value as "priority" | "newest" | "oldest"
-                );
+                setSortOrder(event.target.value as "priority" | "newest" | "oldest");
                 setPage(1);
               }}
             >
@@ -949,9 +865,7 @@ function Appointments() {
           </div>
 
           <div className="appointment-filter-field">
-            <label htmlFor="appointment-barber">
-              Barber
-            </label>
+            <label htmlFor="appointment-barber">Barber</label>
             <select
               id="appointment-barber"
               value={barberFilter}
@@ -961,12 +875,8 @@ function Appointments() {
               }}
             >
               <option value="">Tất cả Barber</option>
-
               {barbers.map((barber) => (
-                <option
-                  key={barber.id}
-                  value={barber.id}
-                >
+                <option key={barber.id} value={barber.id}>
                   {barber.fullName}
                 </option>
               ))}
@@ -974,9 +884,7 @@ function Appointments() {
           </div>
 
           <div className="appointment-filter-field">
-            <label htmlFor="appointment-date">
-              Ngày hẹn
-            </label>
+            <label htmlFor="appointment-date">Ngày hẹn</label>
             <input
               id="appointment-date"
               type="date"
@@ -988,13 +896,10 @@ function Appointments() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="appointment-search-button"
-          >
+          <button type="submit" className="appointment-search-button">
             Tìm kiếm
           </button>
-          {/* 👉 CHỈ HIỆN KHI Ở TRANG LỄ TÂN, ADMIN SẼ KHÔNG CÓ NÚT NÀY */}
+
           {isReceptionistPage && (
             <button
               type="button"
@@ -1025,10 +930,7 @@ function Appointments() {
             <tbody>
               {appointments.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="appointment-empty"
-                  >
+                  <td colSpan={8} className="appointment-empty">
                     Không có lịch hẹn phù hợp.
                   </td>
                 </tr>
@@ -1108,28 +1010,19 @@ function Appointments() {
                           </button>
                         )}
 
-                        {(nextActions[appointment.status] ?? []).map(
-                          (action) => (
-                            <button
-                              type="button"
-                              key={action.status}
-                              disabled={
-                                processingId === appointment._id
-                              }
-                              title={action.label}
-                              aria-label={action.label}
-                              className={`appointment-icon-button ${action.status === "CANCELLED" ? "appointment-icon-cancel" : `appointment-icon-${action.status.toLowerCase()}`}`}
-                              onClick={() =>
-                                void handleChangeStatus(
-                                  appointment,
-                                  action.status
-                                )
-                              }
-                            >
-                              {statusActionIcons[action.status]}
-                            </button>
-                          )
-                        )}
+                        {(nextActions[appointment.status] ?? []).map((action) => (
+                          <button
+                            type="button"
+                            key={action.status}
+                            disabled={processingId === appointment._id}
+                            title={action.label}
+                            aria-label={action.label}
+                            className={`appointment-icon-button ${action.status === "CANCELLED" ? "appointment-icon-cancel" : `appointment-icon-${action.status.toLowerCase()}`}`}
+                            onClick={() => void handleChangeStatus(appointment, action.status)}
+                          >
+                            {statusActionIcons[action.status]}
+                          </button>
+                        ))}
 
                         {!(["COMPLETED", "CANCELLED"] as AppointmentStatus[]).includes(appointment.status) && (
                           <button
@@ -1138,7 +1031,7 @@ function Appointments() {
                             title="Đổi lịch hẹn"
                             aria-label="Đổi lịch hẹn"
                             disabled={processingId === appointment._id}
-                            onClick={() => void handleReschedule(appointment)}
+                            onClick={() => openRescheduleModal(appointment)}
                           >
                             ◷
                           </button>
@@ -1173,7 +1066,6 @@ function Appointments() {
                               ₫
                             </button>
                           )}
-
                       </div>
                     </td>
                   </tr>
@@ -1207,19 +1099,9 @@ function Appointments() {
       </main>
 
       {selectedAppointment && (
-        <div
-          className="appointment-modal-backdrop"
-          onMouseDown={closeDetail}
-        >
-          <section
-            className="appointment-modal"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="appointment-modal-close"
-              onClick={closeDetail}
-            >
+        <div className="appointment-modal-backdrop" onMouseDown={closeDetail}>
+          <section className="appointment-modal" onMouseDown={(event) => event.stopPropagation()}>
+            <button type="button" className="appointment-modal-close" onClick={closeDetail}>
               ×
             </button>
 
@@ -1239,16 +1121,12 @@ function Appointments() {
 
               <div>
                 <span>Ngày hẹn</span>
-                <strong>
-                  {formatDate(selectedAppointment.appointmentDate)}
-                </strong>
+                <strong>{formatDate(selectedAppointment.appointmentDate)}</strong>
               </div>
 
               <div>
                 <span>Khung giờ</span>
-                <strong>
-                  {selectedAppointment.startTime} - {selectedAppointment.endTime}
-                </strong>
+                <strong>{selectedAppointment.startTime} - {selectedAppointment.endTime}</strong>
               </div>
 
               <div>
@@ -1258,9 +1136,7 @@ function Appointments() {
 
               <div>
                 <span>Thanh toán</span>
-                <strong>
-                  {paymentStatusLabels[selectedAppointment.paymentStatus]}
-                </strong>
+                <strong>{paymentStatusLabels[selectedAppointment.paymentStatus]}</strong>
               </div>
             </div>
 
@@ -1273,17 +1149,21 @@ function Appointments() {
                     {service.nameSnapshot}
                     <small>{service.durationSnapshot} phút</small>
                   </span>
-
                   <strong>{formatMoney(service.priceSnapshot)}đ</strong>
                 </li>
               ))}
             </ul>
 
             <div className="appointment-detail-total">
-              <span>Tổng dịch vụ: {formatMoney(selectedAppointment.subtotal)}đ{selectedAppointment.voucherCode ? ` · Voucher ${selectedAppointment.voucherCode}: -${formatMoney(selectedAppointment.discountAmount)}đ` : ""}<br />Đặt cọc: {selectedAppointment.depositRequired ? `${formatMoney(selectedAppointment.depositAmount)}đ (${selectedAppointment.depositPaid ? "đã cọc" : "chưa cọc"})` : "không yêu cầu"}<br />Còn phải thu</span>
-              <strong>
-                {formatMoney(selectedAppointment.totalPrice)}đ
-              </strong>
+              <span>
+                Tổng dịch vụ: {formatMoney(selectedAppointment.subtotal)}đ
+                {selectedAppointment.voucherCode ? ` · Voucher ${selectedAppointment.voucherCode}: -${formatMoney(selectedAppointment.discountAmount)}đ` : ""}
+                <br />
+                Đặt cọc: {selectedAppointment.depositRequired ? `${formatMoney(selectedAppointment.depositAmount)}đ (${selectedAppointment.depositPaid ? "đã cọc" : "chưa cọc"})` : "không yêu cầu"}
+                <br />
+                Còn phải thu
+              </span>
+              <strong>{formatMoney(selectedAppointment.totalPrice)}đ</strong>
             </div>
 
             <div className="appointment-detail-note">
@@ -1298,12 +1178,22 @@ function Appointments() {
                   const key = segment === "HAIR" ? "hair" : "care";
                   const value = selectedAppointment.workProgress?.[key];
                   if (value === "NOT_REQUIRED") return null;
-                  return <div key={segment}>
-                    <span>{segment === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc"}</span>
-                    <b>{value === "PENDING" ? "Chưa bắt đầu" : value === "IN_PROGRESS" ? "Đang thực hiện" : "Đã hoàn thành"}</b>
-                    {value === "PENDING" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "START")}>Bắt đầu</button>}
-                    {value === "IN_PROGRESS" && <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "COMPLETE")}>Hoàn thành phần việc</button>}
-                  </div>;
+                  return (
+                    <div key={segment}>
+                      <span>{segment === "HAIR" ? "Barber làm tóc" : "Nhân viên chăm sóc"}</span>
+                      <b>{value === "PENDING" ? "Chưa bắt đầu" : value === "IN_PROGRESS" ? "Đang thực hiện" : "Đã hoàn thành"}</b>
+                      {value === "PENDING" && (
+                        <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "START")}>
+                          Bắt đầu
+                        </button>
+                      )}
+                      {value === "IN_PROGRESS" && (
+                        <button disabled={processingId === selectedAppointment._id} onClick={() => void changeWorkProgress(segment, "COMPLETE")}>
+                          Hoàn thành phần việc
+                        </button>
+                      )}
+                    </div>
+                  );
                 })}
                 <small>Lịch chỉ hoàn thành khi tất cả phần việc bắt buộc đều đã hoàn thành.</small>
               </section>
@@ -1312,7 +1202,11 @@ function Appointments() {
             {selectedAppointment.cancellation && (
               <div className="appointment-cancel-reason">
                 <strong>Lý do hủy:</strong>
-                <span>{selectedAppointment.cancellation.reason}<br />Hoàn cọc: {selectedAppointment.cancellation.depositRefundStatus === "ELIGIBLE" ? `Đủ điều kiện · ${formatMoney(selectedAppointment.cancellation.depositRefundAmount ?? 0)}đ` : selectedAppointment.cancellation.depositRefundStatus === "REFUNDED" ? "Đã hoàn" : selectedAppointment.cancellation.depositRefundStatus === "NOT_ELIGIBLE" ? "Không đủ điều kiện" : "Không áp dụng"}</span>
+                <span>
+                  {selectedAppointment.cancellation.reason}
+                  <br />
+                  Hoàn cọc: {selectedAppointment.cancellation.depositRefundStatus === "ELIGIBLE" ? `Đủ điều kiện · ${formatMoney(selectedAppointment.cancellation.depositRefundAmount ?? 0)}đ` : selectedAppointment.cancellation.depositRefundStatus === "REFUNDED" ? "Đã hoàn" : selectedAppointment.cancellation.depositRefundStatus === "NOT_ELIGIBLE" ? "Không đủ điều kiện" : "Không áp dụng"}
+                </span>
               </div>
             )}
 
@@ -1330,10 +1224,7 @@ function Appointments() {
                           : activity.actorRole;
 
                     return (
-                      <article
-                        className="appointment-activity-item"
-                        key={activity._id}
-                      >
+                      <article className="appointment-activity-item" key={activity._id}>
                         <span className="appointment-activity-dot" />
                         <div>
                           <strong>{activity.description}</strong>
@@ -1369,59 +1260,43 @@ function Appointments() {
                 >
                   {processingId === selectedAppointment._id
                     ? "Đang xác nhận..."
-                    : `Thanh toán ${formatMoney(
-                      getRemainingPayment(selectedAppointment)
-                    )}đ`}
+                    : `Thanh toán ${formatMoney(getRemainingPayment(selectedAppointment))}đ`}
                 </button>
               )}
 
-            {!["COMPLETED", "CANCELLED"].includes(
-              selectedAppointment.status
-            ) && (
-                <div className="appointment-change-barber">
-                  <label htmlFor="new-barber">
-                    Đổi Barber
-                    <select
-                      id="new-barber"
-                      value={selectedBarberId}
-                      onChange={(event) =>
-                        setSelectedBarberId(event.target.value)
-                      }
-                    >
-                      {barbers.map((barber) => (
-                        <option
-                          key={barber.id}
-                          value={barber.id}
-                        >
-                          {barber.fullName}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <button
-                    type="button"
-                    disabled={processingId === selectedAppointment._id}
-                    onClick={() => void handleChangeBarber()}
+            {!["COMPLETED", "CANCELLED"].includes(selectedAppointment.status) && (
+              <div className="appointment-change-barber">
+                <label htmlFor="new-barber">
+                  Đổi Barber
+                  <select
+                    id="new-barber"
+                    value={selectedBarberId}
+                    onChange={(event) => setSelectedBarberId(event.target.value)}
                   >
-                    {processingId === selectedAppointment._id
-                      ? "Đang lưu..."
-                      : "Lưu Barber"}
-                  </button>
-                </div>
-              )}
+                    {barbers.map((barber) => (
+                      <option key={barber.id} value={barber.id}>
+                        {barber.fullName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  disabled={processingId === selectedAppointment._id}
+                  onClick={() => void handleChangeBarber()}
+                >
+                  {processingId === selectedAppointment._id ? "Đang lưu..." : "Lưu Barber"}
+                </button>
+              </div>
+            )}
           </section>
         </div>
       )}
+
       {paymentDialog && (
-        <div
-          className="appointment-modal-backdrop"
-          onMouseDown={() => !processingId && setPaymentDialog(null)}
-        >
-          <section
-            className="appointment-modal appointment-payment-modal"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
+        <div className="appointment-modal-backdrop" onMouseDown={() => !processingId && setPaymentDialog(null)}>
+          <section className="appointment-modal appointment-payment-modal" onMouseDown={(event) => event.stopPropagation()}>
             <button
               type="button"
               className="appointment-modal-close"
@@ -1458,10 +1333,7 @@ function Appointments() {
               <button
                 type="button"
                 className={paymentDialog.method === "CASH" ? "active" : ""}
-                onClick={() => setPaymentDialog({
-                  ...paymentDialog,
-                  method: "CASH",
-                })}
+                onClick={() => setPaymentDialog({ ...paymentDialog, method: "CASH" })}
               >
                 <span>₫</span>
                 <div>
@@ -1474,10 +1346,7 @@ function Appointments() {
               <button
                 type="button"
                 className={paymentDialog.method === "BANK_TRANSFER" ? "active" : ""}
-                onClick={() => setPaymentDialog({
-                  ...paymentDialog,
-                  method: "BANK_TRANSFER",
-                })}
+                onClick={() => setPaymentDialog({ ...paymentDialog, method: "BANK_TRANSFER" })}
               >
                 <span>⇄</span>
                 <div>
@@ -1492,12 +1361,8 @@ function Appointments() {
               <div className="appointment-transfer-qr">
                 <div>
                   <span>Quét mã để chuyển khoản</span>
-                  <strong>
-                    {formatMoney(getRemainingPayment(paymentDialog.appointment))}đ
-                  </strong>
-                  <small>
-                    Nội dung: {paymentDialog.appointment.appointmentCode}
-                  </small>
+                  <strong>{formatMoney(getRemainingPayment(paymentDialog.appointment))}đ</strong>
+                  <small>Nội dung: {paymentDialog.appointment.appointmentCode}</small>
                 </div>
 
                 <img
@@ -1526,23 +1391,152 @@ function Appointments() {
               >
                 {processingId
                   ? "Đang xác nhận..."
-                  : `Xác nhận đã thu ${formatMoney(
-                    getRemainingPayment(paymentDialog.appointment)
-                  )}đ`}
+                  : `Xác nhận đã thu ${formatMoney(getRemainingPayment(paymentDialog.appointment))}đ`}
               </button>
             </div>
           </section>
         </div>
       )}
-      {serviceEditor && (
+
+      {/* Modal Popup Đổi lịch hẹn mới */}
+      {rescheduleDialog && (
         <div
           className="appointment-modal-backdrop"
-          onMouseDown={() => !processingId && setServiceEditor(null)}
+          onMouseDown={() => !processingId && setRescheduleDialog(null)}
         >
           <section
-            className="appointment-modal appointment-services-modal"
+            className="appointment-modal"
+            style={{
+              maxWidth: "500px",
+              background: "#1c1c1a",
+              border: "1px solid #c6a15b",
+              color: "#eee",
+              padding: "26px",
+            }}
             onMouseDown={(event) => event.stopPropagation()}
           >
+            <button
+              type="button"
+              className="appointment-modal-close"
+              aria-label="Đóng"
+              disabled={Boolean(processingId)}
+              onClick={() => setRescheduleDialog(null)}
+            >
+              ×
+            </button>
+
+            <p className="appointment-modal-brand" style={{ color: "#c6a15b", fontSize: "11px", letterSpacing: "2px" }}>
+              THADS BARBER
+            </p>
+            <h2 style={{ color: "#ffffff", marginTop: "4px", marginBottom: "8px", fontSize: "24px" }}>
+              Đổi lịch hẹn
+            </h2>
+            <p style={{ color: "#aaa", fontSize: "13px", margin: "0 0 18px 0" }}>
+              Mã: <b style={{ color: "#c6a15b" }}>{rescheduleDialog.appointment.appointmentCode}</b> · Khách: <b>{getUserName(rescheduleDialog.appointment.client)}</b>
+            </p>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "14px",
+                padding: "16px",
+                background: "#242320",
+                borderRadius: "10px",
+                border: "1px solid #3c3a34",
+                marginBottom: "20px",
+              }}
+            >
+              <label style={{ display: "flex", flexDirection: "column", gap: "6px", color: "#ddd", fontSize: "13px" }}>
+                <span>Ngày hẹn mới</span>
+                <input
+                  type="date"
+                  value={rescheduleDialog.appointmentDate}
+                  onChange={(e) =>
+                    setRescheduleDialog({
+                      ...rescheduleDialog,
+                      appointmentDate: e.target.value,
+                    })
+                  }
+                  style={{
+                    padding: "10px 12px",
+                    background: "#111",
+                    color: "#fff",
+                    border: "1px solid #4a473f",
+                    borderRadius: "6px",
+                    outline: "none",
+                  }}
+                />
+              </label>
+
+              <label style={{ display: "flex", flexDirection: "column", gap: "6px", color: "#ddd", fontSize: "13px" }}>
+                <span>Giờ bắt đầu mới</span>
+                <input
+                  type="time"
+                  value={rescheduleDialog.startTime}
+                  onChange={(e) =>
+                    setRescheduleDialog({
+                      ...rescheduleDialog,
+                      startTime: e.target.value,
+                    })
+                  }
+                  style={{
+                    padding: "10px 12px",
+                    background: "#111",
+                    color: "#fff",
+                    border: "1px solid #4a473f",
+                    borderRadius: "6px",
+                    outline: "none",
+                  }}
+                />
+              </label>
+            </div>
+
+            <p style={{ color: "#d8b272", fontSize: "12px", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              * Lưu ý: Hãy đảm bảo khách hàng đã đồng ý thời gian này trước khi bấm xác nhận cập nhật.
+            </p>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button
+                type="button"
+                disabled={Boolean(processingId)}
+                onClick={() => setRescheduleDialog(null)}
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: "8px",
+                  border: "1px solid #555",
+                  background: "#292622",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(processingId)}
+                onClick={() => void handleConfirmReschedule()}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#c6a15b",
+                  color: "#111",
+                  fontWeight: 700,
+                  cursor: processingId ? "wait" : "pointer",
+                }}
+              >
+                {processingId ? "Đang xử lý..." : "Xác nhận đổi lịch"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {serviceEditor && (
+        <div className="appointment-modal-backdrop" onMouseDown={() => !processingId && setServiceEditor(null)}>
+          <section className="appointment-modal appointment-services-modal" onMouseDown={(event) => event.stopPropagation()}>
             <button
               type="button"
               className="appointment-modal-close"
@@ -1570,7 +1564,6 @@ function Appointments() {
             <div className="appointment-selected-services">
               {serviceEditor.selectedIds.map((serviceId, index) => {
                 const service = services.find((item) => item.id === serviceId);
-
                 if (!service) return null;
 
                 return (
@@ -1606,11 +1599,7 @@ function Appointments() {
 
             <div className="appointment-available-services">
               {services
-                .filter(
-                  (service) =>
-                    service.isActive &&
-                    !serviceEditor.selectedIds.includes(service.id)
-                )
+                .filter((service) => service.isActive && !serviceEditor.selectedIds.includes(service.id))
                 .map((service) => (
                   <button
                     type="button"
@@ -1662,15 +1651,10 @@ function Appointments() {
           </section>
         </div>
       )}
+
       {reopenForm && (
-        <div
-          className="appointment-modal-backdrop"
-          onMouseDown={() => !processingId && setReopenForm(null)}
-        >
-          <section
-            className="appointment-modal appointment-reopen-modal"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
+        <div className="appointment-modal-backdrop" onMouseDown={() => !processingId && setReopenForm(null)}>
+          <section className="appointment-modal appointment-reopen-modal" onMouseDown={(event) => event.stopPropagation()}>
             <button
               type="button"
               className="appointment-modal-close"
@@ -1780,6 +1764,7 @@ function Appointments() {
           </section>
         </div>
       )}
+
       {receipt && (
         <div className="appointment-modal-backdrop">
           <section className="appointment-receipt">
@@ -1811,16 +1796,10 @@ function Appointments() {
           </section>
         </div>
       )}
+
       {cancelDialog && (
-        <div
-          className="appointment-modal-backdrop"
-          onMouseDown={() => !processingId && setCancelDialog(null)}
-        >
-          <section
-            className="appointment-modal"
-            style={{ maxWidth: "480px" }}
-            onMouseDown={(event) => event.stopPropagation()}
-          >
+        <div className="appointment-modal-backdrop" onMouseDown={() => !processingId && setCancelDialog(null)}>
+          <section className="appointment-modal" style={{ maxWidth: "480px" }} onMouseDown={(event) => event.stopPropagation()}>
             <button
               type="button"
               className="appointment-modal-close"
@@ -1890,6 +1869,7 @@ function Appointments() {
           </section>
         </div>
       )}
+
       {isReceptionistPage && (
         <BarberLeaveRegistrationModal
           isOpen={isLeaveModalOpen}

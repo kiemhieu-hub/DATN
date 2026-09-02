@@ -65,23 +65,62 @@ function StaffMultiSelect({
 
   return (
     <div className="staff-multi-select" ref={rootRef}>
-      <span className="staff-filter-label">{label}</span>
+      <span className="staff-filter-label" style={{ color: "#f6eadb" }}>
+        {label}
+      </span>
 
       <button
         type="button"
         className={`staff-filter-trigger ${open ? "open" : ""}`}
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
+        style={{
+          background: "#fffaf4",
+          color: "#211a15",
+          WebkitTextFillColor: "#211a15",
+        }}
       >
-        <span>{summary}</span>
-        <b>{open ? "▲" : "▼"}</b>
+        <span
+          style={{
+            color: selectedIds.length === 0 ? "#6d5e52" : "#211a15",
+            WebkitTextFillColor: selectedIds.length === 0 ? "#6d5e52" : "#211a15",
+            fontWeight: 700,
+          }}
+        >
+          {summary}
+        </span>
+        <b
+          style={{
+            color: "#8f5e26",
+            WebkitTextFillColor: "#8f5e26",
+            fontSize: "12px",
+          }}
+        >
+          {open ? "▲" : "▼"}
+        </b>
       </button>
 
       {open && (
-        <div className="staff-filter-menu">
-          <label className="staff-filter-all">
+        <div
+          className="staff-filter-menu"
+          style={{
+            background: "#fffdf9",
+            color: "#201914",
+            border: "1px solid #c9aa82",
+          }}
+        >
+          <label
+            className="staff-filter-all"
+            style={{
+              color: "#201914",
+              WebkitTextFillColor: "#201914",
+              fontWeight: 800,
+            }}
+          >
             <input type="checkbox" checked={allSelected} onChange={toggleAll} />
-            <span>Chọn tất cả</span>
+            <span style={{ color: "#201914", WebkitTextFillColor: "#201914" }}>
+              Chọn tất cả
+            </span>
           </label>
 
           <div className="staff-filter-options">
@@ -93,8 +132,22 @@ function StaffMultiSelect({
                   onChange={() => toggleOne(option.id)}
                 />
                 <span>
-                  <strong>{option.fullName}</strong>
-                  <small>{option.email}</small>
+                  <strong
+                    style={{
+                      color: "#211a15",
+                      WebkitTextFillColor: "#211a15",
+                    }}
+                  >
+                    {option.fullName}
+                  </strong>
+                  <small
+                    style={{
+                      color: "#77685c",
+                      WebkitTextFillColor: "#77685c",
+                    }}
+                  >
+                    {option.email}
+                  </small>
                 </span>
               </label>
             ))}

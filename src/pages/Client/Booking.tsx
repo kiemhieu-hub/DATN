@@ -288,7 +288,12 @@ function Booking() {
 
   if (authLoading || loading) return <div className="booking-page"><p className="booking-loading">Đang tải trang đặt lịch...</p></div>;
   if (!isAuthenticated || !user) return (
-    <div className="booking-page"><div className="booking-login-required"><h1>Bạn chưa đăng nhập</h1><Link to="/login">Đăng nhập để đặt lịch</Link></div></div>
+    <div className="booking-page">
+      <div className="booking-login-required">
+        <h1 style={{ color: "#ffffff", marginBottom: "20px" }}>Bạn chưa đăng nhập</h1>
+        <Link to="/login">Đăng nhập để đặt lịch</Link>
+      </div>
+    </div>
   );
 
   const groups = Object.keys(groupNames) as ServiceGroup[];
@@ -335,7 +340,22 @@ function Booking() {
 
           {serviceIds.length > 0 && <section className="booking-panel">
             <div className="booking-panel-title"><b>02</b><div><h2>Chọn ngày và Barber</h2><p>Chọn ngày trước, sau đó chọn Barber còn lịch phù hợp.</p></div></div>
-            <label className="booking-date">Ngày hẹn<input type="date" min={today} max={maxDate} value={appointmentDate} onChange={(e) => { setAppointmentDate(e.target.value); setHairBarberId(""); }} /></label>
+            <label className="booking-date" style={{ color: "#221e1a", fontWeight: 700, fontSize: "14px" }}>
+              Ngày hẹn
+              <input
+                type="date"
+                min={today}
+                max={maxDate}
+                value={appointmentDate}
+                onChange={(e) => { setAppointmentDate(e.target.value); setHairBarberId(""); }}
+                style={{
+                  background: "#fff",
+                  color: "#221e1a",
+                  border: "1px solid #dcd3c5",
+                  fontWeight: 600
+                }}
+              />
+            </label>
             {needsHair && <BarberPicker title="Nhân viên làm tóc" items={hairBarbers} value={hairBarberId} onChange={(id) => changeBarber(setHairBarberId, id)} />}
             {!needsHair && needsCare && <div className="booking-auto-care"><b>Nhân viên chăm sóc tự động</b><span>Hệ thống sẽ chọn ngẫu nhiên một nhân viên phù hợp còn lịch trống.</span></div>}
           </section>}
@@ -343,77 +363,97 @@ function Booking() {
           <section className="booking-panel">
             <div className="booking-panel-title"><b>03</b><div><h2>Chọn thời gian</h2><p>Khung giờ mờ đã có lịch; khung sáng còn có thể đặt.</p></div></div>
             <div className="booking-slots">{slotsLoading ? <p>Đang tải khung giờ...</p> : slots.map((slot) => <button type="button" key={slot.startTime} disabled={!slot.available} title={slot.reason} className={`${startTime === slot.startTime ? "selected" : ""} ${!slot.available ? "occupied" : ""}`} onClick={() => setStartTime(slot.startTime)}>{slot.startTime}<small>{slot.endTime}</small></button>)}</div>
-            <label className="booking-note">Ghi chú<textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Yêu cầu kiểu tóc hoặc lưu ý khác..." /></label>
+            <label className="booking-note" style={{ color: "#221e1a", fontWeight: 700, fontSize: "14px" }}>
+              Ghi chú
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Yêu cầu kiểu tóc hoặc lưu ý khác..."
+                style={{
+                  background: "#fff",
+                  color: "#221e1a",
+                  border: "1px solid #dcd3c5",
+                  fontWeight: 500
+                }}
+              />
+            </label>
           </section>
+
           <section className="booking-panel">
-  <div className="booking-panel-title">
-    <b>04</b>
-    <div>
-      <h2>Thông tin khách sử dụng</h2>
-      <p>Có thể sửa để đặt lịch hộ người khác.</p>
-    </div>
-  </div>
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-      gap: "14px",
-      alignItems: "start",
-    }}
-  >
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <span style={{ color: "#ddd", fontSize: "13px" }}>Họ và tên</span>
-      <input
-        value={customerName}
-        onChange={(e) => setCustomerName(e.target.value)}
-        style={{
-          width: "100%",
-          height: "48px",
-          padding: "13px",
-          color: "#eee",
-          background: "#111",
-          border: "1px solid #49463f",
-          boxSizing: "border-box",
-        }}
-      />
-    </div>
+            <div className="booking-panel-title">
+              <b>04</b>
+              <div>
+                <h2>Thông tin khách sử dụng</h2>
+                <p>Có thể sửa để đặt lịch hộ người khác.</p>
+              </div>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: "14px",
+                alignItems: "start",
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <span style={{ color: "#221e1a", fontSize: "14px", fontWeight: 700 }}>Họ và tên</span>
+                <input
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    height: "48px",
+                    padding: "13px",
+                    color: "#221e1a",
+                    background: "#ffffff",
+                    border: "1px solid #dcd3c5",
+                    borderRadius: "6px",
+                    boxSizing: "border-box",
+                    fontWeight: 600,
+                  }}
+                />
+              </div>
 
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <span style={{ color: "#ddd", fontSize: "13px" }}>Số điện thoại</span>
-      <input
-        value={customerPhone}
-        onChange={(e) => setCustomerPhone(e.target.value)}
-        style={{
-          width: "100%",
-          height: "48px",
-          padding: "13px",
-          color: "#eee",
-          background: "#111",
-          border: "1px solid #49463f",
-          boxSizing: "border-box",
-        }}
-      />
-    </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <span style={{ color: "#221e1a", fontSize: "14px", fontWeight: 700 }}>Số điện thoại</span>
+                <input
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  style={{
+                    width: "100%",
+                    height: "48px",
+                    padding: "13px",
+                    color: "#221e1a",
+                    background: "#ffffff",
+                    border: "1px solid #dcd3c5",
+                    borderRadius: "6px",
+                    boxSizing: "border-box",
+                    fontWeight: 600,
+                  }}
+                />
+              </div>
 
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <span style={{ color: "#ddd", fontSize: "13px" }}>Email</span>
-      <input
-        type="email"
-        value={customerEmail}
-        onChange={(e) => setCustomerEmail(e.target.value)}
-        style={{
-          width: "100%",
-          height: "48px",
-          padding: "13px",
-          color: "#eee",
-          background: "#111",
-          border: "1px solid #49463f",
-          boxSizing: "border-box",
-        }}
-      />
-    </div>
-  </div>
-</section>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <span style={{ color: "#221e1a", fontSize: "14px", fontWeight: 700 }}>Email</span>
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  style={{
+                    width: "100%",
+                    height: "48px",
+                    padding: "13px",
+                    color: "#221e1a",
+                    background: "#ffffff",
+                    border: "1px solid #dcd3c5",
+                    borderRadius: "6px",
+                    boxSizing: "border-box",
+                    fontWeight: 600,
+                  }}
+                />
+              </div>
+            </div>
+          </section>
         </main>
 
         <aside className="booking-summary">
@@ -461,6 +501,7 @@ function Booking() {
           </div>
         </aside>
       </form>
+
       {depositAppointment && (
         <div className="booking-deposit-modal">
           <section>
@@ -472,6 +513,7 @@ function Booking() {
           </section>
         </div>
       )}
+
       {voucherOpen && (
         <div className="booking-voucher-modal" onMouseDown={() => setVoucherOpen(false)}>
           <section onMouseDown={(event) => event.stopPropagation()}>
@@ -496,7 +538,35 @@ function Booking() {
 }
 
 function BarberPicker({ title, items, value, onChange }: { title: string; items: CatalogBarber[]; value: string; onChange: (id: string) => void }) {
-  return <div className="booking-barber-picker"><h3>{title}</h3>{!items.length ? <p>Chưa có nhân viên phù hợp với toàn bộ dịch vụ đã chọn.</p> : <div>{items.map((barber) => <button type="button" key={barber.id} className={value === barber.id ? "selected" : ""} onClick={() => onChange(barber.id)}>{barber.profile.avatar ? <img src={barber.profile.avatar} alt={barber.fullName} /> : <span>{barber.fullName.charAt(0)}</span>}<b>{barber.fullName}</b><small>{barber.profile.experienceYears} năm kinh nghiệm</small></button>)}</div>}</div>;
+  return (
+    <div className="booking-barber-picker" style={{ marginTop: "22px" }}>
+      <h3 style={{ color: "#221e1a", fontSize: "16px", fontWeight: 800, marginBottom: "12px" }}>
+        {title}
+      </h3>
+      {!items.length ? (
+        <p style={{ color: "#666" }}>Chưa có nhân viên phù hợp với toàn bộ dịch vụ đã chọn.</p>
+      ) : (
+        <div>
+          {items.map((barber) => (
+            <button
+              type="button"
+              key={barber.id}
+              className={value === barber.id ? "selected" : ""}
+              onClick={() => onChange(barber.id)}
+            >
+              {barber.profile.avatar ? (
+                <img src={barber.profile.avatar} alt={barber.fullName} />
+              ) : (
+                <span>{barber.fullName.charAt(0)}</span>
+              )}
+              <b style={{ color: "#221e1a", fontWeight: 700 }}>{barber.fullName}</b>
+              <small style={{ color: "#777" }}>{barber.profile.experienceYears} năm kinh nghiệm</small>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default Booking;
