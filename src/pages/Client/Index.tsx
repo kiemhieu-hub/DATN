@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
+import Logo from "../../components/Logo";
 
 function Index() {
   const navigate = useNavigate();
@@ -39,16 +40,7 @@ function Index() {
       <nav className="navbar navbar-expand-lg">
         <div className="container">
           {/* Logo */}
-          <div className="logo-wrapper">
-            <Link className="logo" to="/">
-              <img
-                src="/img/logo.png"
-                className="logo-img"
-                alt="THADS Barber"
-              />
-            </Link>
-          </div>
-
+          <Logo/>
           {/* Mobile menu button */}
           <button
             className="navbar-toggler"
