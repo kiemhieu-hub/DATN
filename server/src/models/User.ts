@@ -27,6 +27,9 @@ export interface IUser extends Document {
   status: UserStatus;
 
   passwordChangedAt?: Date;
+  resetPasswordToken: string;
+  resetPasswordExpires?: Date;
+  tokenVersion: number;
   lastLoginAt?: Date;
 
   createdAt: Date;
@@ -78,6 +81,7 @@ const userSchema = new Schema<IUser>(
         "Số điện thoại là bắt buộc",
       ],
       trim: true,
+      unique: true,
       match: [
         /^(0|\+84)[0-9]{9,10}$/,
         "Số điện thoại không hợp lệ",
@@ -91,8 +95,8 @@ const userSchema = new Schema<IUser>(
         "Mật khẩu là bắt buộc",
       ],
       minlength: [
-        6,
-        "Mật khẩu phải có ít nhất 6 ký tự",
+        8,
+        "Mật khẩu phải có ít nhất 8 ký tự",
       ],
       select: false,
     },
@@ -130,6 +134,9 @@ const userSchema = new Schema<IUser>(
       type: Date,
       default: null,
     },
+    resetPasswordToken: { type: String, select: false, default: "" },
+    resetPasswordExpires: { type: Date, select: false, default: null },
+    tokenVersion: { type: Number, default: 0, min: 0, select: false },
 
     lastLoginAt: {
       type: Date,

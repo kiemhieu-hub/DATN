@@ -90,9 +90,12 @@ export interface AdminDashboardData {
     revenue: number;
     appointments: number;
   }>;
+  revenueByService: Array<{ serviceId: string; serviceName: string; uses: number; revenue: number }>;
   revenueFilter: {
     period: "DAY" | "MONTH" | "YEAR";
     date: string;
+    fromDate?: string;
+    toDate?: string;
     barberId: string;
   };
   outcomeSummary: {

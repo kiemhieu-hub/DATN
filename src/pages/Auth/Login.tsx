@@ -238,6 +238,8 @@ function Login({
           </p>
         )}
 
+        {role === "CLIENT" && <Link className="login-back-home" to="/forgot-password">Quên mật khẩu?</Link>}
+
         <Link
           className="login-back-home"
           to="/"

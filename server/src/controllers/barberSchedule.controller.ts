@@ -22,7 +22,7 @@ export const getMySchedule = async (
     }
 
     const schedules =
-      await barberScheduleService.getMyWeeklySchedule(
+      await barberScheduleService.getMyUpcomingSchedule(
         req.user.userId
       );
 
@@ -137,7 +137,8 @@ export const createLeave = async (
 
     res.status(200).json({
       success: true,
-      message: `Đăng ký nghỉ thành công ${result.totalDays} ngày`,
+      message: `Đã gửi yêu cầu nghỉ ${result.totalDays} ngày, vui lòng chờ lễ tân duyệt`,
+      request: result.request,
     });
   } catch (error) {
     next(error);

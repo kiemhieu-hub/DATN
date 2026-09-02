@@ -525,7 +525,6 @@ function Dashboard() {
               <aside className="admin-dashboard-shortcuts">
                 <span>TRUY CẬP NHANH</span>
                 <h2>Quản lý hệ thống</h2>
-                <Link to="/admin/revenue">Xem báo cáo doanh thu <b>→</b></Link>
                 <Link to="/admin/appointments">Quản lý lịch hẹn <b>→</b></Link>
                 <Link to="/admin/barbers">Quản lý Barber <b>→</b></Link>
                 <Link to="/admin/users">Quản lý người dùng <b>→</b></Link>

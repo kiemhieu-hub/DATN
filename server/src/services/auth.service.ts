@@ -1,8 +1,10 @@
 import bcrypt from "bcrypt";
+import crypto from "node:crypto";
 
 import User from "../models/User";
 import AppError from "../utils/AppError";
 import { generateToken } from "../utils/generateToken";
+import { sendPasswordResetEmail } from "./email.service";
 
 interface RegisterInput {
   fullName: string;
@@ -35,13 +37,14 @@ export const registerClient = async (input: RegisterInput) => {
   if (password !== confirmPassword) {
     throw new AppError("Mật khẩu xác nhận không khớp", 400);
   }
+  assertPassword(password);
 
   const existingUser = await User.findOne({
-    email: email.toLowerCase().trim(),
+    $or: [{ email: email.toLowerCase().trim() }, { phone: phone.trim() }],
   });
 
   if (existingUser) {
-    throw new AppError("Email đã được sử dụng", 409);
+    throw new AppError(existingUser.email === email.toLowerCase().trim() ? "Email đã được sử dụng" : "Số điện thoại đã được sử dụng", 409);
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -73,7 +76,7 @@ export const loginUser = async (
 
   const user = await User.findOne({
     email: email.toLowerCase().trim(),
-  }).select("+password");
+  }).select("+password +tokenVersion");
 
   if (!user) {
     throw new AppError("Email hoặc mật khẩu không chính xác", 401);
@@ -99,7 +102,11 @@ export const loginUser = async (
   const accessToken = generateToken({
     userId: user._id.toString(),
     role: user.role,
+    tokenVersion: user.tokenVersion,
   });
+
+  user.lastLoginAt = new Date();
+  await user.save();
 
   return {
     accessToken,
@@ -112,6 +119,56 @@ export const loginUser = async (
       status: user.status,
     },
   };
+};
+
+function assertPassword(password: string): void {
+  if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+    throw new AppError("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ và số", 400);
+  }
+}
+
+export const requestPasswordReset = async (emailValue: string): Promise<void> => {
+  const email = emailValue?.trim().toLowerCase();
+  if (!email) throw new AppError("Vui lòng nhập email", 400);
+  const user = await User.findOne({ email }).select("+resetPasswordToken +resetPasswordExpires");
+  if (!user) return;
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  user.resetPasswordToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+  user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+  await user.save();
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  await sendPasswordResetEmail(user.email, user.fullName, `${clientUrl}/reset-password?token=${rawToken}`);
+};
+
+export const resetPassword = async (rawToken: string, password: string, confirmPassword: string): Promise<void> => {
+  if (!rawToken) throw new AppError("Liên kết đặt lại mật khẩu không hợp lệ", 400);
+  if (password !== confirmPassword) throw new AppError("Mật khẩu xác nhận không khớp", 400);
+  assertPassword(password);
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const user = await User.findOne({ resetPasswordToken: tokenHash, resetPasswordExpires: { $gt: new Date() } }).select("+password +resetPasswordToken +resetPasswordExpires +tokenVersion");
+  if (!user) throw new AppError("Liên kết đã hết hạn hoặc không hợp lệ", 400);
+  user.password = await bcrypt.hash(password, 10);
+  user.passwordChangedAt = new Date();
+  user.resetPasswordToken = "";
+  user.resetPasswordExpires = undefined;
+  user.tokenVersion += 1;
+  await user.save();
+};
+
+export const changePassword = async (userId: string, currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> => {
+  if (newPassword !== confirmPassword) throw new AppError("Mật khẩu xác nhận không khớp", 400);
+  assertPassword(newPassword);
+  const user = await User.findById(userId).select("+password +tokenVersion");
+  if (!user) throw new AppError("Không tìm thấy tài khoản", 404);
+  if (!(await bcrypt.compare(currentPassword, user.password))) throw new AppError("Mật khẩu hiện tại không chính xác", 400);
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.passwordChangedAt = new Date();
+  user.tokenVersion += 1;
+  await user.save();
+};
+
+export const revokeSessions = async (userId: string): Promise<void> => {
+  await User.findByIdAndUpdate(userId, { $inc: { tokenVersion: 1 } });
 };
 
 export const getCurrentUser = async (userId: string) => {

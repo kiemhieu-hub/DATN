@@ -63,9 +63,16 @@
 
 .status-container {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
   gap: 8px;
   margin-top: 4px;
+}
+
+.barber-appointment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
 }
 
 /* Style nút bấm vừa vặn với badge */
@@ -100,6 +107,7 @@
 }
 
 .status-container button:disabled {
-  opacity: 0.6;
+  opacity: 0.38;
   cursor: not-allowed;
+  filter: grayscale(0.45);
 }

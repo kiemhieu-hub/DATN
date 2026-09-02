@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
-import { dayDetail, history, list, removeOverride, saveOverride, update } from "../controllers/receptionistSchedule.controller";
+import { dayDetail, decideLeaveRequest, history, leaveRequests, list, removeOverride, saveOverride, update } from "../controllers/receptionistSchedule.controller";
 const router=Router();
 router.use(authenticate,authorize("RECEPTIONIST","ADMIN"));
 router.get("/barbers",list);
@@ -10,4 +10,6 @@ router.get("/barbers/:id/day-detail", dayDetail);
 router.get("/barbers/:id/schedule-history", history);
 router.put("/barbers/:id/date-override", saveOverride);
 router.delete("/barbers/:id/date-override", removeOverride);
+router.get("/leave-requests", leaveRequests);
+router.patch("/leave-requests/:id", decideLeaveRequest);
 export default router;

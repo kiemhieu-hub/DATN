@@ -18,9 +18,15 @@ export interface BarberScheduleDay {
   updatedAt?: string;
 }
 
+export interface BarberUpcomingScheduleDay extends BarberScheduleDay {
+  date: string;
+  note?: string;
+  source: "WEEKLY" | "OVERRIDE";
+}
+
 export interface GetBarberScheduleResponse {
   success: boolean;
-  schedules: BarberScheduleDay[];
+  schedules: BarberUpcomingScheduleDay[];
 }
 
 export interface UpdateBarberScheduleResponse {

@@ -173,3 +173,17 @@ export const sendAppointmentLifecycleEmail = async (
     `,
   });
 };
+
+export const sendPasswordResetEmail = async (to: string, customerName: string, resetUrl: string): Promise<void> => {
+  const { SMTP_USER, SMTP_FROM } = process.env;
+  const transporter = getTransporter();
+  if (!transporter || !SMTP_USER) {
+    throw new Error("SMTP chưa được cấu hình để gửi email đặt lại mật khẩu");
+  }
+  await transporter.sendMail({
+    from: SMTP_FROM || `THADS Barber <${SMTP_USER}>`,
+    to,
+    subject: "Đặt lại mật khẩu THADS Barber",
+    html: `<div style="font-family:Arial,sans-serif;color:#222;line-height:1.6"><h2>THADS BARBER</h2><p>Xin chào <strong>${escapeHtml(customerName)}</strong>,</p><p>Nhấn vào liên kết sau để đặt lại mật khẩu. Liên kết có hiệu lực trong 15 phút:</p><p><a href="${escapeHtml(resetUrl)}">Đặt lại mật khẩu</a></p><p>Nếu bạn không yêu cầu thao tác này, hãy bỏ qua email.</p></div>`,
+  });
+};

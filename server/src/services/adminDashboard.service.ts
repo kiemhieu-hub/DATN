@@ -1,6 +1,7 @@
 import Appointment from "../models/Appointment";
 import Service from "../models/Service";
 import User from "../models/User";
+import mongoose from "mongoose";
 
 interface RevenuePoint {
   date: string;
@@ -73,7 +74,7 @@ const getLastSevenDates =
   };
 
 export const getAdminDashboard =
-  async (filters: { period?: "DAY" | "MONTH" | "YEAR"; date?: string; barberId?: string } = {}) => {
+  async (filters: { period?: "DAY" | "MONTH" | "YEAR"; date?: string; fromDate?: string; toDate?: string; barberId?: string } = {}) => {
     const today =
       getDateString(new Date());
 
@@ -261,7 +262,9 @@ export const getAdminDashboard =
 
     const selectedDate = filters.date || today;
     const period = filters.period || "MONTH";
-    const dateMatch = period === "DAY"
+    const dateMatch = filters.fromDate || filters.toDate
+      ? { appointmentDate: { ...(filters.fromDate ? { $gte: filters.fromDate } : {}), ...(filters.toDate ? { $lte: filters.toDate } : {}) } }
+      : period === "DAY"
       ? { appointmentDate: selectedDate }
       : period === "YEAR"
         ? { appointmentDate: { $regex: `^${selectedDate.slice(0, 4)}` } }
@@ -271,12 +274,15 @@ export const getAdminDashboard =
       paymentStatus: "PAID",
       ...dateMatch,
     };
-    if (filters.barberId) revenueFilter.barber = filters.barberId;
+    const selectedBarberId = filters.barberId && mongoose.Types.ObjectId.isValid(filters.barberId)
+      ? new mongoose.Types.ObjectId(filters.barberId)
+      : undefined;
+    if (selectedBarberId) revenueFilter.barber = selectedBarberId;
     const outcomeFilter: Record<string, unknown> = {
       status: { $in: ["COMPLETED", "CANCELLED"] },
       ...dateMatch,
     };
-    if (filters.barberId) outcomeFilter.barber = filters.barberId;
+    if (selectedBarberId) outcomeFilter.barber = selectedBarberId;
     const [completedInPeriod, cancelledInPeriod] = await Promise.all([
       Appointment.countDocuments({ ...outcomeFilter, status: "COMPLETED" }),
       Appointment.countDocuments({ ...outcomeFilter, status: "CANCELLED" }),
@@ -293,6 +299,17 @@ export const getAdminDashboard =
       { $group: { _id: "$barber", revenue: { $sum: "$totalPrice" }, appointments: { $sum: 1 } } },
       { $sort: { revenue: -1 } },
     ]);
+    const serviceRows = await Appointment.aggregate([
+      { $match: revenueFilter },
+      { $unwind: "$services" },
+      { $group: {
+        _id: "$services.service",
+        serviceName: { $first: "$services.nameSnapshot" },
+        uses: { $sum: 1 },
+        revenue: { $sum: { $cond: [{ $gt: ["$subtotal", 0] }, { $multiply: ["$totalPrice", { $divide: ["$services.priceSnapshot", "$subtotal"] }] }, 0] } },
+      } },
+      { $sort: { uses: -1, revenue: -1 } },
+    ]);
     const barberUsers = await User.find({ _id: { $in: revenueRows.map((row) => row._id) } }).select("fullName").lean();
     const barberMap = new Map(barberUsers.map((barber) => [String(barber._id), barber.fullName]));
     const revenueByBarber = revenueRows.map((row) => ({
@@ -308,7 +325,8 @@ export const getAdminDashboard =
       revenueLastSevenDays,
       recentAppointments,
       revenueByBarber,
-      revenueFilter: { period, date: selectedDate, barberId: filters.barberId || "" },
+      revenueByService: serviceRows.map((row) => ({ serviceId: String(row._id), serviceName: row.serviceName || "Dịch vụ", uses: row.uses, revenue: Math.round(row.revenue) })),
+      revenueFilter: { period, date: selectedDate, fromDate: filters.fromDate || "", toDate: filters.toDate || "", barberId: filters.barberId || "" },
       outcomeSummary,
     };
   };

@@ -51,3 +51,8 @@ export const updateMyProfile = async (data: UpdateProfilePayload) => {
   }>("/auth/me", data);
   return response.data;
 };
+
+export const forgotPassword = async (email: string) => (await api.post<{ success: boolean; message: string }>("/auth/forgot-password", { email })).data;
+export const resetPassword = async (token: string, password: string, confirmPassword: string) => (await api.post<{ success: boolean; message: string }>("/auth/reset-password", { token, password, confirmPassword })).data;
+export const changePassword = async (currentPassword: string, newPassword: string, confirmPassword: string) => (await api.patch<{ success: boolean; message: string }>("/auth/change-password", { currentPassword, newPassword, confirmPassword })).data;
+export const revokeCurrentSession = async () => { await api.post("/auth/logout"); };

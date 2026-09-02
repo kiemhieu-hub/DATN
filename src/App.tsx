@@ -32,6 +32,8 @@ import Profile from "./pages/barber/Profile";
 // Auth
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 
 import AdminLogin from "./pages/Auth/AdminLogin";
 import BarberLogin from "./pages/Auth/BarberLogin";
@@ -62,6 +64,7 @@ import VnpayReturn from "./pages/Client/VnpayReturn";
 
 // Theme dùng chung, luôn import sau CSS riêng của từng module.
 import "./styles/ThadsTheme.css";
+import ChatWidget from "./components/ChatWidget";
 
 function App() {
   return (
@@ -72,7 +75,6 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="revenue" element={<AdminRevenue />} />
           <Route path="invoices" element={<AdminPayments />} />
           <Route path="vouchers" element={<AdminVouchers />} />
           <Route
@@ -94,12 +96,15 @@ function App() {
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="notifications" element={<StaffNotifications />} />
           <Route path="refunds" element={<AdminRefunds />} />
+          <Route path="revenue" element={<AdminRevenue />} />
         </Route>
 
         {/* ================= AUTH ================= */}
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/receptionist/login" element={<ReceptionistLogin />} />
         <Route path="/receptionist" element={<ReceptionistLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
@@ -108,6 +113,7 @@ function App() {
           <Route path="barber-day-schedule" element={<BarberDaySchedule />} />
           <Route path="notifications" element={<StaffNotifications />} />
           <Route path="refunds" element={<AdminRefunds />} />
+          <Route path="revenue" element={<AdminRevenue />} />
         </Route>
 
         {/* ================= CLIENT ================= */}
@@ -180,6 +186,7 @@ function App() {
           }
         />
       </Routes>
+      <ChatWidget />
     </Router>
   );
 }

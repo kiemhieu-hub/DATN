@@ -10,6 +10,10 @@ import {
   loginUser,
   registerClient,
   updateClientProfile,
+  requestPasswordReset,
+  resetPassword,
+  changePassword,
+  revokeSessions,
 } from "../services/auth.service";
 import type { UserRole } from "../models/User";
 
@@ -86,4 +90,30 @@ export const updateMe = async (
   } catch (error) {
     next(error);
   }
+};
+
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    await requestPasswordReset(String(req.body.email || ""));
+    res.json({ success: true, message: "Nếu email tồn tại, hệ thống đã gửi liên kết đặt lại mật khẩu." });
+  } catch (error) { next(error); }
+};
+
+export const applyPasswordReset = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    await resetPassword(String(req.body.token || ""), String(req.body.password || ""), String(req.body.confirmPassword || ""));
+    res.json({ success: true, message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại." });
+  } catch (error) { next(error); }
+};
+
+export const updatePassword = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    await changePassword(req.user!.userId, String(req.body.currentPassword || ""), String(req.body.newPassword || ""), String(req.body.confirmPassword || ""));
+    res.json({ success: true, message: "Đổi mật khẩu thành công. Vui lòng đăng nhập lại." });
+  } catch (error) { next(error); }
+};
+
+export const logout = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try { await revokeSessions(req.user!.userId); res.json({ success: true, message: "Đăng xuất thành công" }); }
+  catch (error) { next(error); }
 };

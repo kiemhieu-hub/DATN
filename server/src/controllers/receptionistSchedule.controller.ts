@@ -126,3 +126,29 @@ export const history = async (
     next(error);
   }
 };
+
+export const leaveRequests = async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json({ success: true, items: await service.listLeaveRequests() });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const decideLeaveRequest = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const request = await service.reviewLeaveRequest(
+      getValue(req.params.id),
+      req.body.decision,
+      typeof req.body.reviewNote === "string" ? req.body.reviewNote : "",
+      getActorId(req)
+    );
+    res.json({
+      success: true,
+      message: req.body.decision === "APPROVED" ? "Đã chấp nhận yêu cầu nghỉ" : "Đã từ chối yêu cầu nghỉ",
+      request,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

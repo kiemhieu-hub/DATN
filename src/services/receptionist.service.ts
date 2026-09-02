@@ -91,3 +91,23 @@ export const getReceptionScheduleHistory = async (id: string) =>
       items: ScheduleChangeHistoryItem[];
     }>(`/receptionist/barbers/${id}/schedule-history`)
   ).data;
+
+export interface BarberLeaveRequest {
+  _id: string;
+  barber: { _id: string; fullName: string; email: string; phone: string };
+  startDate: string;
+  endDate: string;
+  reasonType: "SICK" | "PERSONAL" | "VACATION" | "OTHER";
+  note: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  reviewNote: string;
+  reviewedBy?: { _id: string; fullName: string; role: string };
+  reviewedAt?: string;
+  createdAt: string;
+}
+
+export const getReceptionLeaveRequests = async () =>
+  (await api.get<{ success: boolean; items: BarberLeaveRequest[] }>("/receptionist/leave-requests")).data;
+
+export const reviewReceptionLeaveRequest = async (id: string, decision: "APPROVED" | "REJECTED", reviewNote = "") =>
+  (await api.patch<{ success: boolean; message: string; request: BarberLeaveRequest }>(`/receptionist/leave-requests/${id}`, { decision, reviewNote })).data;

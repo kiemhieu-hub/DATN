@@ -129,8 +129,10 @@
 
 .barber-day-card.is-off {
   border-left: 3px solid #5a524a;
-  opacity: 0.65;
-  background: rgba(24, 22, 20, 0.6);
+  opacity: 0.78;
+  background: #a9a6a1;
+  border-color: #8d8983;
+  filter: grayscale(1);
 }
 
 /* Badge Header trong Card */
@@ -143,8 +145,10 @@
 .day-name {
   font-size: 18px;
   font-weight: 700;
-  color: #070707;
+  color: #f5eee6;
 }
+
+.day-badge-header>div{display:grid;gap:4px}.day-date{color:#c89b63;font-size:13px;letter-spacing:.4px}.barber-day-card.is-off .day-name,.barber-day-card.is-off .day-date{color:#4b4946}.barber-day-card.is-off .day-time-body{border-top-color:#85817b}.barber-day-card.is-off .day-off-text{color:#55514c;font-weight:700}
 
 .status-pill {
   font-size: 11px;
@@ -179,7 +183,7 @@
 .working-hours {
   font-size: 20px;
   font-weight: 700;
-  color: #0b0b0b;
+  color: #ffffff;
   letter-spacing: 0.5px;
 }
 
@@ -234,4 +238,93 @@
   .barber-week-grid-modern {
     grid-template-columns: 1fr;
   }
+}
+
+/* Bộ lọc ngày */
+.working-schedule-filters {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) minmax(210px, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+  padding: 20px 22px;
+  background: #fffaf4;
+  border: 1px solid #dbc8b1;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(38, 30, 22, 0.12);
+  color: #241d17;
+}
+
+.schedule-filter-field { display: grid; gap: 8px; }
+.schedule-filter-field label { color: #2b2118; font-size: 13px; font-weight: 800; }
+.schedule-filter-field input {
+  width: 100%; min-height: 44px; padding: 0 13px; box-sizing: border-box;
+  color: #1e1813; background: #fff; border: 1px solid #bda688; border-radius: 7px;
+  font: inherit; color-scheme: light;
+}
+.schedule-filter-field input:focus { outline: 3px solid rgba(183, 128, 58, .2); border-color: #9a661f; }
+.schedule-filter-actions { display: flex; gap: 9px; }
+.schedule-filter-actions button {
+  min-height: 44px; padding: 0 19px; border-radius: 7px; font: inherit; font-size: 13px;
+  font-weight: 800; cursor: pointer;
+}
+.schedule-search-btn { color: #fff; background: #211b16; border: 1px solid #211b16; }
+.schedule-search-btn:hover { background: #9b681f; border-color: #9b681f; }
+.schedule-reset-btn { color: #2b2118; background: #f3e6d5; border: 1px solid #c7aa84; }
+.schedule-reset-btn:hover { background: #ead6ba; }
+.schedule-filter-error { grid-column: 1 / -1; margin: -3px 0 0; color: #a51f1f; font-size: 13px; font-weight: 700; }
+
+/* Danh sách lịch dạng hàng, đồng bộ với bảng lịch hẹn */
+.barber-content-card { overflow: hidden; border: 1px solid #d8c5ad; border-radius: 10px; box-shadow: 0 12px 32px rgba(38, 30, 22, .13); }
+.working-schedule-table { width: 100%; color: #211b16; background: #fffaf4; }
+.working-schedule-table-head,
+.working-schedule-row {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1.7fr .75fr;
+  align-items: center;
+  column-gap: 18px;
+}
+.working-schedule-table-head {
+  min-height: 58px; padding: 0 22px; color: #fff9ef; background: #211b16;
+  font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .45px;
+}
+.working-schedule-table-body { background: #f7efe5; }
+.working-schedule-row {
+  min-height: 92px; padding: 16px 22px; background: #fffaf4;
+  border-bottom: 1px solid #e2d2bf; box-sizing: border-box;
+}
+.working-schedule-row:last-child { border-bottom: 0; }
+.working-schedule-row.is-working { border-left: 4px solid #b77a2a; }
+.working-schedule-row.is-off { background: #d3d1ce; border-left: 4px solid #77736e; color: #393633; }
+.working-date-cell { display: grid; gap: 5px; }
+.working-date-cell strong { color: #1d1712; font-size: 16px; }
+.working-date-cell span { color: #80531d; font-size: 13px; font-weight: 750; }
+.working-shift-cell strong { color: #1d1712; font-size: 16px; }
+.working-note-cell { color: #51463a; font-size: 14px; line-height: 1.45; }
+.working-schedule-row.is-off .working-date-cell strong,
+.working-schedule-row.is-off .working-shift-cell strong { color: #34312e; }
+.working-schedule-row.is-off .working-date-cell span,
+.working-schedule-row.is-off .working-note-cell { color: #56514d; }
+.working-status-cell { display: flex; justify-content: flex-start; }
+.working-schedule-row .status-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 72px; padding: 7px 12px; }
+.working-schedule-row .status-pill.working { color: #fff; background: #775019; border-color: #775019; }
+.working-schedule-row .status-pill.off { color: #fff; background: #5e5a56; border-color: #5e5a56; }
+.working-schedule-empty { padding: 42px 20px; color: #5b4d3f; background: #fffaf4; text-align: center; font-weight: 700; }
+
+@media (max-width: 768px) {
+  .working-schedule-filters { grid-template-columns: 1fr 1fr; }
+  .schedule-filter-actions { grid-column: 1 / -1; }
+  .schedule-filter-actions button { flex: 1; }
+  .working-schedule-table-head { display: none; }
+  .working-schedule-row { grid-template-columns: 1fr 1fr; gap: 16px; padding: 18px; }
+  .working-schedule-row [data-label]::before {
+    content: attr(data-label); display: block; margin-bottom: 5px; color: #756554;
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .7px;
+  }
+  .working-schedule-row.is-off [data-label]::before { color: #5a5652; }
+}
+
+@media (max-width: 520px) {
+  .working-schedule-filters { grid-template-columns: 1fr; }
+  .schedule-filter-actions { grid-column: auto; }
+  .working-schedule-row { grid-template-columns: 1fr; }
 }

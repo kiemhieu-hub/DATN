@@ -10,7 +10,7 @@ const router = Router();
 router.get(
   "/",
   authenticate,
-  authorize("ADMIN"),
+  authorize("ADMIN", "RECEPTIONIST"),
   getDashboard
 );
 

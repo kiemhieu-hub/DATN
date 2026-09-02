@@ -79,6 +79,7 @@ export interface IAppointment extends Document {
   appointmentCode: string;
   customer: IAppointmentCustomer;
   staffAssignments: IStaffAssignment[];
+  slotKeys: string[];
 
   services: IAppointmentService[];
 
@@ -287,6 +288,8 @@ const appointmentSchema =
         default: [],
       },
 
+      slotKeys: { type: [String], default: [], select: false },
+
       services: {
         type: [appointmentServiceSchema],
         required: [
@@ -477,6 +480,7 @@ appointmentSchema.index({
   appointmentDate: -1,
   startTime: -1,
 });
+appointmentSchema.index({ slotKeys: 1 }, { unique: true, sparse: true });
 
 appointmentSchema.index({
   barber: 1,

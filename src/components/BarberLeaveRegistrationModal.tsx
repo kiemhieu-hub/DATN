@@ -65,7 +65,7 @@ export const BarberLeaveRegistrationModal: React.FC<Props> = ({
         localStorage.getItem('auth_token') ||
         '';
 
-      const response = await fetch('/api/barber-schedules/leaves', {
+      const response = await fetch('/api/barber/schedule/leaves', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ export const BarberLeaveRegistrationModal: React.FC<Props> = ({
           }}
         >
           <span style={{ fontSize: '18px' }}>✓</span>
-          <span>Đăng ký lịch nghỉ thành công!</span>
+          <span>Đã gửi yêu cầu nghỉ, vui lòng chờ duyệt!</span>
         </div>
       )}
 

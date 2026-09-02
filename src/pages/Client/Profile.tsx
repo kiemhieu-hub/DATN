@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import ClientHeader from "../../components/ClientHeader";
 import { useAuth } from "../../contexts/AuthContext";
-import { getMe, updateMyProfile } from "../../services/authService";
+import { changePassword, getMe, updateMyProfile } from "../../services/authService";
 import "./css/Profile.css";
 
 const getError = (error: unknown): string =>
@@ -20,6 +20,9 @@ function ClientProfile() {
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState("");
   const [message, setMessage] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) navigate("/login", { replace: true });
@@ -53,6 +56,12 @@ function ClientProfile() {
     setMessage("");
     updateMutation.mutate({ fullName, phone, avatar });
   };
+
+  const passwordMutation = useMutation({
+    mutationFn: () => changePassword(currentPassword, newPassword, confirmPassword),
+    onSuccess: (response) => { setMessage(response.message); setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); },
+    onError: (error) => setMessage(getError(error)),
+  });
 
   if (isLoading || profileQuery.isLoading) {
     return <div className="client-account-loading">Đang tải thông tin cá nhân...</div>;
@@ -106,6 +115,16 @@ function ClientProfile() {
             <button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
+          </form>
+        </section>
+        <section className="client-profile-card">
+          <aside><h2>Bảo mật tài khoản</h2><p>Đổi mật khẩu sẽ đăng xuất các phiên đang hoạt động.</p></aside>
+          <form onSubmit={(event) => { event.preventDefault(); setMessage(""); passwordMutation.mutate(); }}>
+            <h2>Đổi mật khẩu</h2>
+            <label>Mật khẩu hiện tại<input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></label>
+            <label>Mật khẩu mới<input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required minLength={8} /></label>
+            <label>Nhập lại mật khẩu mới<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required /></label>
+            <button type="submit" disabled={passwordMutation.isPending}>{passwordMutation.isPending ? "Đang đổi..." : "Đổi mật khẩu"}</button>
           </form>
         </section>
       </main>

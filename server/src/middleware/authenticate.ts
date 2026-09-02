@@ -6,16 +6,17 @@ import {
 import jwt from "jsonwebtoken";
 
 import type { TokenPayload } from "../utils/generateToken";
+import User from "../models/User";
 
 export interface AuthenticatedRequest extends Request {
   user?: TokenPayload;
 }
 
-export const authenticate = (
+export const authenticate = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   const authorization =
     req.headers.authorization;
 
@@ -62,6 +63,11 @@ export const authenticate = (
       secret
     ) as TokenPayload;
 
+    const user = await User.findById(payload.userId).select("+tokenVersion status role").lean();
+    if (!user || user.status !== "ACTIVE" || user.role !== payload.role || user.tokenVersion !== payload.tokenVersion) {
+      res.status(401).json({ success: false, message: "Phiên đăng nhập không còn hiệu lực" });
+      return;
+    }
     req.user = payload;
 
     next();

@@ -84,10 +84,6 @@ export const processRefund = async (input: ProcessRefundInput) => {
     throw new AppError("Yêu cầu hoàn tiền đã được xử lý", 409);
   }
 
-  if (input.status === "REFUNDED_MANUAL" && !input.bankReference?.trim()) {
-    throw new AppError("Vui lòng nhập mã giao dịch ngân hàng", 400);
-  }
-
   refund.status = input.status;
   refund.processedBy = new mongoose.Types.ObjectId(input.actorId);
   refund.bankReference = input.bankReference?.trim() ?? "";
@@ -105,12 +101,20 @@ export const processRefund = async (input: ProcessRefundInput) => {
     if (input.status === "REFUNDED_MANUAL") appointment.paymentStatus = "REFUNDED";
     await appointment.save();
 
+    if (input.status === "REFUNDED_MANUAL" && refund.payment) {
+      await Payment.findByIdAndUpdate(refund.payment, {
+        status: "REFUNDED",
+        refundedAt: new Date(),
+        refundReason: refund.reason,
+      });
+    }
+
     await recordAppointmentActivity({
       appointmentId: appointment._id,
       action: "REFUND_UPDATED",
       description:
         input.status === "REFUNDED_MANUAL"
-          ? `Đã hoàn ${refund.amount.toLocaleString("vi-VN")}đ, mã ${refund.bankReference}`
+          ? `Đã xác nhận hoàn ${refund.amount.toLocaleString("vi-VN")}đ cho khách hàng`
           : `Yêu cầu hoàn tiền chuyển sang ${input.status}`,
       actorId: input.actorId,
       actorRole: input.actorRole,

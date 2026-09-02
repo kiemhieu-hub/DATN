@@ -73,6 +73,9 @@ function ReceptionistLayout() {
           <NavLink to="/receptionist/refunds" className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
             <span className="admin-nav-icon">HT</span><span className="admin-nav-label">Yêu cầu hoàn tiền</span>
           </NavLink>
+          <NavLink to="/receptionist/revenue" className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
+            <span className="admin-nav-icon">DT</span><span className="admin-nav-label">Quản lý doanh thu</span>
+          </NavLink>
         </nav>
         <div className="admin-shell-user">
           <span className="admin-user-label">Tài khoản lễ tân</span>

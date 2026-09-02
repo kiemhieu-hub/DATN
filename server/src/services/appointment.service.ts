@@ -32,6 +32,7 @@ import {
 } from "./appointmentActivity.service";
 import { createStaffNotification } from "./staffNotification.service";
 import { createRefundRequestForAppointment } from "./refund.service";
+import { buildAppointmentSlotKeys } from "../utils/appointmentSlot";
 
 interface LifecycleEmailAppointment {
   appointmentCode: string;
@@ -955,6 +956,10 @@ export const createAppointment =
             endTime,
           }] : []),
         ],
+        slotKeys: buildAppointmentSlotKeys(appointmentDate, [
+          ...(hairServices.length ? [{ barber: barberId, startTime, endTime: hairEndTime }] : []),
+          ...(careServices.length ? [{ barber: assignedCareBarberId, startTime: careStartTime, endTime }] : []),
+        ]),
 
         services:
           normalizedServices.map(
@@ -1162,6 +1167,7 @@ export const cancelMyAppointment =
 
     appointment.status =
       "CANCELLED";
+    appointment.slotKeys = [];
 
     const refundEligible = appointment.depositPaid && leadTime >= fullRefundWindow;
     if (refundEligible && (!refundBankName?.trim() || !refundAccountNumber?.trim() || !refundAccountName?.trim())) {
@@ -1437,6 +1443,7 @@ export const updateAppointmentStatus =
     }
 
     if (status === "CANCELLED") {
+      appointment.slotKeys = [];
       appointment.cancellation = {
         cancelledBy:
           new mongoose.Types.ObjectId(

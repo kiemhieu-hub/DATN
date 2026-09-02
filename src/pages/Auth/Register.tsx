@@ -145,7 +145,9 @@ function Register() {
                 onChange={(event) =>
                   setPassword(event.target.value)
                 }
-                minLength={6}
+                minLength={8}
+                pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
+                title="Ít nhất 8 ký tự, gồm chữ và số"
                 required
               />
 
@@ -185,7 +187,7 @@ function Register() {
                 onChange={(event) =>
                   setConfirmPassword(event.target.value)
                 }
-                minLength={6}
+                minLength={8}
                 required
               />
 

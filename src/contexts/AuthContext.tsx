@@ -9,6 +9,7 @@ import {
 import {
   getMe,
   login as loginApi,
+  revokeCurrentSession,
 } from "../services/authService";
 import { fetchBusinessQuery } from "../lib/queryApi";
 import { queryClient } from "../lib/queryClient";
@@ -158,6 +159,7 @@ export function AuthProvider({
   };
 
   const logout = (role: UserRole): void => {
+    void revokeCurrentSession().catch(() => undefined);
     localStorage.removeItem(tokenKey(role));
     localStorage.removeItem(userKey(role));
 

@@ -11,8 +11,6 @@ import type { CatalogBarber } from "../../types/Catalog";
 import "./css/Revenue.css";
 import { queryKeys } from "../../lib/queryKeys";
 
-type RevenuePeriod = "DAY" | "MONTH" | "YEAR";
-
 const money = (value: number): string =>
   new Intl.NumberFormat("vi-VN").format(value);
 
@@ -25,10 +23,14 @@ const getError = (error: unknown): string => {
 };
 
 function Revenue() {
-  const [period, setPeriod] = useState<RevenuePeriod>("MONTH");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const today = new Date().toISOString().slice(0, 10);
+  const firstDayOfMonth = `${today.slice(0, 8)}01`;
+  const [fromDate, setFromDate] = useState(firstDayOfMonth);
+  const [toDate, setToDate] = useState(today);
+  const [appliedRange, setAppliedRange] = useState({ fromDate: firstDayOfMonth, toDate: today });
+  const [filterError, setFilterError] = useState("");
   const [barberId, setBarberId] = useState("");
-  const filters = { period, date, barberId: barberId || undefined };
+  const filters = { ...appliedRange, barberId: barberId || undefined };
   const revenueQuery = useQuery({
     queryKey: queryKeys.adminDashboard(filters),
     queryFn: async () => (await getAdminDashboard(filters)).data,
@@ -56,11 +58,7 @@ function Revenue() {
     [data]
   );
 
-  const filterLabel = period === "DAY"
-    ? "ngày đã chọn"
-    : period === "MONTH"
-      ? "tháng đã chọn"
-      : "năm đã chọn";
+  const filterLabel = "trong khoảng đã chọn";
   const completionRate = data?.outcomeSummary.completionRate ?? 0;
   const cancellationRate = data?.outcomeSummary.cancellationRate ?? 0;
   const outcomeChart = `conic-gradient(#42b883 0 ${completionRate}%, #e05b5b ${completionRate}% ${completionRate + cancellationRate}%, #35322d ${completionRate + cancellationRate}% 100%)`;
@@ -80,17 +78,13 @@ function Revenue() {
 
         <section className="admin-revenue-filters">
           <label>
-            Chu kỳ
-            <select value={period} onChange={(event) => setPeriod(event.target.value as RevenuePeriod)}>
-              <option value="DAY">Theo ngày</option>
-              <option value="MONTH">Theo tháng</option>
-              <option value="YEAR">Theo năm</option>
-            </select>
+            Từ ngày
+            <input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} />
           </label>
 
           <label>
-            Ngày đối chiếu
-            <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+            Đến ngày
+            <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} />
           </label>
 
           <label>
@@ -102,6 +96,19 @@ function Revenue() {
               ))}
             </select>
           </label>
+          <div className="admin-revenue-filter-actions">
+            <button type="button" onClick={() => {
+              if (!fromDate || !toDate) { setFilterError("Vui lòng chọn đủ từ ngày và đến ngày."); return; }
+              if (fromDate > toDate) { setFilterError("Từ ngày không được lớn hơn đến ngày."); return; }
+              setFilterError("");
+              setAppliedRange({ fromDate, toDate });
+            }}>Xem doanh thu</button>
+            <button type="button" className="secondary" onClick={() => {
+              setFromDate(firstDayOfMonth); setToDate(today);
+              setAppliedRange({ fromDate: firstDayOfMonth, toDate: today }); setBarberId(""); setFilterError("");
+            }}>Đặt lại</button>
+          </div>
+          {filterError && <p className="admin-revenue-filter-error">{filterError}</p>}
         </section>
 
         {error && <div className="admin-revenue-error">{error}</div>}
@@ -164,6 +171,14 @@ function Revenue() {
                 <small>{item.appointments} lịch hoàn thành</small>
                 <strong>{money(item.revenue)}đ</strong>
               </article>
+            ))}
+          </section>
+        )}
+        {!!data?.revenueByService?.length && (
+          <section className="admin-revenue-ranking">
+            <h2>Doanh thu và mức sử dụng dịch vụ</h2>
+            {data.revenueByService.map((item, index) => (
+              <article key={item.serviceId}><b>#{index + 1}</b><span>{item.serviceName}</span><small>{item.uses} lượt sử dụng</small><strong>{money(item.revenue)}đ</strong></article>
             ))}
           </section>
         )}

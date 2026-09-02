@@ -29,7 +29,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => {
     const method = response.config.method?.toUpperCase();
-    if (method && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const isChatRequest = response.config.url?.startsWith("/chat");
+    if (method && !isChatRequest && !["GET", "HEAD", "OPTIONS"].includes(method)) {
       void invalidateBusinessData();
     }
     return response;

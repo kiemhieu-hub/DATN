@@ -6,6 +6,7 @@ import Appointment from "../models/Appointment";
 import BarberScheduleOverride from "../models/BarberScheduleOverride";
 import BarberProfile from "../models/BarberProfile";
 import BarberScheduleChangeLog from "../models/BarberScheduleChangeLog";
+import BarberLeaveRequest from "../models/BarberLeaveRequest";
 
 const ACTIVE_STATUSES = ["PENDING", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"];
 const timeToMinutes = (value: string) => {
@@ -250,4 +251,55 @@ export const getScheduleChangeHistory = async (barberId: string) => {
     .sort({ createdAt: -1 })
     .limit(100)
     .lean();
+};
+
+export const listLeaveRequests = async () =>
+  BarberLeaveRequest.find()
+    .populate("barber", "fullName email phone")
+    .populate("reviewedBy", "fullName role")
+    .sort({ status: 1, createdAt: -1 })
+    .limit(200)
+    .lean();
+
+export const reviewLeaveRequest = async (
+  requestId: string,
+  decision: "APPROVED" | "REJECTED",
+  reviewNote: string,
+  actorId: string
+) => {
+  if (!mongoose.Types.ObjectId.isValid(requestId)) throw new AppError("Mã yêu cầu không hợp lệ", 400);
+  if (!["APPROVED", "REJECTED"].includes(decision)) throw new AppError("Quyết định xử lý không hợp lệ", 400);
+  const request = await BarberLeaveRequest.findById(requestId);
+  if (!request) throw new AppError("Không tìm thấy yêu cầu nghỉ", 404);
+  if (request.status !== "PENDING") throw new AppError("Yêu cầu này đã được xử lý", 409);
+
+  if (decision === "APPROVED") {
+    const conflict = await Appointment.findOne({
+      appointmentDate: { $gte: request.startDate, $lte: request.endDate },
+      status: { $in: ACTIVE_STATUSES },
+      $or: [{ barber: request.barber }, { "staffAssignments.barber": request.barber }],
+    } as any).select("appointmentCode appointmentDate").lean();
+    if (conflict) {
+      throw new AppError(`Không thể duyệt vì Barber có lịch ${conflict.appointmentCode} ngày ${conflict.appointmentDate}`, 409);
+    }
+
+    const dates: string[] = [];
+    for (let date = new Date(`${request.startDate}T00:00:00Z`); date <= new Date(`${request.endDate}T00:00:00Z`); date.setUTCDate(date.getUTCDate() + 1)) {
+      dates.push(date.toISOString().slice(0, 10));
+    }
+    await BarberScheduleOverride.bulkWrite(dates.map((date) => ({
+      updateOne: {
+        filter: { barber: request.barber, date },
+        update: { $set: { barber: request.barber, date, startTime: "09:00", endTime: "21:00", isWorking: false, note: `${request.reasonType}${request.note ? `: ${request.note}` : ""}` } },
+        upsert: true,
+      },
+    })));
+  }
+
+  request.status = decision;
+  request.reviewedBy = new mongoose.Types.ObjectId(actorId);
+  request.reviewNote = reviewNote.trim();
+  request.reviewedAt = new Date();
+  await request.save();
+  return request.populate([{ path: "barber", select: "fullName email phone" }, { path: "reviewedBy", select: "fullName role" }]);
 };

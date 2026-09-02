@@ -4,6 +4,7 @@ import BarberSchedule from "../models/BarberSchedule";
 import BarberProfile from "../models/BarberProfile";
 import User from "../models/User";
 import AppError from "../utils/AppError";
+import { buildAppointmentSlotKeys } from "../utils/appointmentSlot";
 import Service from "../models/Service";
 import { processAutomaticAppointmentStatuses, updateAppointmentStatus } from "./appointment.service";
 import {
@@ -356,6 +357,7 @@ export const reassignAppointmentBarber = async (
   if (hairAssignment) {
     hairAssignment.barber = new mongoose.Types.ObjectId(barberId);
   }
+  appointment.slotKeys = buildAppointmentSlotKeys(appointment.appointmentDate, appointment.staffAssignments.map((assignment) => ({ barber: String(assignment.barber), startTime: assignment.startTime, endTime: assignment.endTime })));
   await appointment.save();
   await recordAppointmentActivity({
     appointmentId,
@@ -453,6 +455,7 @@ export const rescheduleAppointment = async (
     assignment.startTime = nextStart;
     assignment.endTime = nextEnd;
   });
+  appointment.slotKeys = buildAppointmentSlotKeys(appointmentDate, appointment.staffAssignments.map((assignment) => ({ barber: String(assignment.barber), startTime: assignment.startTime, endTime: assignment.endTime })));
   appointment.rescheduleConsent = true;
   if (appointment.status === "NO_SHOW") appointment.status = "CONFIRMED";
   await appointment.save();
@@ -593,6 +596,7 @@ export const reopenNoShowAppointment = async (
     appointment.confirmedAt = new Date();
     appointment.reopenedAt = new Date();
     appointment.rescheduleConsent = true;
+    appointment.slotKeys = buildAppointmentSlotKeys(appointmentDate, appointment.staffAssignments.map((assignment) => ({ barber: String(assignment.barber), startTime: assignment.startTime, endTime: assignment.endTime })));
     await appointment.save();
     await recordAppointmentActivity({
       appointmentId,
@@ -781,6 +785,7 @@ export const replaceAppointmentServices = async (
   appointment.barber = new mongoose.Types.ObjectId(
     hairServices.length > 0 ? hairBarberId : careBarberId
   );
+  appointment.slotKeys = buildAppointmentSlotKeys(appointment.appointmentDate, appointment.staffAssignments.map((assignment) => ({ barber: String(assignment.barber), startTime: assignment.startTime, endTime: assignment.endTime })));
   await appointment.save();
   await recordAppointmentActivity({
     appointmentId,

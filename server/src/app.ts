@@ -35,12 +35,16 @@ import favoriteHairstyleRoutes from "./routes/favoriteHairstyle.routes";
 import refundRoutes from "./routes/refund.routes";
 import bankAccountRoutes from "./routes/bankAccount.routes";
 import barberAppointmentRoutes from "./routes/barberAppointment.routes";
+import chatRoutes from "./routes/chat.routes";
 import {
   emitBusinessChanged,
   emitStaffDataChanged,
 } from "./realtime/socket";
+import { securityHeaders } from "./middleware/security";
 
 const app = express();
+app.disable("x-powered-by");
+app.use(securityHeaders);
 
 // Middleware
 app.use(
@@ -49,7 +53,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: "16mb" }));
 
 // Phát tín hiệu realtime sau khi API thay đổi lịch hẹn hoặc thông báo.
 // Frontend nhận tín hiệu rồi tải lại dữ liệu bằng API có xác thực.
@@ -58,7 +62,9 @@ app.use((req, res, next) => {
 
   if (isMutation) {
     res.on("finish", () => {
-      if (res.statusCode >= 200 && res.statusCode < 400) {
+      // Chat tự đồng bộ trong ChatWidget, không làm tải lại toàn bộ dữ liệu trang.
+      const isChatOperation = req.originalUrl.startsWith("/api/chat");
+      if (!isChatOperation && res.statusCode >= 200 && res.statusCode < 400) {
         const isStaffOperation =
           req.path.includes("/appointments") ||
           req.path.includes("/notifications") ||
@@ -94,6 +100,9 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/catalog",catalogRoutes);
 app.use("/api/barber", barberRoutes);
 app.use("/api/barber/schedule",barberScheduleRoutes);
+// Giữ tương thích với các phiên bản giao diện cũ đang dùng hai đường dẫn này.
+app.use("/api/barber-schedules", barberScheduleRoutes);
+app.use("/api/schedules", barberScheduleRoutes);
 app.use("/api/barber/dashboard",barberDashboardRoutes);
 app.use("/api/barber/profile",barberProfileRoutes);
 app.use("/api/admin/dashboard",adminDashboardRoutes);
@@ -114,6 +123,7 @@ app.use("/api/favorites", favoriteHairstyleRoutes);
 app.use("/api/admin/refunds", refundRoutes);
 app.use("/api/banks", bankAccountRoutes);
 app.use("/api/barber/appointments", barberAppointmentRoutes);
+app.use("/api/chat", chatRoutes);
 
 
 // Error Handler
@@ -132,7 +142,7 @@ app.use(
       return;
     }
 
-    if (
+  if (
       error instanceof mongoose.Error.ValidationError
     ) {
       const firstError =
@@ -153,6 +163,11 @@ app.use(
       "code" in error &&
       error.code === 11000
     ) {
+      const duplicate = error as { keyPattern?: Record<string, number> };
+      if (duplicate.keyPattern?.slotKeys) {
+        res.status(409).json({ success: false, message: "Khung giờ vừa được người khác đặt. Vui lòng chọn giờ khác." });
+        return;
+      }
       res.status(409).json({
         success: false,
         message:

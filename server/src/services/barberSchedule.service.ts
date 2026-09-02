@@ -4,6 +4,7 @@ import BarberSchedule, {
   type IScheduleBreak,
 } from "../models/BarberSchedule";
 import BarberScheduleOverride from "../models/BarberScheduleOverride";
+import BarberLeaveRequest from "../models/BarberLeaveRequest";
 
 import User from "../models/User";
 import AppError from "../utils/AppError";
@@ -286,6 +287,48 @@ export const getMyWeeklySchedule =
     );
   };
 
+/** Lịch thực tế 14 ngày từ hôm nay, ưu tiên lịch điều chỉnh theo ngày. */
+export const getMyUpcomingSchedule = async (barberId: string) => {
+  const weeklySchedules = await getMyWeeklySchedule(barberId);
+  const weeklyMap = new Map(weeklySchedules.map((schedule) => [schedule.dayOfWeek, schedule]));
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
+  const start = new Date(`${today}T00:00:00Z`);
+  const dates = Array.from({ length: 14 }, (_, index) => {
+    const value = new Date(start);
+    value.setUTCDate(value.getUTCDate() + index);
+    return value.toISOString().slice(0, 10);
+  });
+  const overrides = await BarberScheduleOverride.find({
+    barber: barberId,
+    date: { $gte: dates[0], $lte: dates[dates.length - 1] },
+  }).lean();
+  const overrideMap = new Map(overrides.map((override) => [override.date, override]));
+
+  return dates.map((date) => {
+    const dayOfWeek = new Date(`${date}T00:00:00Z`).getUTCDay();
+    const weekly = weeklyMap.get(dayOfWeek) ?? {
+      barber: barberId,
+      dayOfWeek,
+      startTime: "09:00",
+      endTime: "21:00",
+      breaks: [],
+      isWorking: false,
+    };
+    const override = overrideMap.get(date);
+    return {
+      barber: barberId,
+      date,
+      dayOfWeek,
+      startTime: override?.startTime ?? weekly.startTime,
+      endTime: override?.endTime ?? weekly.endTime,
+      breaks: override ? [] : weekly.breaks,
+      isWorking: override?.isWorking ?? weekly.isWorking,
+      note: override?.note ?? "",
+      source: override ? "OVERRIDE" as const : "WEEKLY" as const,
+    };
+  });
+};
+
 /**
  * Cập nhật toàn bộ lịch làm việc trong tuần.
  */
@@ -433,35 +476,25 @@ export const registerLeaveSchedule = async ({
   createdBy,
 }: RegisterLeaveInput) => {
   await validateBarberAccount(staffId);
-
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const dates: string[] = [];
-
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    dates.push(d.toISOString().slice(0, 10));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate) || startDate > endDate) {
+    throw new AppError("Khoảng ngày nghỉ không hợp lệ", 400);
   }
+  const duplicated = await BarberLeaveRequest.exists({
+    barber: staffId,
+    status: "PENDING",
+    startDate: { $lte: endDate },
+    endDate: { $gte: startDate },
+  });
+  if (duplicated) throw new AppError("Đã có yêu cầu nghỉ chờ duyệt trùng khoảng ngày này", 409);
 
-  const operations: any[]= dates.map((date) => ({
-    updateOne: {
-      filter: { barber: staffId, date },
-      update: {
-        $set: {
-          barber: staffId,
-          date,
-          isWorking: false,
-          reason: note ? `${reasonType}: ${note}` : reasonType,
-          createdBy,
-        },
-      },
-      upsert: true,
-    },
-  }));
-
-  await BarberScheduleOverride.bulkWrite(operations);
-
-  return {
-    totalDays: dates.length,
-    dates,
-  };
+  const normalizedReason = (["SICK", "PERSONAL", "VACATION", "OTHER"] as const).find((value) => value === reasonType) ?? "OTHER";
+  const request = await BarberLeaveRequest.create({
+    barber: staffId,
+    startDate,
+    endDate,
+    reasonType: normalizedReason,
+    note: note?.trim() || "",
+  });
+  const totalDays = Math.floor((new Date(`${endDate}T00:00:00Z`).getTime() - new Date(`${startDate}T00:00:00Z`).getTime()) / 86400000) + 1;
+  return { totalDays, request, createdBy };
 };

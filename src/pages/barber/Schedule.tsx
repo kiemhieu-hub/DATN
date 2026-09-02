@@ -82,6 +82,7 @@ function Schedule() {
 
   const handleStatusChange = (e: React.MouseEvent, appointmentId: string, targetStatus: AppointmentStatus) => {
     e.stopPropagation();
+    if (targetStatus === "COMPLETED" && !window.confirm("Xác nhận đã hoàn thành toàn bộ dịch vụ của lịch hẹn này?")) return;
     statusMutation.mutate({ appointmentId, status: targetStatus });
   };
 
@@ -138,27 +139,25 @@ function Schedule() {
                 <div className="schedule-status-col">
                   <small>TRẠNG THÁI</small>
                   <div className="status-container">
-                    <span className={`status ${item.status.toLowerCase()}`}>{labels[item.status]}</span>
-
-                    {item.status === "CHECKED_IN" && (
-                      <button 
+                    <span className={`status ${item.status.toLowerCase()}`}>{labels[item.status] || item.status}</span>
+                    <div className="barber-appointment-actions">
+                      <button
                         className="btn-start"
-                        disabled={statusMutation.isPending}
+                        title={item.status === "CHECKED_IN" ? "Bắt đầu thực hiện dịch vụ" : "Chỉ bật sau khi khách đã check-in"}
+                        disabled={item.status !== "CHECKED_IN" || statusMutation.isPending}
                         onClick={(e) => handleStatusChange(e, item._id, "IN_PROGRESS")}
                       >
-                        {statusMutation.isPending ? "..." : "Bắt đầu"}
+                        {statusMutation.isPending && statusMutation.variables?.appointmentId === item._id ? "Đang xử lý..." : "Bắt đầu làm"}
                       </button>
-                    )}
-
-                    {item.status === "IN_PROGRESS" && (
-                      <button 
+                      <button
                         className="btn-complete"
-                        disabled={statusMutation.isPending}
+                        title={item.status === "IN_PROGRESS" ? "Xác nhận hoàn thành lịch hẹn" : "Chỉ bật sau khi đã bắt đầu làm"}
+                        disabled={item.status !== "IN_PROGRESS" || statusMutation.isPending}
                         onClick={(e) => handleStatusChange(e, item._id, "COMPLETED")}
                       >
-                        {statusMutation.isPending ? "..." : "Kết thúc"}
+                        {statusMutation.isPending && statusMutation.variables?.appointmentId === item._id ? "Đang xử lý..." : "Hoàn thành đơn"}
                       </button>
-                    )}
+                    </div>
                   </div>
                 </div>
               </article>
