@@ -1,19 +1,14 @@
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { getMyBarberSchedule } from "../../services/baberSchedule.service";
+import { getMyBarberSchedule } from "../../services/barberSchedule.service";
 import type { BarberScheduleDay } from "../../types/BarberSchedule";
 import "./css/WorkingSchedule.css";
+import "./css/Schedule.css";
 
-const days = [
-  "Chủ Nhật",
-  "Thứ Hai",
-  "Thứ Ba",
-  "Thứ Tư",
-  "Thứ Năm",
-  "Thứ Sáu",
-  "Thứ Bảy",
-];
+const days = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
 
 function WorkingSchedule() {
   const navigate = useNavigate();
@@ -23,8 +18,13 @@ function WorkingSchedule() {
 
   const load = useCallback(async () => {
     try {
-      const r = await getMyBarberSchedule();
-      setItems(r.schedules);
+      const response = await fetchBusinessQuery(
+        "barber-working-schedule",
+        () => getMyBarberSchedule(),
+        undefined,
+        0
+      );
+      setItems(response.schedules);
     } finally {
       setLoading(false);
     }
@@ -39,89 +39,63 @@ function WorkingSchedule() {
     void load();
   }, [isLoading, isAuthenticated, user, navigate, load]);
 
-  if (isLoading || loading)
-    return <div className="barber-view-loading">Đang tải lịch làm việc...</div>;
+  useRealtimeRefresh(() => {
+    void load();
+  }, isAuthenticated);
 
-  // Tính toán nhanh tổng số ngày làm việc trong tuần
-  const workingDaysCount = items.filter((item) => item.isWorking).length;
+  if (isLoading || loading) {
+    return <div className="barber-view-page" style={{ padding: '40px', textAlign: 'center' }}>Đang tải ca làm việc...</div>;
+  }
 
   return (
     <div className="barber-view-page">
-      <div className="barber-schedule-container">
-        {/* Header Chuyên Nghiệp Đồng Bộ */}
-        <header className="barber-header">
-          <div className="header-brand-info">
-            <span className="brand-tag">THADS BARBER • WORKSPACE</span>
-            <h1 className="header-title">CA LÀM VIỆC CỦA TÔI</h1>
-            <p className="header-desc">
-              Lịch làm việc cố định theo tuần. Mọi thay đổi ca do Lễ tân hoặc Admin điều phối.
-            </p>
+      <main className="barber-schedule-container">
+        {/* Header Bar */}
+        <header className="barber-header-card">
+          <div>
+            <span className="barber-brand-tag">THADS BARBER</span>
+            <h1 className="barber-page-title">Ca làm việc của tôi</h1>
+            <p className="barber-page-desc">Lịch chỉ đọc. Lễ tân và Admin chịu trách nhiệm điều phối.</p>
           </div>
-          <nav className="header-nav-tabs">
-            <Link to="/barber/dashboard" className="nav-tab">
-              Tổng quan
-            </Link>
-            <Link to="/barber/schedule" className="nav-tab">
-              Lịch hẹn
-            </Link>
-            <Link to="/barber/working-schedule" className="nav-tab active">
-              Ca làm việc
-            </Link>
-            <Link to="/barber/profile" className="nav-tab">
-              Cá nhân
-            </Link>
+          <nav className="barber-nav-actions">
+            <Link to="/barber/dashboard" className="barber-nav-btn">Dashboard</Link>
+            <Link to="/barber/schedule" className="barber-nav-btn">Lịch hẹn</Link>
+            <Link to="/barber/profile" className="barber-nav-btn">Cá nhân</Link>
           </nav>
         </header>
 
-        {/* Khối Thống Kê Ca Làm */}
-        <div className="barber-stats-grid">
-          <div className="stat-card">
-            <span className="stat-label">Số ngày làm việc/tuần</span>
-            <span className="stat-value highlight-gold">{workingDaysCount} / 7 ngày</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-label">Trạng thái tuần này</span>
-            <span className="stat-value highlight-green">Đã phân lịch</span>
-          </div>
-        </div>
-
-        {/* Lưới Hiển Thị Các Ngày Trong Tuần */}
-        <div className="barber-week-grid">
-          {items
-            .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-            .map((item) => {
-              const isToday = new Date().getDay() === item.dayOfWeek;
-              return (
+        {/* Schedule Grid Content */}
+        <section className="barber-content-card">
+          <div className="barber-week-grid-modern">
+            {items
+              .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+              .map((item) => (
                 <article
                   key={item.dayOfWeek}
-                  className={`schedule-day-card ${!item.isWorking ? "off" : ""} ${
-                    isToday ? "today" : ""
-                  }`}
+                  className={`barber-day-card ${!item.isWorking ? "is-off" : "is-working"}`}
                 >
-                  {isToday && <span className="today-badge">HÔM NAY</span>}
-                  <div className="day-name">{days[item.dayOfWeek]}</div>
-                  <div className="day-status">
+                  <div className="day-badge-header">
+                    <span className="day-name">{days[item.dayOfWeek]}</span>
+                    <span className={`status-pill ${item.isWorking ? "working" : "off"}`}>
+                      {item.isWorking ? "Đi làm" : "Nghỉ"}
+                    </span>
+                  </div>
+
+                  <div className="day-time-body">
                     {item.isWorking ? (
                       <>
-                        <span className="working-badge">Có ca làm</span>
-                        <div className="time-range">
-                          {item.startTime} – {item.endTime}
-                        </div>
-                        <small className="shift-note">Làm việc liên tục</small>
+                        <div className="working-hours">{item.startTime} – {item.endTime}</div>
+                        <span className="break-note">Làm việc xuyên trưa</span>
                       </>
                     ) : (
-                      <>
-                        <span className="off-badge">Nghỉ ca</span>
-                        <div className="time-range off-text">Không có ca</div>
-                        <small className="shift-note">—</small>
-                      </>
+                      <div className="day-off-text">Không có ca trực</div>
                     )}
                   </div>
                 </article>
-              );
-            })}
-        </div>
-      </div>
+              ))}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

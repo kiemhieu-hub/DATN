@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import BarberSchedule, {
   type IScheduleBreak,
 } from "../models/BarberSchedule";
+import BarberScheduleOverride from "../models/BarberScheduleOverride";
 
 import User from "../models/User";
 import AppError from "../utils/AppError";
@@ -17,6 +18,15 @@ interface UpdateScheduleDayInput {
 
 interface UpdateWeeklyScheduleInput {
   schedules: UpdateScheduleDayInput[];
+}
+
+export interface RegisterLeaveInput {
+  staffId: string;
+  startDate: string;
+  endDate: string;
+  reasonType: string;
+  note?: string;
+  createdBy: string;
 }
 
 const TIME_PATTERN =
@@ -410,3 +420,48 @@ export const updateMyScheduleDay =
         input.dayOfWeek,
     }).lean();
   };
+
+/**
+ * Đăng ký ngày nghỉ / ghi đè lịch nghỉ của Barber.
+ */
+export const registerLeaveSchedule = async ({
+  staffId,
+  startDate,
+  endDate,
+  reasonType,
+  note,
+  createdBy,
+}: RegisterLeaveInput) => {
+  await validateBarberAccount(staffId);
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const dates: string[] = [];
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    dates.push(d.toISOString().slice(0, 10));
+  }
+
+  const operations: any[]= dates.map((date) => ({
+    updateOne: {
+      filter: { barber: staffId, date },
+      update: {
+        $set: {
+          barber: staffId,
+          date,
+          isWorking: false,
+          reason: note ? `${reasonType}: ${note}` : reasonType,
+          createdBy,
+        },
+      },
+      upsert: true,
+    },
+  }));
+
+  await BarberScheduleOverride.bulkWrite(operations);
+
+  return {
+    totalDays: dates.length,
+    dates,
+  };
+};

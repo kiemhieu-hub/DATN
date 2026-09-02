@@ -22,10 +22,12 @@ import Blog2 from './pages/Client/Blog2';
 import Blog3 from './pages/Client/Blog3';
 import Booking from "./pages/Client/Booking";
 import BookingHistory from "./pages/Client/BookingHistory";
+import Favorites from "./pages/Client/Favorites";
+import ClientProfile from "./pages/Client/Profile";
 import Schedule from "./pages/Barber/Schedule";
 import WorkingSchedule from "./pages/Barber/WorkingSchedule";
-import Dashboard from "./pages/Barber/Dashnoard";
-import Profile from "./pages/Barber/Dashnoard";
+import Dashboard from "./pages/Barber/Dashboard";
+import Profile from "./pages/Barber/Profile";
 
 // Auth
 import Login from './pages/Auth/Login';
@@ -36,6 +38,7 @@ import BarberLogin from "./pages/Auth/BarberLogin";
 import ReceptionistLogin from "./pages/Auth/ReceptionistLogin";
 import ReceptionistDashboard from "./pages/Receptionist/Dashboard";
 import ReceptionistBarberSchedules from "./pages/Receptionist/BarberSchedules";
+import BarberDaySchedule from "./pages/Receptionist/BarberDaySchedule";
 import AdminLayout from "./layouts/AdminLayout";
 import ReceptionistLayout from "./layouts/ReceptionistLayout";
 
@@ -52,7 +55,14 @@ import AdminVouchers from "./pages/Admin/Vouchers";
 import AdminServiceCategories from "./pages/Admin/ServiceCategories";
 import AdminHairstyleGallery from "./pages/Admin/HairstyleGallery";
 import AdminReviews from "./pages/Admin/Reviews";
+import AdminRefunds from "./pages/Admin/Refunds";
 import StaffNotifications from "./pages/Admin/StaffNotifications";
+
+//VNpay
+import VnpayReturn from "./pages/Client/VnpayReturn";
+
+// Theme dùng chung, luôn import sau CSS riêng của từng module.
+import "./styles/ThadsTheme.css";
 
 function App() {
   return (
@@ -69,6 +79,7 @@ function App() {
           <Route path="service-categories" element={<AdminServiceCategories />}/>
           <Route path="barbers" element={<Barbers />}/>
           <Route path="barber-schedules" element={<ReceptionistBarberSchedules />}/>
+          <Route path="barber-day-schedule" element={<BarberDaySchedule />}/>
           <Route path="services" element={<AdminServices />}/>
           <Route path="appointments" element={<AdminAppointments />}/>
           <Route path="operations" element={<ReceptionistDashboard />}/>
@@ -77,6 +88,7 @@ function App() {
           <Route path="hairstyle-gallery" element={<AdminHairstyleGallery />}/>
           <Route path="reviews" element={<AdminReviews />}/>
           <Route path="notifications" element={<StaffNotifications />}/>
+          <Route path="refunds" element={<AdminRefunds />}/>
         </Route>
 
         {/* ================= AUTH ================= */}
@@ -88,6 +100,9 @@ function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<ReceptionistDashboard />} />
           <Route path="barbers" element={<ReceptionistBarberSchedules />} />
+          <Route path="barber-day-schedule" element={<BarberDaySchedule />} />
+          <Route path="notifications" element={<StaffNotifications />} />
+          <Route path="refunds" element={<AdminRefunds />} />
         </Route>
 
         {/* ================= CLIENT ================= */}
@@ -110,6 +125,16 @@ function App() {
         <Route path="/blog3" element={<Blog3 />} />
         <Route path="/booking"element={<Booking />}/>
         <Route path="/booking-history"element={<BookingHistory />}/>
+        <Route path="/favorites" element={<Favorites />} />
+        <Route path="/profile" element={<ClientProfile />} />
+        <Route path="/index.html" element={<Navigate to="/" replace />} />
+        <Route path="/about.html" element={<Navigate to="/about" replace />} />
+        <Route path="/services.html" element={<Navigate to="/services" replace />} />
+        <Route path="/pricing.html" element={<Navigate to="/pricing" replace />} />
+        <Route path="/contact.html" element={<Navigate to="/contact" replace />} />
+        <Route path="/portfolio.html" element={<Navigate to="/portfolio" replace />} />
+        <Route path="/team.html" element={<Navigate to="/team" replace />} />
+        <Route path="/faq.html" element={<Navigate to="/faq" replace />} />
 
         {/* ================= BARBER ================= */}
         <Route path="/barber/login" element={<BarberLogin />} />
@@ -117,6 +142,9 @@ function App() {
         <Route path="/barber/working-schedule"element={<WorkingSchedule />}/>
         <Route path="/barber/dashboard" element={<Dashboard />}/>
         <Route path="/barber/profile"element={<Profile />}/>
+
+        {/* ================= VNpay ================= */}
+        <Route path="/payment/vnpay-return"element={<VnpayReturn />}/>
 
 
         <Route path="*"element={

@@ -17,7 +17,7 @@ function Post() {
         <div className="container">
           {/* Logo */}
           <div className="logo-wrapper">
-            <a className="logo" href="index.html"> 
+            <a className="logo" href="/"> 
               <img src="img/logo.png" className="logo-img" alt="" /> 
             </a>
           </div>
@@ -30,22 +30,22 @@ function Post() {
           {/* Menu */}
           <div className="collapse navbar-collapse" id="navbar">
             <ul className="navbar-nav ms-auto">
-              <li className="nav-item"><a className="nav-link" href="index.html">Home</a></li>
-              <li className="nav-item"><a className="nav-link" href="about.html">About</a></li>
-              <li className="nav-item"><a className="nav-link" href="services.html">Services</a></li>
-              <li className="nav-item"><a className="nav-link" href="pricing.html">Pricing</a></li>
+              <li className="nav-item"><a className="nav-link" href="/">Home</a></li>
+              <li className="nav-item"><a className="nav-link" href="/about">About</a></li>
+              <li className="nav-item"><a className="nav-link" href="/services">Services</a></li>
+              <li className="nav-item"><a className="nav-link" href="/pricing">Pricing</a></li>
               <li className="nav-item dropdown"> 
                 <a className="nav-link active dropdown-toggle" href="#0" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                   Pages <i className="ti-angle-down"></i>
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a href="portfolio.html" className="dropdown-item"><span>Portfolio</span></a></li>
-                  <li><a href="team.html" className="dropdown-item"><span>Team</span></a></li>
-                  <li><a href="faq.html" className="dropdown-item"><span>Faq</span></a></li>
-                  <li><a href="services-page.html" className="dropdown-item"><span>Services Page</span></a></li>
-                  <li><a href="team-details.html" className="dropdown-item"><span>Team Details</span></a></li>
-                  <li><a href="post.html" className="dropdown-item active"><span>Post Single</span></a></li>
-                  <li><a href="404.html" className="dropdown-item"><span>404</span></a></li>
+                  <li><a href="/portfolio" className="dropdown-item"><span>Portfolio</span></a></li>
+                  <li><a href="/team" className="dropdown-item"><span>Team</span></a></li>
+                  <li><a href="/faq" className="dropdown-item"><span>Faq</span></a></li>
+                  <li><a href="/services-page" className="dropdown-item"><span>Services Page</span></a></li>
+                  <li><a href="/team-details" className="dropdown-item"><span>Team Details</span></a></li>
+                  <li><a href="/post" className="dropdown-item active"><span>Post Single</span></a></li>
+                  <li><a href="/404" className="dropdown-item"><span>404</span></a></li>
                   
                   <li className="dropdown-submenu dropdown"> 
                     <a className="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" href="#0">
@@ -63,12 +63,12 @@ function Post() {
                   Blog <i className="ti-angle-down"></i>
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a href="blog.html" className="dropdown-item"><span>Blog 01</span></a></li>
-                  <li><a href="blog2.html" className="dropdown-item"><span>Blog 02</span></a></li>
-                  <li><a href="blog3.html" className="dropdown-item"><span>Blog 03</span></a></li>
+                  <li><a href="/blog" className="dropdown-item"><span>Blog 01</span></a></li>
+                  <li><a href="/blog2" className="dropdown-item"><span>Blog 02</span></a></li>
+                  <li><a href="/blog3" className="dropdown-item"><span>Blog 03</span></a></li>
                 </ul>
               </li>
-              <li className="nav-item"><a className="nav-link" href="contact.html">Contact</a></li>
+              <li className="nav-item"><a className="nav-link" href="/contact">Contact</a></li>
             </ul>
           </div>
         </div>

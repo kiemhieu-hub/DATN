@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
+import Logo from "../../components/Logo";
 
 function Index() {
   const navigate = useNavigate();
@@ -39,16 +40,7 @@ function Index() {
       <nav className="navbar navbar-expand-lg">
         <div className="container">
           {/* Logo */}
-          <div className="logo-wrapper">
-            <Link className="logo" to="/">
-              <img
-                src="/img/logo.png"
-                className="logo-img"
-                alt="THADS Barber"
-              />
-            </Link>
-          </div>
-
+          <Logo/>
           {/* Mobile menu button */}
           <button
             className="navbar-toggler"
@@ -121,7 +113,7 @@ function Index() {
                 <ul className="dropdown-menu">
                   <li>
                     <Link
-                      to="/portfolio.html"
+                      to="/portfolio"
                       className="dropdown-item"
                     >
                       <span>Thư viện kiểu tóc</span>
@@ -130,7 +122,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/team.html"
+                      to="/team"
                       className="dropdown-item"
                     >
                       <span>Đội ngũ Barber</span>
@@ -139,7 +131,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/faq.html"
+                      to="/faq"
                       className="dropdown-item"
                     >
                       <span>Câu hỏi thường gặp</span>
@@ -157,7 +149,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/team-details.html"
+                      to="/team-details"
                       className="dropdown-item"
                     >
                       <span>Thông tin Barber</span>
@@ -166,7 +158,7 @@ function Index() {
 
                   <li>
                     <Link
-                      to="/blog.html"
+                      to="/blog"
                       className="dropdown-item"
                     >
                       <span>Tin tức & bài viết</span>
@@ -178,7 +170,7 @@ function Index() {
               <li className="nav-item">
                 <Link
                   className="nav-link"
-                  to="/contact.html"
+                  to="/contact"
                 >
                   Liên hệ
                 </Link>
@@ -518,7 +510,7 @@ function Index() {
       <section className="testimonials">
         <div
           className="background bg-img bg-fixed section-padding pb-0"
-          data-background="img/slider/20.jpg"
+          data-background="img/slider/18.jpg"
           data-overlay-dark={6}
         >
           <div className="container">

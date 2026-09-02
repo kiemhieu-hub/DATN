@@ -1,5 +1,3 @@
-// Dùng require để dự án vẫn type-check trước khi cài package nodemailer mới.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const nodemailer = require("nodemailer") as {
   createTransport: (options: Record<string, unknown>) => {
     sendMail: (options: Record<string, unknown>) => Promise<unknown>;
@@ -24,6 +22,7 @@ export type AppointmentEmailEvent =
   | "REOPENED"
   | "NO_SHOW"
   | "COMPLETED"
+  | "DEPOSIT_PAID"
   | "PAID";
 
 interface AppointmentLifecycleEmailInput {
@@ -82,6 +81,7 @@ const emailTitles: Record<
   REOPENED: "Lịch hẹn đã được bật lại",
   NO_SHOW: "Lịch hẹn được ghi nhận vắng mặt",
   COMPLETED: "Dịch vụ đã hoàn thành",
+  DEPOSIT_PAID: "Thanh toán đặt cọc thành công",
   PAID: "Thanh toán thành công",
 };
 

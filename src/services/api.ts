@@ -1,7 +1,8 @@
 import axios from "axios";
+import { invalidateBusinessData } from "../lib/queryKeys";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,5 +25,16 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => {
+    const method = response.config.method?.toUpperCase();
+    if (method && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+      void invalidateBusinessData();
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
 
 export default api;

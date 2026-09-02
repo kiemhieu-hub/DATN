@@ -1,33 +1,40 @@
-import api from "./api";
+import mongoose from "mongoose";
 
-export type AdminContentKind =
-  | "vouchers"
-  | "reviews"
-  | "service-categories"
-  | "hairstyle-gallery";
+import HairstyleGallery from "../models/HairstyleGallery";
+import Review from "../models/Review";
+import ServiceCategory from "../models/ServiceCategory";
+import Voucher from "../models/Voucher";
+import AppError from "../utils/AppError";
 
-export interface AdminContentItem {
-  _id: string;
-  [key: string]: unknown;
-}
-
-export const getAdminContent = async (kind: AdminContentKind) => {
-  const response = await api.get<{
-    success: boolean;
-    items: AdminContentItem[];
-  }>(`/admin/${kind}`);
-
-  return response.data;
+const assertId = (id: string): void => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError("Mã dữ liệu không hợp lệ", 400);
+  }
 };
 
-export const deleteAdminContent = async (
-  kind: AdminContentKind,
-  itemId: string
-) => {
-  const response = await api.delete<{
-    success: boolean;
-    message: string;
-  }>(`/admin/${kind}/${itemId}`);
+const list = async (model: any) => model.find().sort({ createdAt: -1 }).lean();
 
-  return response.data;
+const remove = async (model: any, id: string, notFoundMessage: string) => {
+  assertId(id);
+  const item = await model.findByIdAndDelete(id).lean();
+  if (!item) throw new AppError(notFoundMessage, 404);
+  return { id };
 };
+
+export const listVouchers = () => list(Voucher);
+export const deleteVoucher = (id: string) => remove(Voucher, id, "Không tìm thấy voucher");
+
+export const listReviews = () => Review.find()
+  .populate("client", "fullName email phone")
+  .populate("barber", "fullName email phone")
+  .sort({ createdAt: -1 })
+  .lean();
+export const deleteReview = (id: string) => remove(Review, id, "Không tìm thấy review");
+
+export const listServiceCategories = () => list(ServiceCategory);
+export const deleteServiceCategory = (id: string) =>
+  remove(ServiceCategory, id, "Không tìm thấy danh mục dịch vụ");
+
+export const listHairstyles = () => list(HairstyleGallery);
+export const deleteHairstyle = (id: string) =>
+  remove(HairstyleGallery, id, "Không tìm thấy hình ảnh kiểu tóc");

@@ -1,6 +1,8 @@
 import axios from "axios";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState, type FormEvent } from "react";
 
+import { queryKeys } from "../../lib/queryKeys";
 import {
   createAdminServiceCategory,
   deleteAdminServiceCategory,
@@ -24,28 +26,23 @@ const errorMessage = (error: unknown) => axios.isAxiosError(error)
   : "Có lỗi xảy ra";
 
 function ServiceCategories() {
-  const [items, setItems] = useState<ServiceCategory[]>([]);
   const [form, setForm] = useState<ServiceCategoryPayload>(emptyForm);
   const [editing, setEditing] = useState<ServiceCategory | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      setItems((await getAdminServiceCategories()).items);
-    } catch (error) {
-      setError(errorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const categoriesQuery = useQuery({
+    queryKey: queryKeys.serviceCategories,
+    queryFn: getAdminServiceCategories,
+  });
 
-  useEffect(() => { void load(); }, [load]);
+  const items: ServiceCategory[] = categoriesQuery.data?.items ?? [];
+  const loading = categoriesQuery.isPending;
+  const load = async () => {
+    await categoriesQuery.refetch();
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -106,7 +103,7 @@ function ServiceCategories() {
       setError("");
       const response = await deleteAdminServiceCategory(item._id);
       setMessage(response.message);
-      setItems((current) => current.filter((category) => category._id !== item._id));
+      await load();
     } catch (error) {
       setError(errorMessage(error));
     } finally {
@@ -122,6 +119,11 @@ function ServiceCategories() {
       </header>
 
       {error && <div className="category-alert error">{error}</div>}
+      {categoriesQuery.isError && (
+        <div className="category-alert error">
+          {errorMessage(categoriesQuery.error)}
+        </div>
+      )}
       {message && <div className="category-alert success">{message}</div>}
 
       <div className="category-table-wrap">

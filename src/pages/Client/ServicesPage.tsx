@@ -187,19 +187,19 @@ function ServicesPage() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/about.html">
+                <Link className="nav-link" to="/about">
                   Giới thiệu
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/services.html">
+                <Link className="nav-link" to="/services">
                   Dịch vụ
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/pricing.html">
+                <Link className="nav-link" to="/pricing">
                   Bảng giá
                 </Link>
               </li>
@@ -219,7 +219,7 @@ function ServicesPage() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/portfolio.html"
+                      to="/portfolio"
                     >
                       <span>Thư viện kiểu tóc</span>
                     </Link>
@@ -228,7 +228,7 @@ function ServicesPage() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team.html"
+                      to="/team"
                     >
                       <span>Đội ngũ Barber</span>
                     </Link>
@@ -237,7 +237,7 @@ function ServicesPage() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/faq.html"
+                      to="/faq"
                     >
                       <span>Câu hỏi thường gặp</span>
                     </Link>
@@ -246,7 +246,7 @@ function ServicesPage() {
                   <li>
                     <Link
                       className="dropdown-item active"
-                      to="/services-page.html"
+                      to="/services-page"
                     >
                       <span>Chi tiết dịch vụ</span>
                     </Link>
@@ -255,7 +255,7 @@ function ServicesPage() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team-details.html"
+                      to="/team-details"
                     >
                       <span>Thông tin Barber</span>
                     </Link>
@@ -264,7 +264,7 @@ function ServicesPage() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/blog.html"
+                      to="/blog"
                     >
                       <span>Tin tức và bài viết</span>
                     </Link>
@@ -273,7 +273,7 @@ function ServicesPage() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/contact.html">
+                <Link className="nav-link" to="/contact">
                   Liên hệ
                 </Link>
               </li>
@@ -464,55 +464,55 @@ function ServicesPage() {
 
                     <ul>
                       <li className="active">
-                        <Link to="/services-page.html">
+                        <Link to="/services-page">
                           Cắt tóc nam
                         </Link>
                       </li>
 
                       <li>
-                        <Link to="/services-page.html">
+                        <Link to="/services-page">
                           Tỉa ria mép
                         </Link>
                       </li>
 
                       <li>
-                        <Link to="/services-page.html">
+                        <Link to="/services-page">
                           Cạo mặt khăn nóng
                         </Link>
                       </li>
 
                       <li>
-                        <Link to="/services-page.html">
+                        <Link to="/services-page">
                           Tỉa và tạo kiểu râu
                         </Link>
                       </li>
 
                       <li>
-                        <Link to="/services-page.html">
+                        <Link to="/services-page">
                           Cắt Fade
                         </Link>
                       </li>
 
                       <li>
-                        <Link to="/services-page.html">
+                        <Link to="/services-page">
                           Chăm sóc da và massage
                         </Link>
                       </li>
 
                       <li>
-                        <Link to="/services-page.html">
+                        <Link to="/services-page">
                           Gội đầu thư giãn
                         </Link>
                       </li>
 
                       <li>
-                        <Link to="/services-page.html">
+                        <Link to="/services-page">
                           Sấy và tạo kiểu
                         </Link>
                       </li>
 
                       <li>
-                        <Link to="/services-page.html">
+                        <Link to="/services-page">
                           Uốn và nhuộm tóc
                         </Link>
                       </li>
@@ -577,7 +577,7 @@ function ServicesPage() {
             {otherServices.map((service) => (
               <div className="col-md-4" key={service.id}>
                 <div className="item mb-30">
-                  <Link to="/services-page.html">
+                  <Link to="/services-page">
                     <span
                       className={`icon ${service.icon}`}
                     />
@@ -600,7 +600,7 @@ function ServicesPage() {
           <div className="row">
             <div className="col-md-12 text-center mt-20">
               <Link
-                to="/pricing.html"
+                to="/pricing"
                 className="button-1"
               >
                 Xem toàn bộ bảng giá

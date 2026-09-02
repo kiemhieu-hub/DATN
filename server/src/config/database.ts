@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { setServers } from "node:dns";
+import Payment from "../models/Payment";
 
 setServers(["1.1.1.1", "8.8.8.8"]);
 
@@ -12,6 +13,8 @@ export const connectDatabase = async (): Promise<void> => {
     }
 
     await mongoose.connect(mongoUri);
+    
+    await Payment.syncIndexes();
 
     console.log("MongoDB Atlas connected successfully");
   } catch (error) {

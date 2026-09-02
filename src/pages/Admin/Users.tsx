@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
@@ -14,7 +16,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import {
   getAdminUserById,
   getAdminUsers,
-  deleteAdminUser,
   updateAdminUserStatus,
 } from "../../services/adminUser.service";
 
@@ -46,7 +47,6 @@ interface UserTableProps {
     account: AdminUser,
     status: AdminUserStatus
   ) => void;
-  onDelete: (account: AdminUser) => void;
   onPageChange: (page: number) => void;
 }
 
@@ -118,7 +118,6 @@ function UserTable({
   processingId,
   onViewDetail,
   onChangeStatus,
-  onDelete,
   onPageChange,
 }: UserTableProps) {
   return (
@@ -212,16 +211,6 @@ function UserTable({
                           </button>
                         )}
 
-                      {(account.role === "CLIENT" || account.role === "BARBER") && (
-                        <button
-                          type="button"
-                          className="danger"
-                          disabled={processingId === account.id}
-                          onClick={() => onDelete(account)}
-                        >
-                          Xóa
-                        </button>
-                      )}
 
                       {account.id !== currentAdminId &&
                         account.status === "BLOCKED" && (
@@ -339,26 +328,26 @@ function Users() {
 
       const [adminResponse, receptionistResponse, barberResponse, clientResponse] =
         await Promise.all([
-          getAdminUsers({
+          fetchBusinessQuery("admin-users", () => getAdminUsers({
             ...commonParams,
             role: "ADMIN",
             page: adminPage,
-          }),
-          getAdminUsers({
+          }), { ...commonParams, role: "ADMIN", page: adminPage }),
+          fetchBusinessQuery("admin-users", () => getAdminUsers({
             ...commonParams,
             role: "RECEPTIONIST",
             page: receptionistPage,
-          }),
-          getAdminUsers({
+          }), { ...commonParams, role: "RECEPTIONIST", page: receptionistPage }),
+          fetchBusinessQuery("admin-users", () => getAdminUsers({
             ...commonParams,
             role: "BARBER",
             page: barberPage,
-          }),
-          getAdminUsers({
+          }), { ...commonParams, role: "BARBER", page: barberPage }),
+          fetchBusinessQuery("admin-users", () => getAdminUsers({
             ...commonParams,
             role: "CLIENT",
             page: clientPage,
-          }),
+          }), { ...commonParams, role: "CLIENT", page: clientPage }),
         ]);
 
       setAdminGroup({
@@ -395,6 +384,10 @@ function Users() {
     receptionistPage,
     clientPage,
   ]);
+
+  useRealtimeRefresh(() => {
+    void loadUsers();
+  });
 
   useEffect(() => {
     if (authLoading) {
@@ -445,7 +438,7 @@ function Users() {
       setDetailLoading(true);
       setError("");
 
-      const response = await getAdminUserById(userId);
+      const response = await fetchBusinessQuery("admin-user-detail", () => getAdminUserById(userId), userId, 0);
       setSelectedUser(response.client);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
@@ -482,23 +475,6 @@ function Users() {
       if (selectedUser?.id === account.id) {
         await openDetail(account.id);
       }
-    } catch (requestError) {
-      setError(getErrorMessage(requestError));
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleDelete = async (account: AdminUser): Promise<void> => {
-    if (!window.confirm(`Xóa vĩnh viễn tài khoản “${account.fullName}”?`)) return;
-    try {
-      setProcessingId(account.id);
-      setError("");
-      setMessage("");
-      const response = await deleteAdminUser(account.id);
-      setMessage(response.message);
-      if (selectedUser?.id === account.id) setSelectedUser(null);
-      await loadUsers();
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -605,7 +581,6 @@ function Users() {
           onChangeStatus={(account, newStatus) =>
             void handleStatus(account, newStatus)
           }
-          onDelete={(account) => void handleDelete(account)}
           onPageChange={setAdminPage}
         />
 
@@ -618,7 +593,6 @@ function Users() {
           processingId={processingId}
           onViewDetail={(userId) => void openDetail(userId)}
           onChangeStatus={(account, newStatus) => void handleStatus(account, newStatus)}
-          onDelete={(account) => void handleDelete(account)}
           onPageChange={setReceptionistPage}
         />
 
@@ -633,7 +607,6 @@ function Users() {
           onChangeStatus={(account, newStatus) =>
             void handleStatus(account, newStatus)
           }
-          onDelete={(account) => void handleDelete(account)}
           onPageChange={setBarberPage}
         />
 
@@ -648,7 +621,6 @@ function Users() {
           onChangeStatus={(account, newStatus) =>
             void handleStatus(account, newStatus)
           }
-          onDelete={(account) => void handleDelete(account)}
           onPageChange={setClientPage}
         />
       </main>

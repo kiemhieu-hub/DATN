@@ -1,21 +1,14 @@
 import axios from "axios";
-import {
-  useCallback,
-  useEffect,
-  useState,
-  type FormEvent,
-} from "react";
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
-
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
+import {useCallback,useEffect,useState,type FormEvent,} from "react";
+import {Link,useNavigate,} from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { deleteAdminPayment, getAdminPayments } from "../../services/payment.service";
-
+import { getAdminPayments } from "../../services/payment.service";
 import type {
   Payment,
   PaymentMethod,
+  PaymentPurpose,
   PaymentSummary,
   PaymentTransactionStatus,
 } from "../../types/Payment";
@@ -35,6 +28,12 @@ const statusLabels: Record<PaymentTransactionStatus, string> = {
   FAILED: "Thất bại",
   CANCELLED: "Đã hủy",
   REFUNDED: "Đã hoàn tiền",
+};
+
+const purposeLabels: Record<PaymentPurpose, string> = {
+  DEPOSIT: "Tiền đặt cọc",
+  BALANCE: "Thanh toán còn lại",
+  FULL: "Thanh toán toàn bộ",
 };
 
 const formatMoney = (value: number): string => {
@@ -98,14 +97,21 @@ function Payments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadPayments = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await getAdminPayments({
+      const response = await fetchBusinessQuery("admin-payments", () => getAdminPayments({
+        keyword: submittedKeyword || undefined,
+        status,
+        method,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        page,
+        limit: 10,
+      }), {
         keyword: submittedKeyword || undefined,
         status,
         method,
@@ -124,6 +130,10 @@ function Payments() {
       setLoading(false);
     }
   }, [submittedKeyword, status, method, dateFrom, dateTo, page]);
+
+  useRealtimeRefresh(() => {
+    void loadPayments();
+  });
 
   useEffect(() => {
     if (authLoading) {
@@ -153,23 +163,6 @@ function Payments() {
     event.preventDefault();
     setPage(1);
     setSubmittedKeyword(keyword.trim());
-  };
-
-  const handleDeletePayment = async (payment: Payment): Promise<void> => {
-    if (!window.confirm(`Xóa vĩnh viễn hóa đơn ${payment.transactionCode || payment._id}?`)) return;
-    try {
-      setDeletingId(payment._id);
-      setError("");
-      setMessage("");
-      const response = await deleteAdminPayment(payment._id);
-      setMessage(response.message);
-      if (selectedPayment?._id === payment._id) setSelectedPayment(null);
-      await loadPayments();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError));
-    } finally {
-      setDeletingId(null);
-    }
   };
 
   const handlePrint = (): void => {
@@ -334,14 +327,6 @@ function Payments() {
                       >
                         Xem hóa đơn
                       </button>
-                      <button
-                        type="button"
-                        className="payments-delete-button"
-                        disabled={deletingId === payment._id}
-                        onClick={() => void handleDeletePayment(payment)}
-                      >
-                        Xóa
-                      </button>
                     </td>
                   </tr>
                 ))
@@ -394,21 +379,42 @@ function Payments() {
               <p><span>Số điện thoại</span><strong>{typeof selectedPayment.client === "string" ? "" : selectedPayment.client.phone}</strong></p>
               <p><span>Thời gian thanh toán</span><strong>{formatDateTime(selectedPayment.paidAt)}</strong></p>
               <p><span>Phương thức</span><strong>{methodLabels[selectedPayment.method]}</strong></p>
+              <p><span>Loại giao dịch</span><strong>{purposeLabels[selectedPayment.purpose]}</strong></p>
             </div>
 
-            {typeof selectedPayment.appointment !== "string" && selectedPayment.appointment?.services && (
-              <ul className="invoice-services">
-                {selectedPayment.appointment.services.map((service, index) => (
-                  <li key={`${service.nameSnapshot}-${index}`}>
-                    <span>{service.nameSnapshot}</span>
-                    <strong>{formatMoney(service.priceSnapshot)}đ</strong>
-                  </li>
-                ))}
-              </ul>
+            {typeof selectedPayment.appointment !== "string" && (
+              <>
+                <ul className="invoice-services">
+                  {selectedPayment.appointment.services.map((service, index) => (
+                    <li key={`${service.nameSnapshot}-${index}`}>
+                      <span>{service.nameSnapshot}</span>
+                      <strong>{formatMoney(service.priceSnapshot)}đ</strong>
+                    </li>
+                  ))}
+                </ul>
+                <div className="invoice-info invoice-breakdown">
+                  <p>
+                    <span>Tạm tính</span>
+                    <strong>{formatMoney(selectedPayment.appointment.subtotal)}đ</strong>
+                  </p>
+                  {selectedPayment.appointment.discountAmount > 0 && (
+                    <p>
+                      <span>Giảm giá</span>
+                      <strong>-{formatMoney(selectedPayment.appointment.discountAmount)}đ</strong>
+                    </p>
+                  )}
+                  {selectedPayment.appointment.depositPaid && (
+                    <p>
+                      <span>Đã đặt cọc</span>
+                      <strong>-{formatMoney(selectedPayment.appointment.depositAmount)}đ</strong>
+                    </p>
+                  )}
+                </div>
+              </>
             )}
 
             <div className="invoice-total">
-              <span>Tổng thanh toán</span>
+              <span>{purposeLabels[selectedPayment.purpose]}</span>
               <strong>{formatMoney(selectedPayment.amount)}đ</strong>
             </div>
 

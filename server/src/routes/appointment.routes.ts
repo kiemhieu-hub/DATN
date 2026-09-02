@@ -5,7 +5,6 @@ import {
   create,
   getSlots,
   getMine,
-  payDeposit,
 } from "../controllers/appointment.controller";
 
 
@@ -41,13 +40,6 @@ router.patch(
   authenticate,
   authorize("CLIENT"),
   cancelMine
-);
-
-router.post(
-  "/:id/deposit",
-  authenticate,
-  authorize("CLIENT"),
-  payDeposit
 );
 
 export default router;

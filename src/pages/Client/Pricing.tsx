@@ -70,13 +70,13 @@ function Pricing() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/about.html">
+                <Link className="nav-link" to="/about">
                   Giới thiệu
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/services.html">
+                <Link className="nav-link" to="/services">
                   Dịch vụ
                 </Link>
               </li>
@@ -84,7 +84,7 @@ function Pricing() {
               <li className="nav-item">
                 <Link
                   className="nav-link active"
-                  to="/pricing.html"
+                  to="/pricing"
                 >
                   Bảng giá
                 </Link>
@@ -105,7 +105,7 @@ function Pricing() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/portfolio.html"
+                      to="/portfolio"
                     >
                       <span>Thư viện kiểu tóc</span>
                     </Link>
@@ -114,7 +114,7 @@ function Pricing() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team.html"
+                      to="/team"
                     >
                       <span>Đội ngũ Barber</span>
                     </Link>
@@ -123,7 +123,7 @@ function Pricing() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/faq.html"
+                      to="/faq"
                     >
                       <span>Câu hỏi thường gặp</span>
                     </Link>
@@ -132,7 +132,7 @@ function Pricing() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/services-page.html"
+                      to="/services-page"
                     >
                       <span>Chi tiết dịch vụ</span>
                     </Link>
@@ -141,7 +141,7 @@ function Pricing() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team-details.html"
+                      to="/team-details"
                     >
                       <span>Thông tin Barber</span>
                     </Link>
@@ -150,7 +150,7 @@ function Pricing() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/blog.html"
+                      to="/blog"
                     >
                       <span>Tin tức và bài viết</span>
                     </Link>
@@ -159,7 +159,7 @@ function Pricing() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/contact.html">
+                <Link className="nav-link" to="/contact">
                   Liên hệ
                 </Link>
               </li>
@@ -609,7 +609,7 @@ function Pricing() {
       <section className="testimonials">
         <div
           className="background bg-img bg-fixed section-padding pb-0"
-          data-background="img/slider/20.jpg"
+          data-background="img/slider/18.jpg"
           data-overlay-dark={6}
         >
           <div className="container">

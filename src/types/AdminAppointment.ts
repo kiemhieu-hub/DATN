@@ -1,4 +1,4 @@
-import type { Appointment, AppointmentStatus } from "./Appoinment";
+import type { Appointment, AppointmentStatus } from "./Appointment";
 
 export interface AdminAppointmentPagination {
   page: number; limit: number; totalItems: number; totalPages: number;

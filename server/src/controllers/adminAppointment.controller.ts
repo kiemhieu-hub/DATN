@@ -86,6 +86,26 @@ export const reopenNoShow = async (req: AuthenticatedRequest, res: Response, nex
   } catch (error) { next(error); }
 };
 
+export const updateWorkProgress = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
+    const appointment = await service.updateAppointmentWorkProgress(
+      idParam(req.params.id),
+      req.body.segment,
+      req.body.progress,
+      req.user.userId,
+      req.user.role as "ADMIN" | "RECEPTIONIST"
+    );
+    res.json({ success: true, message: "Cập nhật tiến độ thực hiện thành công", appointment });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deleteAppointment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const appointment = await service.deleteAdminAppointment(idParam(req.params.id));

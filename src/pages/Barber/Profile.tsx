@@ -1,4 +1,6 @@
 import axios from "axios";
+import { fetchBusinessQuery } from "../../lib/queryApi";
+import { useRealtimeRefresh } from "../../hooks/useRealtimeRefresh";
 import {
   useCallback,
   useEffect,
@@ -115,7 +117,7 @@ function Profile() {
     user,
     isAuthenticated,
     isLoading: authLoading,
-  } = useAuth();
+  } = useAuth("BARBER");
 
   const [
     profileData,
@@ -161,8 +163,8 @@ function Profile() {
           profileResponse,
           servicesResponse,
         ] = await Promise.all([
-          getMyBarberProfile(),
-          getCatalogServices(),
+          fetchBusinessQuery("barber-profile", () => getMyBarberProfile()),
+          fetchBusinessQuery("catalog-services", () => getCatalogServices()),
         ]);
 
         setProfileData(
@@ -190,13 +192,17 @@ function Profile() {
       }
     }, []);
 
+  useRealtimeRefresh(() => {
+    void loadData();
+  }, isAuthenticated);
+
   useEffect(() => {
     if (authLoading) {
       return;
     }
 
     if (!isAuthenticated || !user) {
-      navigate("/login", {
+      navigate("/barber/login", {
         replace: true,
         state: {
           message:
@@ -208,7 +214,7 @@ function Profile() {
     }
 
     if (user.role !== "BARBER") {
-      navigate("/", {
+      navigate("/barber/login", {
         replace: true,
       });
 

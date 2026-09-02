@@ -1,45 +1,34 @@
-import type { Appointment, AppointmentStatus } from "./Appoinment";
-
-export interface BarberDashboardStatistics {
-  total: number;
-  pending: number;
-  confirmed: number;
-  inProgress: number;
-  completed: number;
-  cancelled: number;
-  todayRevenue: number;
-}
-
-export interface BarberDashboardClient {
-  _id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-}
-
-export interface BarberDashboardServiceItem {
-  name: string;
-  price: number;
-  durationMinutes: number;
-}
+import type { AppointmentStatus, PaymentStatus } from "./Appointment";
 
 export interface BarberDashboardAppointment {
   _id: string;
-  client: BarberDashboardClient | null;
-  services: BarberDashboardServiceItem[];
+  appointmentCode: string;
+  client: { _id: string; fullName: string; email: string; phone: string } | null;
+  services: Array<{ name: string; price: number; durationMinutes: number }>;
   appointmentDate: string;
   startTime: string;
   endTime: string;
   durationMinutes: number;
   totalPrice: number;
   status: AppointmentStatus;
+  paymentStatus: PaymentStatus;
+  barberViewedAt?: string;
 }
 
 export interface BarberDashboardData {
-  date: string;
-  statistics: BarberDashboardStatistics;
-  nextAppointment: BarberDashboardAppointment | null;
-  todayAppointments: BarberDashboardAppointment[];
+  dateFrom: string;
+  dateTo: string;
+  today: string;
+  revenue: number;
+  revenueSeries: Array<{ date: string; amount: number }>;
+  outcomes: {
+    completed: number;
+    cancelled: number;
+    noShow: number;
+    completionRate: number;
+    cancellationRate: number;
+  };
+  appointments: BarberDashboardAppointment[];
 }
 
 export interface GetBarberDashboardResponse {

@@ -1,18 +1,12 @@
-import {
-  type NextFunction,
-  type Request,
-  type Response,
-} from "express";
-
+import {type NextFunction,type Request,type Response,} from "express";
 import type { AuthenticatedRequest } from "../middleware/authenticate";
-
 import {
   cancelMyAppointment,
-  confirmClientDeposit,
   createAppointment,
   getAdminAppointments,
   getAvailableSlots,
   getBarberAppointments,
+  markBarberAppointmentViewed,
   getMyAppointments,
   updateAppointmentStatus,
 } from "../services/appointment.service";
@@ -140,6 +134,9 @@ export const cancelMine = async (
         userId: req.user.userId,
         role: "CLIENT",
         reason: req.body.reason,
+        refundBankName: req.body.refundBankName,
+        refundAccountNumber: req.body.refundAccountNumber,
+        refundAccountName: req.body.refundAccountName,
       });
 
     res.status(200).json({
@@ -203,6 +200,23 @@ export const getBarberMine = async (
       success: true,
       appointments,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const markBarberViewed = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
+    const appointment = await markBarberAppointmentViewed(
+      getStringParam(req.params.id, "Mã lịch hẹn không hợp lệ"),
+      req.user.userId
+    );
+    res.json({ success: true, appointment });
   } catch (error) {
     next(error);
   }
@@ -398,21 +412,6 @@ export const getSlots = async (
       success: true,
       slots,
     });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const payDeposit = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    if (!req.user) throw new AppError("Bạn chưa đăng nhập", 401);
-    const appointmentId = getStringParam(req.params.id, "Mã lịch hẹn không hợp lệ");
-    const appointment = await confirmClientDeposit(appointmentId, req.user.userId);
-    res.status(200).json({ success: true, message: "Đã ghi nhận thanh toán đặt cọc 30%", appointment });
   } catch (error) {
     next(error);
   }

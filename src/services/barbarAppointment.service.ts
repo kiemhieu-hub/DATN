@@ -3,7 +3,7 @@ import api from "./api";
 import type {
   Appointment,
   AppointmentStatus,
-} from "../types/Appointment";
+} from "../types/Appoinment";
 
 export interface BarberAppointmentsParams {
   status?: AppointmentStatus;

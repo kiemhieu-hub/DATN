@@ -61,7 +61,7 @@ function Services() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/about.html">
+                <Link className="nav-link" to="/about">
                   Giới thiệu
                 </Link>
               </li>
@@ -69,14 +69,14 @@ function Services() {
               <li className="nav-item">
                 <Link
                   className="nav-link active"
-                  to="/services.html"
+                  to="/services"
                 >
                   Dịch vụ
                 </Link>
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/pricing.html">
+                <Link className="nav-link" to="/pricing">
                   Bảng giá
                 </Link>
               </li>
@@ -96,7 +96,7 @@ function Services() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/portfolio.html"
+                      to="/portfolio"
                     >
                       <span>Thư viện kiểu tóc</span>
                     </Link>
@@ -105,7 +105,7 @@ function Services() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team.html"
+                      to="/team"
                     >
                       <span>Đội ngũ Barber</span>
                     </Link>
@@ -114,7 +114,7 @@ function Services() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/faq.html"
+                      to="/faq"
                     >
                       <span>Câu hỏi thường gặp</span>
                     </Link>
@@ -123,7 +123,7 @@ function Services() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/services-page.html"
+                      to="/services-page"
                     >
                       <span>Chi tiết dịch vụ</span>
                     </Link>
@@ -132,7 +132,7 @@ function Services() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/team-details.html"
+                      to="/team-details"
                     >
                       <span>Thông tin Barber</span>
                     </Link>
@@ -141,7 +141,7 @@ function Services() {
                   <li>
                     <Link
                       className="dropdown-item"
-                      to="/blog.html"
+                      to="/blog"
                     >
                       <span>Tin tức và bài viết</span>
                     </Link>
@@ -150,7 +150,7 @@ function Services() {
               </li>
 
               <li className="nav-item">
-                <Link className="nav-link" to="/contact.html">
+                <Link className="nav-link" to="/contact">
                   Liên hệ
                 </Link>
               </li>
@@ -241,7 +241,7 @@ function Services() {
           <div className="row">
             <div className="col-md-4">
               <div className="item">
-                <Link to="/services-page.html">
+                <Link to="/services-page">
                   <span className="icon icon-icon-1-1" />
 
                   <h5>Tỉa ria mép</h5>
@@ -261,7 +261,7 @@ function Services() {
 
             <div className="col-md-4">
               <div className="item">
-                <Link to="/services-page.html">
+                <Link to="/services-page">
                   <span className="icon icon-icon-1-9" />
 
                   <h5>Cạo mặt</h5>
@@ -281,7 +281,7 @@ function Services() {
 
             <div className="col-md-4">
               <div className="item">
-                <Link to="/services-page.html">
+                <Link to="/services-page">
                   <span className="icon icon-icon-1-3" />
 
                   <h5>Tỉa và tạo kiểu râu</h5>
@@ -300,7 +300,7 @@ function Services() {
 
             <div className="col-md-4">
               <div className="item">
-                <Link to="/services-page.html">
+                <Link to="/services-page">
                   <span className="icon icon-icon-1-2" />
 
                   <h5>Cắt tóc nam</h5>
@@ -320,7 +320,7 @@ function Services() {
 
             <div className="col-md-4">
               <div className="item">
-                <Link to="/services-page.html">
+                <Link to="/services-page">
                   <span className="icon icon-icon-1-6" />
 
                   <h5>Cắt Fade chuyên nghiệp</h5>
@@ -340,7 +340,7 @@ function Services() {
 
             <div className="col-md-4">
               <div className="item">
-                <Link to="/services-page.html">
+                <Link to="/services-page">
                   <span className="icon icon-icon-1-8" />
 
                   <h5>Chăm sóc da và massage</h5>
@@ -359,7 +359,7 @@ function Services() {
 
             <div className="col-md-4">
               <div className="item">
-                <Link to="/services-page.html">
+                <Link to="/services-page">
                   <span className="icon icon-icon-1-4" />
 
                   <h5>Gội đầu thư giãn</h5>
@@ -378,7 +378,7 @@ function Services() {
 
             <div className="col-md-4">
               <div className="item">
-                <Link to="/services-page.html">
+                <Link to="/services-page">
                   <span className="icon icon-icon-1-18" />
 
                   <h5>Sấy và tạo kiểu</h5>
@@ -397,7 +397,7 @@ function Services() {
 
             <div className="col-md-4">
               <div className="item">
-                <Link to="/services-page.html">
+                <Link to="/services-page">
                   <span className="icon icon-icon-1-10" />
 
                   <h5>Nhuộm tóc</h5>
@@ -542,7 +542,7 @@ function Services() {
                     </p>
 
                     <Link
-                      to="/team.html"
+                      to="/team"
                       className="button-2 mt-15"
                     >
                       Xem đội ngũ
@@ -560,7 +560,7 @@ function Services() {
       <section className="testimonials">
         <div
           className="background bg-img bg-fixed section-padding pb-0"
-          data-background="img/slider/20.jpg"
+          data-background="img/slider/18.jpg"
           data-overlay-dark={6}
         >
           <div className="container">

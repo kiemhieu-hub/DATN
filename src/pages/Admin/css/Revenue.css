@@ -1,1 +1,274 @@
-.admin-revenue-page{min-height:100vh;padding:34px 24px 50px;color:#eee;background:#10100f}.admin-revenue-container{width:min(1240px,100%);margin:auto}.admin-revenue-header{display:flex;align-items:flex-end;justify-content:space-between;gap:25px;margin-bottom:24px}.admin-revenue-header>div>span,.admin-revenue-chart-heading span{color:#c6a15b;font-size:11px;letter-spacing:2.5px}.admin-revenue-header h1{margin:7px 0;font-size:42px}.admin-revenue-header p{margin:0;color:#999}.admin-revenue-header button{padding:11px 17px;color:#111;font:inherit;font-weight:700;cursor:pointer;background:#c6a15b;border:0}.admin-revenue-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:18px;background:#191918;border:1px solid #34322d}.admin-revenue-filters label{display:grid;gap:8px;color:#aaa;font-size:12px}.admin-revenue-filters input,.admin-revenue-filters select{width:100%;padding:11px;color:#eee;font:inherit;background:#111;border:1px solid #49463f}.admin-revenue-error{padding:13px;margin-top:14px;color:#ffd3d3;background:#4a2020}.admin-revenue-summary{display:grid;grid-template-columns:2fr 1fr 1fr;gap:13px;margin:16px 0}.admin-revenue-summary article{padding:21px;background:#1a1a19;border:1px solid #34322d}.admin-revenue-summary span{display:block;color:#999;font-size:12px}.admin-revenue-summary strong{display:block;margin-top:9px;color:#c6a15b;font-size:29px}.admin-revenue-chart-card{padding:24px;background:#191918;border:1px solid #34322d}.admin-revenue-chart-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}.admin-revenue-chart-heading h2{margin:5px 0 0}.admin-revenue-chart-heading small{color:#888}.admin-revenue-chart-scroll{overflow-x:auto}.admin-revenue-chart{display:flex;gap:22px;align-items:flex-end;min-width:max-content;height:430px;padding:45px 20px 10px;margin-top:18px;border-bottom:1px solid #49463f;background:linear-gradient(to top,transparent 24%,#2b2a2722 25%,transparent 26%,transparent 49%,#2b2a2722 50%,transparent 51%,transparent 74%,#2b2a2722 75%,transparent 76%)}.admin-revenue-chart article{display:grid;grid-template-rows:350px auto auto;width:105px;text-align:center}.admin-revenue-bar-area{position:relative;display:flex;align-items:flex-end;justify-content:center;height:350px}.admin-revenue-bar-area>span{position:absolute;top:-26px;left:50%;width:150px;color:#ddd;font-size:10px;transform:translateX(-50%)}.admin-revenue-bar{width:58px;min-height:8px;background:linear-gradient(#dfbd79,#9f7938);border-radius:4px 4px 0 0;box-shadow:0 0 22px #c6a15b22;transition:height .3s}.admin-revenue-chart article>b{margin-top:9px;font-size:12px}.admin-revenue-chart article>small{margin-top:4px;color:#888}.admin-revenue-empty{padding:80px 20px;text-align:center;color:#888}.admin-revenue-ranking{margin-top:16px;padding:22px;background:#191918;border:1px solid #34322d}.admin-revenue-ranking h2{margin-top:0}.admin-revenue-ranking article{display:grid;grid-template-columns:50px 1fr 1fr auto;gap:15px;align-items:center;padding:14px 0;border-bottom:1px solid #302f2b}.admin-revenue-ranking article>b,.admin-revenue-ranking article>strong{color:#c6a15b}.admin-revenue-ranking article>small{color:#888}@media(max-width:800px){.admin-revenue-header{align-items:flex-start;flex-direction:column}.admin-revenue-filters,.admin-revenue-summary{grid-template-columns:1fr}.admin-revenue-ranking article{grid-template-columns:40px 1fr auto}.admin-revenue-ranking article>small{display:none}}@media(max-width:560px){.admin-revenue-page{padding:24px 14px}.admin-revenue-header h1{font-size:31px}}
+.admin-revenue-page {
+  min-height: 100vh;
+  padding: 34px 24px 50px;
+  color: #eee;
+  background: #10100f;
+}
+
+.admin-revenue-container {
+  width: min(1240px, 100%);
+  margin: auto;
+}
+
+.admin-revenue-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 24px;
+}
+
+.admin-revenue-header > div > span,
+.admin-revenue-chart-heading span {
+  color: #c6a15b;
+  font-size: 11px;
+  letter-spacing: 2.5px;
+}
+
+.admin-revenue-header h1 {
+  margin: 7px 0;
+  color: #ffffff;
+  font-size: 42px;
+}
+
+.admin-revenue-header p {
+  margin: 0;
+  color: #999;
+}
+
+.admin-revenue-header button {
+  padding: 11px 17px;
+  color: #111;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: #c6a15b;
+  border: 0;
+}
+
+.admin-revenue-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px;
+  background: #191918;
+  border: 1px solid #34322d;
+}
+
+.admin-revenue-filters label {
+  display: grid;
+  gap: 8px;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.admin-revenue-filters input,
+.admin-revenue-filters select {
+  width: 100%;
+  padding: 11px;
+  color: #eee;
+  font: inherit;
+  background: #111;
+  border: 1px solid #49463f;
+}
+
+.admin-revenue-error {
+  padding: 13px;
+  margin-top: 14px;
+  color: #ffd3d3;
+  background: #4a2020;
+}
+
+.admin-revenue-summary {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 13px;
+  margin: 16px 0;
+}
+
+.admin-revenue-summary article {
+  padding: 21px;
+  background: #1a1a19;
+  border: 1px solid #34322d;
+}
+
+.admin-revenue-summary span {
+  display: block;
+  color: #999;
+  font-size: 12px;
+}
+
+.admin-revenue-summary strong {
+  display: block;
+  margin-top: 9px;
+  color: #c6a15b;
+  font-size: 29px;
+}
+
+.admin-revenue-chart-card {
+  padding: 24px;
+  background: #191918;
+  border: 1px solid #34322d;
+}
+
+.admin-revenue-chart-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.admin-revenue-chart-heading h2 {
+  margin: 5px 0 0;
+  color: #ffffff;
+}
+
+.admin-revenue-chart-heading small {
+  color: #888;
+}
+
+.admin-revenue-chart-scroll {
+  overflow-x: auto;
+}
+
+.admin-revenue-chart {
+  display: flex;
+  gap: 22px;
+  align-items: flex-end;
+  min-width: max-content;
+  height: 430px;
+  padding: 45px 20px 10px;
+  margin-top: 18px;
+  border-bottom: 1px solid #49463f;
+  background: linear-gradient(
+    to top,
+    transparent 24%,
+    #2b2a2722 25%,
+    transparent 26%,
+    transparent 49%,
+    #2b2a2722 50%,
+    transparent 51%,
+    transparent 74%,
+    #2b2a2722 75%,
+    transparent 76%
+  );
+}
+
+.admin-revenue-chart article {
+  display: grid;
+  grid-template-rows: 350px auto auto;
+  width: 105px;
+  text-align: center;
+}
+
+.admin-revenue-bar-area {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 350px;
+}
+
+.admin-revenue-bar-area > span {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  width: 150px;
+  color: #ddd;
+  font-size: 10px;
+  transform: translateX(-50%);
+}
+
+.admin-revenue-bar {
+  width: 58px;
+  min-height: 8px;
+  background: linear-gradient(#dfbd79, #9f7938);
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 0 22px #c6a15b22;
+  transition: height 0.3s;
+}
+
+.admin-revenue-chart article > b {
+  margin-top: 9px;
+  color: #eee;
+  font-size: 12px;
+}
+
+.admin-revenue-chart article > small {
+  margin-top: 4px;
+  color: #888;
+}
+
+.admin-revenue-empty {
+  padding: 80px 20px;
+  text-align: center;
+  color: #888;
+}
+
+/* Chi tiết doanh thu từng Barber */
+.admin-revenue-ranking {
+  margin-top: 16px;
+  padding: 22px;
+  background: #191918;
+  border: 1px solid #34322d;
+}
+
+.admin-revenue-ranking h2 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #ffffff !important;
+  font-size: 22px;
+}
+
+.admin-revenue-ranking article {
+  display: grid;
+  grid-template-columns: 50px 1fr 1fr auto;
+  gap: 15px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #302f2b;
+}
+
+.admin-revenue-ranking article > b,
+.admin-revenue-ranking article > strong {
+  color: #c6a15b !important;
+}
+
+.admin-revenue-ranking article > span {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.admin-revenue-ranking article > small {
+  color: #aaa !important;
+}
+
+@media (max-width: 800px) {
+  .admin-revenue-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-revenue-filters,
+  .admin-revenue-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-revenue-ranking article {
+    grid-template-columns: 40px 1fr auto;
+  }
+
+  .admin-revenue-ranking article > small {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-revenue-page {
+    padding: 24px 14px;
+  }
+
+  .admin-revenue-header h1 {
+    font-size: 31px;
+  }
+}
