@@ -13,6 +13,7 @@ interface AdminNavigationItem {
 
 const navigationItems: AdminNavigationItem[] = [
   { to: "/admin/dashboard", label: "Dashboard", icon: "DB" },
+  { to: "/admin/revenue", label: "Quản lý doanh thu", icon: "DT" },
   {
     to: "/admin/invoices",
     label: "Quản lý hóa đơn",

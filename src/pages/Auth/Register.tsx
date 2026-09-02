@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { register } from "../../services/authService";
 
 import "./Register.css";
 
@@ -35,16 +36,13 @@ function Register() {
     try {
       setLoading(true);
 
-      await axios.post(
-        "http://localhost:5000/api/auth/register",
-        {
+      await register({
           fullName: fullName.trim(),
           email: email.trim(),
           phone: phone.trim(),
           password,
           confirmPassword,
-        }
-      );
+      });
 
       // Đăng ký thành công thì chuyển sang trang đăng nhập
       navigate("/login", {

@@ -36,7 +36,6 @@ export default function ClientHeader() {
             <Link to="/portfolio">Thư viện kiểu tóc</Link>
             <Link to="/team">Đội ngũ Barber</Link>
             <Link to="/faq">Câu hỏi thường gặp</Link>
-            <Link to="/blog">Tin tức và bài viết</Link>
           </div>
         </div>
         <NavLink to="/contact">Liên hệ</NavLink>
